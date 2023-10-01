@@ -38,36 +38,36 @@ os.chdir(SessionDataFolder)
 
 
 CaseFolder = "CT"
-NiiFile = "LIDC-IDRI-0001.nii.gz"
+Nii_File = "LIDC-IDRI-0001.nii.gz"
 
 
 #### Load Intensity Volume
-NiiFile = os.path.join(SessionDataFolder, CaseFolder, "image", NiiFile)
-niivol, niimetada = readNifty(NiiFile)
+Nii_File = os.path.join(SessionDataFolder, CaseFolder, "image", Nii_File)
+nii_vol, nii_metadata = readNifty(Nii_File)
 #### Load Nodule Mask
-NiiFile = os.path.join(SessionDataFolder, CaseFolder, "nodule_mask", NiiFile)
-niimask, niimetada = readNifty(NiiFile)
+Nii_File = os.path.join(SessionDataFolder, CaseFolder, "nodule_mask", Nii_File)
+nii_mask, nii_metadata = readNifty(Nii_File)
 
 ######## VOLUME METADATA
-print("Voxel Resolution (mm): ", niimetada.spacing)
-print("Volume origin (mm): ", niimetada.origen)
-print("Axes direction: ", niimetada.direction)
+print("Voxel Resolution (mm): ", nii_metadata.spacing)
+print("Volume origin (mm): ", nii_metadata.origen)
+print("Axes direction: ", nii_metadata.direction)
 ######## VISUALIZE VOLUMES
 
 ### Interactive Volume Visualization
 # Short Axis View
-VolumeCutBrowser(niivol)
-VolumeCutBrowser(niivol, IMSSeg=niimask)
+VolumeCutBrowser(nii_vol)
+VolumeCutBrowser(nii_vol, IMSSeg=nii_mask)
 # Coronal View
-VolumeCutBrowser(niivol, Cut="Cor")
+VolumeCutBrowser(nii_vol, cut="Cor")
 # Sagital View
-VolumeCutBrowser(niivol, Cut="Sag")
+VolumeCutBrowser(nii_vol, cut="Sag")
 
 
 ### Short Axis (SA) Image
 # Define SA cut
-k = int(niivol.shape[2] / 2)  # Cut at the middle of the volume
-SA = niivol[:, :, k]
+k = int(nii_vol.shape[2] / 2)  # Cut at the middle of the volume
+SA = nii_vol[:, :, k]
 # Image
 fig1 = plt.figure()
 plt.imshow(SA, cmap="gray")

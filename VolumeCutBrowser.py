@@ -49,23 +49,25 @@ class VolumeCutBrowser:
 
     idx: int
     ax: axes.Axes
-    IMS: np.ndarray  # IMS: Image Stack
-    IMSSeg: np.ndarray | None  # IMS segmentation
+    img_stack: np.ndarray  # Image Stack
+    segmentation_stack: np.ndarray | None  # Segmentation Stack
 
-    def __init__(self, IMS: np.ndarray, IMSSeg: np.ndarray | None = None, Cut="SA"):
-        self.IMS = IMS
+    def __init__(
+        self, img_stack: np.ndarray, IMSSeg: np.ndarray | None = None, cut="SA"
+    ):
+        self.img_stack = img_stack
         self.idx = 0
-        self.Cut = Cut
-        self.IMSSeg = IMSSeg
+        self.cut = cut
+        self.segmentation_stack = IMSSeg
 
-        if self.Cut == "SA":
-            self.idx = round(self.IMS.shape[2] / 2)
-        elif self.Cut == "Sag":
-            self.idx = round(self.IMS.shape[0] / 2)
-        elif self.Cut == "Cor":
-            self.idx = round(self.IMS.shape[1] / 2)
+        if self.cut == "SA":
+            self.idx = round(self.img_stack.shape[2] / 2)
+        elif self.cut == "Sag":
+            self.idx = round(self.img_stack.shape[0] / 2)
+        elif self.cut == "Cor":
+            self.idx = round(self.img_stack.shape[1] / 2)
         else:
-            raise ValueError("Cut must be SA, Sag or Cor")
+            raise ValueError("cut must be SA, Sag or Cor")
 
         self.fig, self.ax = plt.subplots()
         self.fig.canvas.mpl_connect(
@@ -81,16 +83,16 @@ class VolumeCutBrowser:
             self.DrawScene()
         elif event.key == "z":
             self.idx += 1
-            if self.Cut == "SA":
-                Mx = self.IMS.shape[2] - 1
-            elif self.Cut == "Sag":
-                Mx = self.IMS.shape[0] - 1
-            elif self.Cut == "Cor":
-                Mx = self.IMS.shape[1] - 1
+            if self.cut == "SA":
+                max_idx = self.img_stack.shape[2] - 1
+            elif self.cut == "Sag":
+                max_idx = self.img_stack.shape[0] - 1
+            elif self.cut == "Cor":
+                max_idx = self.img_stack.shape[1] - 1
             else:
-                raise ValueError("Cut must be SA, Sag or Cor")
+                raise ValueError("cut must be SA, Sag or Cor")
 
-            self.idx = min(Mx, self.idx)
+            self.idx = min(max_idx, self.idx)
             self.DrawScene()
         else:  # no reaction on other keys
             pass
@@ -98,28 +100,28 @@ class VolumeCutBrowser:
     def DrawScene(self):
         self.ax.cla()
 
-        if self.Cut == "SA":
-            Im = self.IMS[:, :, self.idx]
-        elif self.Cut == "Sag":
-            Im = np.squeeze(self.IMS[self.idx, :, :])
-        elif self.Cut == "Cor":
-            Im = np.squeeze(self.IMS[:, self.idx, :])
+        if self.cut == "SA":
+            image = self.img_stack[:, :, self.idx]
+        elif self.cut == "Sag":
+            image = np.squeeze(self.img_stack[self.idx, :, :])
+        elif self.cut == "Cor":
+            image = np.squeeze(self.img_stack[:, self.idx, :])
         else:
-            raise ValueError("Cut must be SA, Sag or Cor")
+            raise ValueError("cut must be SA, Sag or Cor")
 
-        self.ax.imshow(Im, cmap="gray")
+        self.ax.imshow(image, cmap="gray")
         self.ax.set_title(
-            "Cut: " + str(self.idx) + ' Press "x" to decrease; "z" to increase'
+            "cut: " + str(self.idx) + ' Press "x" to decrease; "z" to increase'
         )
 
-        if self.IMSSeg is not None:  # Draw segmentation contour
-            if self.Cut == "SA":
-                Im = self.IMSSeg[:, :, self.idx]
-            elif self.Cut == "Sag":
-                Im = np.squeeze(self.IMSSeg[self.idx, :, :])
-            elif self.Cut == "Cor":
-                Im = np.squeeze(self.IMSSeg[:, self.idx, :])
-            self.ax.contour(Im, [0.5], colors="r")
+        if self.segmentation_stack is not None:  # Draw segmentation contour
+            if self.cut == "SA":
+                image = self.segmentation_stack[:, :, self.idx]
+            elif self.cut == "Sag":
+                image = np.squeeze(self.segmentation_stack[self.idx, :, :])
+            elif self.cut == "Cor":
+                image = np.squeeze(self.segmentation_stack[:, self.idx, :])
+            self.ax.contour(image, [0.5], colors="r")
 
         self.fig.canvas.draw()
         plt.show()
