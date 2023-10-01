@@ -25,7 +25,7 @@ SessionDataFolder = os.path.join(SessionPyFolder, "data")
 #### Session Code Folder (change to your path)
 os.chdir(SessionPyFolder)  # Change Dir 2 load session functions
 # .nii Read Data
-from NiftyIO import readNifty
+from NiftyIO import read_nifty
 
 # Volume Visualization
 from VolumeCutBrowser import VolumeCutBrowser
@@ -43,14 +43,14 @@ Nii_File = "LIDC-IDRI-0001.nii.gz"
 
 #### Load Intensity Volume
 Nii_File = os.path.join(SessionDataFolder, CaseFolder, "image", Nii_File)
-nii_vol, nii_metadata = readNifty(Nii_File)
+nii_vol, nii_metadata = read_nifty(Nii_File)
 #### Load Nodule Mask
 Nii_File = os.path.join(SessionDataFolder, CaseFolder, "nodule_mask", Nii_File)
-nii_mask, nii_metadata = readNifty(Nii_File)
+nii_mask, nii_metadata = read_nifty(Nii_File)
 
 ######## VOLUME METADATA
 print("Voxel Resolution (mm): ", nii_metadata.spacing)
-print("Volume origin (mm): ", nii_metadata.origen)
+print("Volume origin (mm): ", nii_metadata.origin)
 print("Axes direction: ", nii_metadata.direction)
 ######## VISUALIZE VOLUMES
 
