@@ -11,6 +11,7 @@ __year__ = "2023"
 """
 
 from enum import Enum
+from pathlib import Path
 from typing import NamedTuple
 import numpy as np
 import SimpleITK as sitk  # to read .nii Files
@@ -45,13 +46,13 @@ class CoordinateOrderError(ValueError):
 
 
 def read_nifty(
-    file_path: str, coordinate_order: CoordinateOrder = CoordinateOrder.xyz
+    file_path: Path, coordinate_order: CoordinateOrder = CoordinateOrder.xyz
 ) -> tuple[np.ndarray, NiiMetadata]:
     """
     Reads a NIfTI file and returns the volume and metadata.
 
     Args:
-    - file_path (str): Full path to the file, e.g. "/home/user/Desktop/BD/LIDC-IDRI-0001_GT1.nii.gz"
+    - file_path (Path): Full path to the file, e.g. "/home/user/Desktop/BD/LIDC-IDRI-0001_GT1.nii.gz"
     - coordinate_order (str): Order of dimensions in array:
         - 'xyz' (Default) sets z as volume third dimension
         - 'zyx' swaps x and z to set z as first dimension
@@ -91,7 +92,7 @@ def read_nifty(
 def save_nifty(
     volume: np.ndarray,
     metadata: NiiMetadata | None,
-    file_path: str,
+    file_path: Path,
     coordinate_order: CoordinateOrder = CoordinateOrder.xyz,
 ) -> None:
     """
@@ -100,7 +101,7 @@ def save_nifty(
     Args:
     - volume (np.ndarray): The numpy array containing the NIfTI volume.
     - metadata (NiiMetadata): The NIfTI metadata (optional). If omitted, default (identity) values are used.
-    - file_path (str): The full path to the output file, e.g. "/home/user/Desktop/BD/LIDC-IDRI-0001_GT1.nii.gz".
+    - file_path (Path): The full path to the output file, e.g. Path("/home/user/LIDC-IDRI-0001_GT1.nii.gz").
     - coordinate_order (str): The order of dimensions in the array. Default is "xyz", which sets z as the volume's third dimension. If set to "zyx", x and z are swapped to set z as the first dimension.
 
     Returns:

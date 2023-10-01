@@ -83,14 +83,6 @@ class VolumeCutDirectionError(ValueError):
 
 
 ################################################################################
-#
-# EXAMPLE:
-# ServerDir='Y:\Shared\Guille'; NIIFile='LIDC-IDRI-0305_GT1_1.nii.gz'
-# nii_vol,_=NiftyIO.readNifty(os.path.join(ServerDir,NIIFile))
-#
-# VolumeCutBrowser(nii_vol)
-
-
 class VolumeCutBrowser:
     """
     # EXAMPLE:
@@ -108,8 +100,8 @@ class VolumeCutBrowser:
     def __init__(
         self,
         img_stack: np.ndarray,
+        cut_dir: VolumeCutDirection,
         contour_stack: np.ndarray | None = None,
-        cut_dir: VolumeCutDirection = VolumeCutDirection.ShortAxis,
     ):
         self.img_stack = img_stack
         self.cut = cut_dir

@@ -10,73 +10,37 @@ __email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
 """
 
-### IMPORT PY LIBRARIES
-
-
-import numpy as np
+from pathlib import Path
 import matplotlib.pyplot as plt
 import os
 from VolumeCutBrowser import VolumeCutBrowser, VolumeCutDirection
 from NiftyIO import read_nifty
 
-SessionPyFolder = os.path.dirname(__file__)
-SessionDataFolder = os.path.join(SessionPyFolder, "data")
-
-
-### IMPORT SESSION FUNCTIONS
-#### Session Code Folder (change to your path)
-os.chdir(SessionPyFolder)  # Change Dir 2 load session functions
-# .nii Read Data
-
-# Volume Visualization
-
-
-######## LOAD DATA
-
 #### Data Folders (change to your path)
-os.chdir(SessionDataFolder)
+DATA_FOLDER = Path(__file__).parent / "data"
+CASE_FOLDER = "CT"
+INTENSITY_VOLUME_NAME = "LIDC-IDRI-0001.nii.gz"
+NODULE_MASK = "LIDC-IDRI-0001_R_1.nii.gz"
+INTENSITY_VOLUME_PATH = DATA_FOLDER / CASE_FOLDER / "image" / INTENSITY_VOLUME_NAME
+NODULE_MASK_PATH = DATA_FOLDER / CASE_FOLDER / "nodule_mask" / NODULE_MASK
 
 
-CaseFolder = "CT"
-Nii_File = "LIDC-IDRI-0001.nii.gz"
+# Load Intensity Volume and Nodule Mask
+nii_vol, nii_metadata = read_nifty(INTENSITY_VOLUME_PATH)
+nii_mask, nii_mask_metadata = read_nifty(NODULE_MASK_PATH)
+assert nii_vol.shape == nii_mask.shape, "Volume and mask must have the same shape"
 
-
-#### Load Intensity Volume
-Nii_File = os.path.join(SessionDataFolder, CaseFolder, "image", Nii_File)
-nii_vol, nii_metadata = read_nifty(Nii_File)
-#### Load Nodule Mask
-Nii_File = os.path.join(SessionDataFolder, CaseFolder, "nodule_mask", Nii_File)
-nii_mask, nii_metadata = read_nifty(Nii_File)
-
-######## VOLUME METADATA
+# VOLUME METADATA
 print("Voxel Resolution (mm): ", nii_metadata.spacing)
 print("Volume origin (mm): ", nii_metadata.origin)
 print("Axes direction: ", nii_metadata.direction)
-######## VISUALIZE VOLUMES
 
-### Interactive Volume Visualization
+# Interactive Volume Visualization
 # Short Axis View
-VolumeCutBrowser(nii_vol)
-VolumeCutBrowser(nii_vol, contour_stack=nii_mask)
+VolumeCutBrowser(nii_vol, VolumeCutDirection.ShortAxis)
 # Coronal View
 VolumeCutBrowser(nii_vol, cut_dir=VolumeCutDirection.Coronal)
 # Sagittal View
 VolumeCutBrowser(nii_vol, cut_dir=VolumeCutDirection.Sagittal)
-
-
-### Short Axis (SA) Image
-# Define SA cut
-k = int(nii_vol.shape[2] / 2)  # Cut at the middle of the volume
-SA = nii_vol[:, :, k]
-# Image
-fig1 = plt.figure()
-plt.imshow(SA, cmap="gray")
-plt.close(fig1)  # close figure fig1
-
-# Cut Level Sets
-levels = [400]
-fig1 = plt.figure()
-ax1 = fig1.add_subplot(111, aspect="equal")
-ax1.imshow(SA, cmap="gray")
-plt.contour(SA, levels, colors="r", linewidths=2)
-plt.close("all")  # close all plt figures
+# #BUG next line:  with contour_stack=nii_mask, no mask is shown
+VolumeCutBrowser(nii_vol, VolumeCutDirection.ShortAxis, contour_stack=nii_vol)
