@@ -31,32 +31,28 @@ class VolumeCutDirection(Enum):
     Coronal = "Cor"  # cut in the coronal axis
 
     @staticmethod
-    def get_median_index(volume: np.ndarray, direction: "VolumeCutDirection") -> int:
+    def to_idx(cut_dir: "VolumeCutDirection") -> int:
         """
-        Returns the median index of the volume in the given direction.
+        Returns the index of the volume in the given direction.
         """
-        if direction == VolumeCutDirection.ShortAxis:
-            return round(volume.shape[2] / 2)
-        elif direction == VolumeCutDirection.Sagittal:
-            return round(volume.shape[0] / 2)
-        elif direction == VolumeCutDirection.Coronal:
-            return round(volume.shape[1] / 2)
+        if cut_dir == VolumeCutDirection.Sagittal:
+            return 0
+        elif cut_dir == VolumeCutDirection.Coronal:
+            return 1
+        elif cut_dir == VolumeCutDirection.ShortAxis:
+            return 2
         else:
-            raise VolumeCutDirectionError(direction)
+            raise VolumeCutDirectionError(cut_dir)
+
+    @staticmethod
+    def get_median_index(volume: np.ndarray, direction: "VolumeCutDirection") -> int:
+        """Returns the median index of the volume in the given direction."""
+        return volume.shape[VolumeCutDirection.to_idx(direction)] // 2
 
     @staticmethod
     def get_max_index(volume: np.ndarray, direction: "VolumeCutDirection") -> int:
-        """
-        Returns the maximum index of the volume in the given direction.
-        """
-        if direction == VolumeCutDirection.ShortAxis:
-            return volume.shape[2]
-        elif direction == VolumeCutDirection.Sagittal:
-            return volume.shape[0]
-        elif direction == VolumeCutDirection.Coronal:
-            return volume.shape[1]
-        else:
-            raise VolumeCutDirectionError(direction)
+        """Returns the maximum index of the volume in the given direction."""
+        return volume.shape[VolumeCutDirection.to_idx(direction)] - 1
 
     @staticmethod
     def get_cut_img(
@@ -65,14 +61,9 @@ class VolumeCutDirection(Enum):
         """
         Returns the cut of the volume in the given direction at the given index.
         """
-        if direction == VolumeCutDirection.ShortAxis:
-            return volume[:, :, index]
-        elif direction == VolumeCutDirection.Sagittal:
-            return np.squeeze(volume[index, :, :])
-        elif direction == VolumeCutDirection.Coronal:
-            return np.squeeze(volume[:, index, :])
-        else:
-            raise VolumeCutDirectionError(direction)
+        return volume.take(index, axis=VolumeCutDirection.to_idx(direction))
+        # volume.take(index, axis=i) returns the index-th slice of the volume in the first dimension
+        # e.g. volume.take(0, axis=0) returns np.squeeze(volume[:, :, index])
 
 
 class VolumeCutDirectionError(ValueError):
@@ -83,13 +74,12 @@ class VolumeCutDirectionError(ValueError):
         return f"Coordinate order {self.cut} not supported. Supported orders are: short axis, sagittal, coronal"
 
 
-################################################################################
 class VolumeCutBrowser:
     """
     # EXAMPLE:
     # DataDir='C://Data_Session1//Case0016';
     # NIIFile='LIDC-IDRI-0016_GT1.nii.gz'
-    # niivol,_=NiftyIO.readNifty(os.path.join(ServerDir,NIIFile))
+    # nii_vol,_=NiftyIO.readNifty(os.path.join(ServerDir,NIIFile))
     # VolumeCutBrowser(nii_vol)
     """
 
@@ -131,9 +121,7 @@ class VolumeCutBrowser:
 
     def draw_scene(self):
         self.ax.cla()
-
         image = VolumeCutDirection.get_cut_img(self.img_stack, self.cut, self.idx)
-
         self.ax.imshow(image, cmap="gray")
         self.ax.set_title(f"cut: {self.idx}. Press 'x' to decrease; 'z' to increase")
 
@@ -156,7 +144,6 @@ def show_mosaic(images: np.ndarray, NRow=4, NCol=4) -> None:
         y = fig.add_subplot(NRow, NCol, cnt + 1)
         img = images[:, :, cnt]
         y.imshow(img, cmap="gray")
-
         x = y.axes  # Axis object
         assert x
 
