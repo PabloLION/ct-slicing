@@ -10,6 +10,7 @@ __email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
 """
 
+from enum import Enum
 from typing import NamedTuple
 import numpy as np
 import SimpleITK as sitk  # to read .nii Files
@@ -26,8 +27,25 @@ class NiiMetadata(NamedTuple):
     direction: sitk.VectorDouble
 
 
+class CoordinateOrder(Enum):
+    """
+    Order of dimensions in array.
+    """
+
+    xyz = "xyz"  # sets x,y,z as first, second and third dimension of volume
+    zyx = "zyx"  # swaps x and z to set z as first dimension
+
+
+class CoordinateOrderError(ValueError):
+    def __init__(self, received_order: CoordinateOrder):
+        self.received_order = received_order
+
+    def __str__(self):
+        return f"Coordinate order {self.received_order} not supported. Supported orders are: xyz, zyx"
+
+
 def read_nifty(
-    file_path: str, coordinate_order: str = "xyz"
+    file_path: str, coordinate_order: CoordinateOrder = CoordinateOrder.xyz
 ) -> tuple[np.ndarray, NiiMetadata]:
     """
     Reads a NIfTI file and returns the volume and metadata.
@@ -49,30 +67,32 @@ def read_nifty(
     vol,_=read_nifty(file_path)
     """
     image = sitk.ReadImage(file_path)
-    print("Reading Nifty format from {}".format(file_path))
-    print("Image size: {}".format(image.GetSize()))
-
     metadata = NiiMetadata(image.GetOrigin(), image.GetSpacing(), image.GetDirection())
 
-    # Converting from SimpleITK image to Numpy array. But also is changed the coordinate systems
-    # from the image which use (x,y,z) to the array using (z,y,x).
+    print(f"Successfully read Nifty file with {metadata=} from {file_path=}")
+
+    # Convert SimpleITK image to Numpy array. By default, the dimension is in (z,y,x) order.
     volume_zyx = sitk.GetArrayFromImage(image)
-    if coordinate_order == "xyz":
-        volume_xyz = np.transpose(
-            volume_zyx, (2, 1, 0)
-        )  # to back to the initial xyz coordinate system.
+
+    if coordinate_order == CoordinateOrder.xyz:
+        volume = np.transpose(volume_zyx, (2, 1, 0))  # to xyz coordinate system.
+    elif coordinate_order == CoordinateOrder.zyx:
+        volume = volume_zyx
     else:
-        volume_xyz = volume_zyx
+        raise CoordinateOrderError(coordinate_order)
 
-    print("Volume shape: {}".format(volume_xyz.shape))
-    print("Minimum value: {}".format(np.min(volume_xyz)))
-    print("Maximum value: {}".format(np.max(volume_xyz)))
+    print("Volume shape: {}".format(volume.shape))
+    print("Minimum value: {}".format(np.min(volume)))
+    print("Maximum value: {}".format(np.max(volume)))
 
-    return volume_xyz, metadata  # return two items.
+    return volume, metadata  # return two items.
 
 
 def save_nifty(
-    volume: np.ndarray, metadata: NiiMetadata, file_path: str, coordinate_order="xyz"
+    volume: np.ndarray,
+    metadata: NiiMetadata | None,
+    file_path: str,
+    coordinate_order: CoordinateOrder = CoordinateOrder.xyz,
 ) -> None:
     """
     Save a NIfTI file from a numpy array.
@@ -85,13 +105,15 @@ def save_nifty(
 
     Returns:
     - None
-
-    #TODO:
-    case with metadata==None
     """
     # Converting from Numpy array to SimpleITK image.
-    if coordinate_order == "xyz":
+    if coordinate_order == CoordinateOrder.xyz:
         volume = np.transpose(volume, (2, 1, 0))  # from (x,y,z) to (z,y,x)
+    elif coordinate_order == CoordinateOrder.zyx:
+        pass  # volume is already in (z,y,x) order
+    else:
+        raise CoordinateOrderError(coordinate_order)
+
     image = sitk.GetImageFromArray(volume)
 
     if metadata is not None:
