@@ -10,64 +10,111 @@ __email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
 """
 
-from typing import Callable, cast
-from matplotlib.backend_bases import Event, KeyEvent
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.axes as axes
-
 import sys
+from enum import Enum
+from typing import Callable, cast
+
+import matplotlib.axes as axes
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.backend_bases import Event, KeyEvent
+
+
+class VolumeCutDirection(Enum):
+    """
+    Order of dimensions in array.
+    """
+
+    ShortAxis = "SA"  # cut in the short axis
+    Sagittal = "Sag"  # cut in the sagittal axis
+    Coronal = "Cor"  # cut in the coronal axis
+
+    @staticmethod
+    def get_median_index(volume: np.ndarray, direction: "VolumeCutDirection") -> int:
+        """
+        Returns the median index of the volume in the given direction.
+        """
+        if direction == VolumeCutDirection.ShortAxis:
+            return round(volume.shape[2] / 2)
+        elif direction == VolumeCutDirection.Sagittal:
+            return round(volume.shape[0] / 2)
+        elif direction == VolumeCutDirection.Coronal:
+            return round(volume.shape[1] / 2)
+        else:
+            raise VolumeCutDirectionError(direction)
+
+    @staticmethod
+    def get_max_index(volume: np.ndarray, direction: "VolumeCutDirection") -> int:
+        """
+        Returns the maximum index of the volume in the given direction.
+        """
+        if direction == VolumeCutDirection.ShortAxis:
+            return volume.shape[2]
+        elif direction == VolumeCutDirection.Sagittal:
+            return volume.shape[0]
+        elif direction == VolumeCutDirection.Coronal:
+            return volume.shape[1]
+        else:
+            raise VolumeCutDirectionError(direction)
+
+    @staticmethod
+    def get_cut_img(
+        volume: np.ndarray, direction: "VolumeCutDirection", index: int
+    ) -> np.ndarray:
+        """
+        Returns the cut of the volume in the given direction at the given index.
+        """
+        if direction == VolumeCutDirection.ShortAxis:
+            return volume[:, :, index]
+        elif direction == VolumeCutDirection.Sagittal:
+            return np.squeeze(volume[index, :, :])
+        elif direction == VolumeCutDirection.Coronal:
+            return np.squeeze(volume[:, index, :])
+        else:
+            raise VolumeCutDirectionError(direction)
+
+
+class VolumeCutDirectionError(ValueError):
+    def __init__(self, cut: VolumeCutDirection):
+        self.cut = cut
+
+    def __str__(self):
+        return f"Coordinate order {self.cut} not supported. Supported orders are: short axis, sagittal, coronal"
 
 
 ################################################################################
 #
 # EXAMPLE:
-# # Load NII Volume
-# from BasicVisualization.DICOMViewer import VolumeSlicer
-# import BasicIO.NiftyIO
-# import os
 # ServerDir='Y:\Shared\Guille'; NIIFile='LIDC-IDRI-0305_GT1_1.nii.gz'
-# niivol,_=NiftyIO.readNifty(os.path.join(ServerDir,NIIFile))
+# nii_vol,_=NiftyIO.readNifty(os.path.join(ServerDir,NIIFile))
 #
-# VolumeCutBrowser(niivol)
+# VolumeCutBrowser(nii_vol)
 
 
 class VolumeCutBrowser:
     """
-
     # EXAMPLE:
-    # # Load NII Volume
-    # from BasicVisualization.DICOMViewer import VolumeSlicer
-    # import BasicIO.NiftyIO
-    # import os
     # DataDir='C://Data_Session1//Case0016';
     # NIIFile='LIDC-IDRI-0016_GT1.nii.gz'
     # niivol,_=NiftyIO.readNifty(os.path.join(ServerDir,NIIFile))
-    #
-    # VolumeCutBrowser(niivol)
+    # VolumeCutBrowser(nii_vol)
     """
 
     idx: int
     ax: axes.Axes
     img_stack: np.ndarray  # Image Stack
-    segmentation_stack: np.ndarray | None  # Segmentation Stack
+    contour_stack: np.ndarray | None  # Segmentation Stack
 
     def __init__(
-        self, img_stack: np.ndarray, IMSSeg: np.ndarray | None = None, cut="SA"
+        self,
+        img_stack: np.ndarray,
+        contour_stack: np.ndarray | None = None,
+        cut_dir: VolumeCutDirection = VolumeCutDirection.ShortAxis,
     ):
         self.img_stack = img_stack
-        self.idx = 0
-        self.cut = cut
-        self.segmentation_stack = IMSSeg
-
-        if self.cut == "SA":
-            self.idx = round(self.img_stack.shape[2] / 2)
-        elif self.cut == "Sag":
-            self.idx = round(self.img_stack.shape[0] / 2)
-        elif self.cut == "Cor":
-            self.idx = round(self.img_stack.shape[1] / 2)
-        else:
-            raise ValueError("cut must be SA, Sag or Cor")
+        self.cut = cut_dir
+        self.contour_stack = contour_stack
+        self.idx = VolumeCutDirection.get_median_index(img_stack, cut_dir)
 
         self.fig, self.ax = plt.subplots()
         self.fig.canvas.mpl_connect(
@@ -83,15 +130,7 @@ class VolumeCutBrowser:
             self.DrawScene()
         elif event.key == "z":
             self.idx += 1
-            if self.cut == "SA":
-                max_idx = self.img_stack.shape[2] - 1
-            elif self.cut == "Sag":
-                max_idx = self.img_stack.shape[0] - 1
-            elif self.cut == "Cor":
-                max_idx = self.img_stack.shape[1] - 1
-            else:
-                raise ValueError("cut must be SA, Sag or Cor")
-
+            max_idx = VolumeCutDirection.get_max_index(self.img_stack, self.cut)
             self.idx = min(max_idx, self.idx)
             self.DrawScene()
         else:  # no reaction on other keys
@@ -100,27 +139,15 @@ class VolumeCutBrowser:
     def DrawScene(self):
         self.ax.cla()
 
-        if self.cut == "SA":
-            image = self.img_stack[:, :, self.idx]
-        elif self.cut == "Sag":
-            image = np.squeeze(self.img_stack[self.idx, :, :])
-        elif self.cut == "Cor":
-            image = np.squeeze(self.img_stack[:, self.idx, :])
-        else:
-            raise ValueError("cut must be SA, Sag or Cor")
+        image = VolumeCutDirection.get_cut_img(self.img_stack, self.cut, self.idx)
 
         self.ax.imshow(image, cmap="gray")
-        self.ax.set_title(
-            "cut: " + str(self.idx) + ' Press "x" to decrease; "z" to increase'
-        )
+        self.ax.set_title(f"cut: {self.idx}. Press 'x' to decrease; 'z' to increase")
 
-        if self.segmentation_stack is not None:  # Draw segmentation contour
-            if self.cut == "SA":
-                image = self.segmentation_stack[:, :, self.idx]
-            elif self.cut == "Sag":
-                image = np.squeeze(self.segmentation_stack[self.idx, :, :])
-            elif self.cut == "Cor":
-                image = np.squeeze(self.segmentation_stack[:, self.idx, :])
+        if self.contour_stack is not None:  # Draw segmentation contour
+            image = VolumeCutDirection.get_cut_img(
+                self.contour_stack, self.cut, self.idx
+            )
             self.ax.contour(image, [0.5], colors="r")
 
         self.fig.canvas.draw()

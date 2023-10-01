@@ -16,6 +16,8 @@ __year__ = "2023"
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from VolumeCutBrowser import VolumeCutBrowser, VolumeCutDirection
+from NiftyIO import read_nifty
 
 SessionPyFolder = os.path.dirname(__file__)
 SessionDataFolder = os.path.join(SessionPyFolder, "data")
@@ -25,10 +27,8 @@ SessionDataFolder = os.path.join(SessionPyFolder, "data")
 #### Session Code Folder (change to your path)
 os.chdir(SessionPyFolder)  # Change Dir 2 load session functions
 # .nii Read Data
-from NiftyIO import read_nifty
 
 # Volume Visualization
-from VolumeCutBrowser import VolumeCutBrowser
 
 
 ######## LOAD DATA
@@ -57,11 +57,11 @@ print("Axes direction: ", nii_metadata.direction)
 ### Interactive Volume Visualization
 # Short Axis View
 VolumeCutBrowser(nii_vol)
-VolumeCutBrowser(nii_vol, IMSSeg=nii_mask)
+VolumeCutBrowser(nii_vol, contour_stack=nii_mask)
 # Coronal View
-VolumeCutBrowser(nii_vol, cut="Cor")
-# Sagital View
-VolumeCutBrowser(nii_vol, cut="Sag")
+VolumeCutBrowser(nii_vol, cut_dir=VolumeCutDirection.Coronal)
+# Sagittal View
+VolumeCutBrowser(nii_vol, cut_dir=VolumeCutDirection.Sagittal)
 
 
 ### Short Axis (SA) Image
