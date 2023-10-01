@@ -10,9 +10,11 @@ __email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
 """
 
-import sys
 from enum import Enum
 from typing import Callable, cast
+from sys import setrecursionlimit, stdout
+
+setrecursionlimit(100000)  # canvas.draw() in draw_scene() is recursive
 
 import matplotlib.axes as axes
 import matplotlib.pyplot as plt
@@ -106,7 +108,7 @@ class VolumeCutBrowser:
         self.draw_scene()
 
     def press(self, event: KeyEvent):
-        sys.stdout.flush()
+        stdout.flush()
         if event.key == "x":
             self.idx -= 1
             self.idx = max(0, self.idx)
