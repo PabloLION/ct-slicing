@@ -11,7 +11,7 @@ __year__ = "2023"
 """
 
 from pathlib import Path
-from VolumeCutBrowser import VolumeCutBrowser, VolumeCutDirection
+from VolumeCutBrowser import VolumeCutBrowser, CutDirection
 from NiftyIO import read_nifty
 
 #### Data Folders (change to your path)
@@ -35,10 +35,10 @@ print("Axes direction: ", nii_metadata.direction)
 
 # Interactive Volume Visualization
 # Short Axis View
-VolumeCutBrowser(nii_vol, VolumeCutDirection.ShortAxis)
+VolumeCutBrowser(nii_vol, CutDirection.ShortAxis)
 # Coronal View
-VolumeCutBrowser(nii_vol, cut_dir=VolumeCutDirection.Coronal)
+VolumeCutBrowser(nii_vol, cut_dir=CutDirection.Coronal)
 # Sagittal View
-VolumeCutBrowser(nii_vol, cut_dir=VolumeCutDirection.Sagittal)
+VolumeCutBrowser(nii_vol, cut_dir=CutDirection.Sagittal)
 # The lesion mask can be added as a contour
-VolumeCutBrowser(nii_vol, VolumeCutDirection.ShortAxis, contour_stack=nii_mask)
+VolumeCutBrowser(nii_vol, CutDirection.ShortAxis, contour_stack=nii_mask)

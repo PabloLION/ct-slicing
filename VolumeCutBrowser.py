@@ -20,7 +20,7 @@ import numpy as np
 from matplotlib.backend_bases import Event, KeyEvent
 
 
-class VolumeCutDirection(Enum):
+class CutDirection(Enum):
     """
     View direction of the volume. Should be one of: short axis, sagittal, coronal.
     See more at https://en.wikipedia.org/wiki/Sagittal_plane
@@ -31,43 +31,43 @@ class VolumeCutDirection(Enum):
     Coronal = "Cor"  # cut in the coronal axis
 
     @staticmethod
-    def to_idx(cut_dir: "VolumeCutDirection") -> int:
+    def to_idx(cut_dir: "CutDirection") -> int:
         """
         Returns the index of the volume in the given direction.
         """
-        if cut_dir == VolumeCutDirection.Sagittal:
+        if cut_dir == CutDirection.Sagittal:
             return 0
-        elif cut_dir == VolumeCutDirection.Coronal:
+        elif cut_dir == CutDirection.Coronal:
             return 1
-        elif cut_dir == VolumeCutDirection.ShortAxis:
+        elif cut_dir == CutDirection.ShortAxis:
             return 2
         else:
             raise VolumeCutDirectionError(cut_dir)
 
     @staticmethod
-    def get_median_index(volume: np.ndarray, direction: "VolumeCutDirection") -> int:
+    def get_median_index(volume: np.ndarray, direction: "CutDirection") -> int:
         """Returns the median index of the volume in the given direction."""
-        return volume.shape[VolumeCutDirection.to_idx(direction)] // 2
+        return volume.shape[CutDirection.to_idx(direction)] // 2
 
     @staticmethod
-    def get_max_index(volume: np.ndarray, direction: "VolumeCutDirection") -> int:
+    def get_max_index(volume: np.ndarray, direction: "CutDirection") -> int:
         """Returns the maximum index of the volume in the given direction."""
-        return volume.shape[VolumeCutDirection.to_idx(direction)] - 1
+        return volume.shape[CutDirection.to_idx(direction)] - 1
 
     @staticmethod
     def get_cut_img(
-        volume: np.ndarray, direction: "VolumeCutDirection", index: int
+        volume: np.ndarray, direction: "CutDirection", index: int
     ) -> np.ndarray:
         """
         Returns the cut of the volume in the given direction at the given index.
         """
-        return volume.take(index, axis=VolumeCutDirection.to_idx(direction))
+        return volume.take(index, axis=CutDirection.to_idx(direction))
         # volume.take(index, axis=i) returns the index-th slice of the volume in the first dimension
         # e.g. volume.take(0, axis=0) returns np.squeeze(volume[:, :, index])
 
 
 class VolumeCutDirectionError(ValueError):
-    def __init__(self, cut: VolumeCutDirection):
+    def __init__(self, cut: CutDirection):
         self.cut = cut
 
     def __str__(self):
@@ -91,13 +91,13 @@ class VolumeCutBrowser:
     def __init__(
         self,
         img_stack: np.ndarray,
-        cut_dir: VolumeCutDirection,
+        cut_dir: CutDirection,
         contour_stack: np.ndarray | None = None,
     ):
         self.img_stack = img_stack
         self.cut = cut_dir
         self.contour_stack = contour_stack
-        self.idx = VolumeCutDirection.get_median_index(img_stack, cut_dir)
+        self.idx = CutDirection.get_median_index(img_stack, cut_dir)
 
         self.fig, self.ax = plt.subplots()
         self.fig.canvas.mpl_connect(
@@ -113,7 +113,7 @@ class VolumeCutBrowser:
             self.draw_scene()
         elif event.key == "z":
             self.idx += 1
-            max_idx = VolumeCutDirection.get_max_index(self.img_stack, self.cut)
+            max_idx = CutDirection.get_max_index(self.img_stack, self.cut)
             self.idx = min(max_idx, self.idx)
             self.draw_scene()
         else:  # no reaction on other keys
@@ -121,14 +121,12 @@ class VolumeCutBrowser:
 
     def draw_scene(self):
         self.ax.cla()
-        image = VolumeCutDirection.get_cut_img(self.img_stack, self.cut, self.idx)
+        image = CutDirection.get_cut_img(self.img_stack, self.cut, self.idx)
         self.ax.imshow(image, cmap="gray")
         self.ax.set_title(f"cut: {self.idx}. Press 'x' to decrease; 'z' to increase")
 
         if self.contour_stack is not None:  # Draw segmentation contour
-            image = VolumeCutDirection.get_cut_img(
-                self.contour_stack, self.cut, self.idx
-            )
+            image = CutDirection.get_cut_img(self.contour_stack, self.cut, self.idx)
             self.ax.contour(image, [0.5], colors="r")
 
         self.fig.canvas.draw()
