@@ -1,5 +1,5 @@
 """
-This is the source code for volume visualization
+Source code for volume visualization
 
 Computer Vision Center
 Universitat Autonoma de Barcelona

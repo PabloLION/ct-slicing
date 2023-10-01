@@ -1,5 +1,5 @@
 """
-This is the source code for volume visualization
+Source code for volume visualization
 
 Computer Vision Center
 Universitat Autonoma de Barcelona
@@ -11,8 +11,6 @@ __year__ = "2023"
 """
 
 from pathlib import Path
-import matplotlib.pyplot as plt
-import os
 from VolumeCutBrowser import VolumeCutBrowser, VolumeCutDirection
 from NiftyIO import read_nifty
 

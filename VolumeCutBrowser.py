@@ -1,5 +1,5 @@
 """
-This is the source code for volume visualization
+Source code for volume visualization
 
 Computer Vision Center
 Universitat Autonoma de Barcelona
@@ -22,7 +22,8 @@ from matplotlib.backend_bases import Event, KeyEvent
 
 class VolumeCutDirection(Enum):
     """
-    Order of dimensions in array.
+    View direction of the volume. Should be one of: short axis, sagittal, coronal.
+    See more at https://en.wikipedia.org/wiki/Sagittal_plane
     """
 
     ShortAxis = "SA"  # cut in the short axis
