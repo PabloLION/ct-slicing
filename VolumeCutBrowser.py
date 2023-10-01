@@ -113,23 +113,23 @@ class VolumeCutBrowser:
         self.fig.canvas.mpl_connect(
             "key_press_event", cast(Callable[[Event], None], self.press)
         )
-        self.DrawScene()
+        self.draw_scene()
 
     def press(self, event: KeyEvent):
         sys.stdout.flush()
         if event.key == "x":
             self.idx -= 1
             self.idx = max(0, self.idx)
-            self.DrawScene()
+            self.draw_scene()
         elif event.key == "z":
             self.idx += 1
             max_idx = VolumeCutDirection.get_max_index(self.img_stack, self.cut)
             self.idx = min(max_idx, self.idx)
-            self.DrawScene()
+            self.draw_scene()
         else:  # no reaction on other keys
             pass
 
-    def DrawScene(self):
+    def draw_scene(self):
         self.ax.cla()
 
         image = VolumeCutDirection.get_cut_img(self.img_stack, self.cut, self.idx)
@@ -147,8 +147,7 @@ class VolumeCutBrowser:
         plt.show()
 
 
-#########################################################
-def ShowMosaic(images: np.ndarray, NRow=4, NCol=4) -> None:
+def show_mosaic(images: np.ndarray, NRow=4, NCol=4) -> None:
     # #TODO: check n row and n col default values
     fig = plt.figure(figsize=(14, 14))
     NIm = images.shape[2]

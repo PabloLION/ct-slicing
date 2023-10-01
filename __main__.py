@@ -40,5 +40,5 @@ VolumeCutBrowser(nii_vol, VolumeCutDirection.ShortAxis)
 VolumeCutBrowser(nii_vol, cut_dir=VolumeCutDirection.Coronal)
 # Sagittal View
 VolumeCutBrowser(nii_vol, cut_dir=VolumeCutDirection.Sagittal)
-# #BUG next line:  with contour_stack=nii_mask, no mask is shown
-VolumeCutBrowser(nii_vol, VolumeCutDirection.ShortAxis, contour_stack=nii_vol)
+# The lesion mask can be added as a contour
+VolumeCutBrowser(nii_vol, VolumeCutDirection.ShortAxis, contour_stack=nii_mask)
