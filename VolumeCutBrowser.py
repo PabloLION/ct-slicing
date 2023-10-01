@@ -79,20 +79,21 @@ class VolumeCutBrowser:
             self.idx -= 1
             self.idx = max(0, self.idx)
             self.DrawScene()
-        if event.key == "z":
+        elif event.key == "z":
             self.idx += 1
+            if self.Cut == "SA":
+                Mx = self.IMS.shape[2] - 1
+            elif self.Cut == "Sag":
+                Mx = self.IMS.shape[0] - 1
+            elif self.Cut == "Cor":
+                Mx = self.IMS.shape[1] - 1
+            else:
+                raise ValueError("Cut must be SA, Sag or Cor")
 
-        if self.Cut == "SA":
-            Mx = self.IMS.shape[2] - 1
-        elif self.Cut == "Sag":
-            Mx = self.IMS.shape[0] - 1
-        elif self.Cut == "Cor":
-            Mx = self.IMS.shape[1] - 1
-        else:
-            raise ValueError("Cut must be SA, Sag or Cor")
-
-        self.idx = min(Mx, self.idx)
-        self.DrawScene()
+            self.idx = min(Mx, self.idx)
+            self.DrawScene()
+        else:  # no reaction on other keys
+            pass
 
     def DrawScene(self):
         self.ax.cla()
