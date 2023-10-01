@@ -10,8 +10,12 @@ __email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
 """
 
+from typing import Callable, cast
+from matplotlib.backend_bases import Event, KeyEvent
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.axes as axes
+
 import sys
 
 
@@ -31,7 +35,7 @@ import sys
 class VolumeCutBrowser:
     """
 
-         # EXAMPLE:
+    # EXAMPLE:
     # # Load NII Volume
     # from BasicVisualization.DICOMViewer import VolumeSlicer
     # import BasicIO.NiftyIO
@@ -43,28 +47,33 @@ class VolumeCutBrowser:
     # VolumeCutBrowser(niivol)
     """
 
-    def __init__(self, IMS, idx=None, IMSSeg=None, Cut="SA"):
-        self.IMS = IMS
-        self.idx = idx
-        self.IMSSeg = IMSSeg
-        self.drawContour = True
-        self.Cut = Cut
-        if IMSSeg is None:
-            self.drawContour = False
+    idx: int
+    ax: axes.Axes
+    IMS: np.ndarray  # IMS: Image Stack
+    IMSSeg: np.ndarray | None  # IMS segmentation
 
-        if idx is None:
-            if self.Cut == "SA":
-                self.idx = np.int_(np.round(self.IMS.shape[2] / 2))
-            elif self.Cut == "Sag":
-                self.idx = np.int_(np.round(self.IMS.shape[0] / 2))
-            elif self.Cut == "Cor":
-                self.idx = np.int_(np.round(self.IMS.shape[1] / 2))
+    def __init__(self, IMS: np.ndarray, IMSSeg: np.ndarray | None = None, Cut="SA"):
+        self.IMS = IMS
+        self.idx = 0
+        self.Cut = Cut
+        self.IMSSeg = IMSSeg
+
+        if self.Cut == "SA":
+            self.idx = round(self.IMS.shape[2] / 2)
+        elif self.Cut == "Sag":
+            self.idx = round(self.IMS.shape[0] / 2)
+        elif self.Cut == "Cor":
+            self.idx = round(self.IMS.shape[1] / 2)
+        else:
+            raise ValueError("Cut must be SA, Sag or Cor")
 
         self.fig, self.ax = plt.subplots()
-        self.fig.canvas.mpl_connect("key_press_event", self.press)
+        self.fig.canvas.mpl_connect(
+            "key_press_event", cast(Callable[[Event], None], self.press)
+        )
         self.DrawScene()
 
-    def press(self, event):
+    def press(self, event: KeyEvent):
         sys.stdout.flush()
         if event.key == "x":
             self.idx -= 1
@@ -73,15 +82,17 @@ class VolumeCutBrowser:
         if event.key == "z":
             self.idx += 1
 
-            if self.Cut == "SA":
-                Mx = self.IMS.shape[2] - 1
-            elif self.Cut == "Sag":
-                Mx = self.IMS.shape[0] - 1
-            elif self.Cut == "Cor":
-                Mx = self.IMS.shape[1] - 1
+        if self.Cut == "SA":
+            Mx = self.IMS.shape[2] - 1
+        elif self.Cut == "Sag":
+            Mx = self.IMS.shape[0] - 1
+        elif self.Cut == "Cor":
+            Mx = self.IMS.shape[1] - 1
+        else:
+            raise ValueError("Cut must be SA, Sag or Cor")
 
-            self.idx = min(Mx, self.idx)
-            self.DrawScene()
+        self.idx = min(Mx, self.idx)
+        self.DrawScene()
 
     def DrawScene(self):
         self.ax.cla()
@@ -92,12 +103,15 @@ class VolumeCutBrowser:
             Im = np.squeeze(self.IMS[self.idx, :, :])
         elif self.Cut == "Cor":
             Im = np.squeeze(self.IMS[:, self.idx, :])
+        else:
+            raise ValueError("Cut must be SA, Sag or Cor")
 
         self.ax.imshow(Im, cmap="gray")
         self.ax.set_title(
             "Cut: " + str(self.idx) + ' Press "x" to decrease; "z" to increase'
         )
-        if self.drawContour:
+
+        if self.IMSSeg is not None:  # Draw segmentation contour
             if self.Cut == "SA":
                 Im = self.IMSSeg[:, :, self.idx]
             elif self.Cut == "Sag":
@@ -111,7 +125,8 @@ class VolumeCutBrowser:
 
 
 #########################################################
-def ShowMosaic(images, NRow, NCol):
+def ShowMosaic(images: np.ndarray, NRow=4, NCol=4) -> None:
+    # #TODO: check n row and n col default values
     fig = plt.figure(figsize=(14, 14))
     NIm = images.shape[2]
 
@@ -120,5 +135,8 @@ def ShowMosaic(images, NRow, NCol):
         img = images[:, :, cnt]
         y.imshow(img, cmap="gray")
 
-        y.axes.get_xaxis().set_visible(False)
-        y.axes.get_yaxis().set_visible(False)
+        x = y.axes  # Axis object
+        assert x
+
+        x.get_xaxis().set_visible(False)
+        x.get_yaxis().set_visible(False)

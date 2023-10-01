@@ -13,13 +13,8 @@ __year__ = "2023"
 ### IMPORT PY LIBRARIES
 
 
-# Python Library 2 manage volumetric data
 import numpy as np
-
-# Pyhton standard Visualization Library
 import matplotlib.pyplot as plt
-
-# Pyhton standard IOs Library
 import os
 
 SessionPyFolder = os.path.dirname(__file__)
