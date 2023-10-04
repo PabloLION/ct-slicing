@@ -10,12 +10,11 @@ __email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
 """
 
-from pathlib import Path
 from VolumeCutBrowser import VolumeCutBrowser, CutDirection
 from NiftyIO import read_nifty
+from config import DATA_FOLDER
 
 #### Data Folders (change to your path)
-DATA_FOLDER = Path(__file__).parent.parent / "data"
 CASE_FOLDER = "CT"
 INTENSITY_VOLUME_NAME = "LIDC-IDRI-0001.nii.gz"
 NODULE_MASK = "LIDC-IDRI-0001_R_1.nii.gz"
