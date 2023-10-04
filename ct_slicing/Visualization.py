@@ -15,7 +15,7 @@ from VolumeCutBrowser import VolumeCutBrowser, CutDirection
 from NiftyIO import read_nifty
 
 #### Data Folders (change to your path)
-DATA_FOLDER = Path(__file__).parent / "data"
+DATA_FOLDER = Path(__file__).parent.parent / "data"
 CASE_FOLDER = "CT"
 INTENSITY_VOLUME_NAME = "LIDC-IDRI-0001.nii.gz"
 NODULE_MASK = "LIDC-IDRI-0001_R_1.nii.gz"
