@@ -10,7 +10,7 @@ Universitat Autonoma de Barcelona
 
 from vis_lib.VolumeCutBrowser import VolumeCutBrowser, CutDirection  # local
 from vis_lib.NiftyIO import read_nifty  # local
-from config import DATA_FOLDER  # local
+from ct_slicing.config.data_path import DATA_FOLDER  # local
 
 #### Data Folders (change to your path)
 CASE_FOLDER = "CT"

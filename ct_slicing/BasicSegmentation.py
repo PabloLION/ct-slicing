@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from config import DATA_FOLDER
+from ct_slicing.config.data_path import DATA_FOLDER
 from vis_lib.NiftyIO import read_nifty
 from scipy.ndimage import filters
 from skimage import morphology as Morpho
