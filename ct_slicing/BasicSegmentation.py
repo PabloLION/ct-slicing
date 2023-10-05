@@ -1,13 +1,11 @@
-"""
-This is the source code for volume visualization
-
-Computer Vision Center
-Universitat Autonoma de Barcelona
-
 __author__ = "Debora Gil, Guillermo Torres, Carles Sanchez, Pau Cano"
 __license__ = "GPL"
 __email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
+__doc__ = """Source code for volume visualization
+
+Computer Vision Center
+Universitat Autonoma de Barcelona
 """
 
 import os
@@ -15,11 +13,12 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 from config import DATA_FOLDER
-from ct_slicing.vis_lib.NiftyIO import read_nifty
+from vis_lib.NiftyIO import read_nifty
 from scipy.ndimage import filters
 from skimage import morphology as Morpho
 from skimage.filters import threshold_otsu
-from VolumeCutBrowser import CutDirection, VolumeCutBrowser
+
+from vis_lib.VolumeCutBrowser import CutDirection, VolumeCutBrowser  # local
 
 
 CASE_FOLDER = "CT"
