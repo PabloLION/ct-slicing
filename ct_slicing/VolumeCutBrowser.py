@@ -76,6 +76,8 @@ class VolumeCutDirectionError(ValueError):
 
 class VolumeCutBrowser:
     """
+    Visualization of a volume in a given direction.
+
     # EXAMPLE:
     # DataDir='C://Data_Session1//Case0016';
     # NIIFile='LIDC-IDRI-0016_GT1.nii.gz'
