@@ -15,7 +15,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 from config import DATA_FOLDER
-from NiftyIO import read_nifty
+from ct_slicing.vis_lib.NiftyIO import read_nifty
 from scipy.ndimage import filters
 from skimage import morphology as Morpho
 from skimage.filters import threshold_otsu

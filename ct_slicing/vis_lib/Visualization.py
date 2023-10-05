@@ -11,7 +11,7 @@ __year__ = "2023"
 """
 
 from VolumeCutBrowser import VolumeCutBrowser, CutDirection
-from NiftyIO import read_nifty
+from ct_slicing.vis_lib.NiftyIO import read_nifty
 from config import DATA_FOLDER
 
 #### Data Folders (change to your path)
