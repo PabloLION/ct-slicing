@@ -6,7 +6,7 @@ Bellaterra, Barcelona, Spain
 
 ## How to use
 
-Use virtual environment if needed
+Set up and activate virtual environment (Optional)
 
 ```bash
 python -m venv .venv
