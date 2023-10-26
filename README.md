@@ -38,3 +38,12 @@ Run the script
 ```bash
 python __main__.py
 ```
+
+## Contribute
+
+Run the code in dev mode.
+
+```bash
+export DEV_MODE=1  # On Unix-like systems
+set DEV_MODE=1     # On Windows
+```
