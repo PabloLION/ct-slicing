@@ -6,6 +6,20 @@ Bellaterra, Barcelona, Spain
 
 ## How to use
 
+I changed the packager to [poetry](https://python-poetry.org/), [install](https://python-poetry.org/docs/#installation) it if needed (also possible to install with `brew`, `pip`). So now you can install the dependencies with:
+
+```bash
+poetry install
+```
+
+To activate the virtual environment created by poetry:
+
+```bash
+poetry shell
+```
+
+### Backup of old version with pip
+
 Set up and activate virtual environment (Optional)
 
 ```bash
