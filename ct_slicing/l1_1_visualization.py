@@ -8,6 +8,7 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
+from ct_slicing.log import logger
 from vis_lib.VolumeCutBrowser import VolumeCutBrowser, CutDirection  # local
 from vis_lib.NiftyIO import read_nifty  # local
 from ct_slicing.config.data_path import DATA_FOLDER  # local
@@ -19,6 +20,8 @@ NODULE_MASK = "LIDC-IDRI-0001_R_1.nii.gz"
 INTENSITY_VOLUME_PATH = DATA_FOLDER / CASE_FOLDER / "image" / INTENSITY_VOLUME_NAME
 NODULE_MASK_PATH = DATA_FOLDER / CASE_FOLDER / "nodule_mask" / NODULE_MASK
 
+logger.debug(f"DATA_FOLDER: {DATA_FOLDER}")
+logger.debug(f"INTENSITY_VOLUME_PATH: {INTENSITY_VOLUME_PATH}")
 
 # Load Intensity Volume and Nodule Mask
 nii_vol, nii_metadata = read_nifty(INTENSITY_VOLUME_PATH)
