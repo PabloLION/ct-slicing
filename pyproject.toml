@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "ct-slicing"
+version = "0.1.0"
+description = "visualization for ct slicing"
+authors = ["PabloLION <36828324+PabloLION@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+numpy = "1.26.0"
+simpleitk = "2.3.0"
+matplotlib = "3.8.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
