@@ -9,7 +9,8 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-# Unit: Features Exploration
+# Not mentioned in class.
+# Unit: Data Exploration / Features Exploration
 # Data: from unit "PyRadiomics" under Section "Features Extraction"
 # Resource:
 # * T-Test: https://thedatascientist.com/how-to-do-a-t-test-in-python/
@@ -27,24 +28,31 @@ SAVED_PATH = DATA_FOLDER / "py-radiomics" / "slice_glcm1d.npz"
 OUTPUT_DIR = OUTPUT_FOLDER / "t_test_box_plots"
 
 saved_data = np.load(SAVED_PATH, allow_pickle=True)
-logger.debug(saved_data.files)
+
+logger.debug(f"loaded data with files {saved_data.files=} from {SAVED_PATH=}")
 slice_meta = saved_data["slice_meta"]
 slice_features = saved_data["slice_features"]  # not "slice_flat"
+# in this npz
 logger.debug(f"loaded slice_meta with {slice_meta.shape=}, {slice_meta[0]=}")
 logger.debug(f"loaded features with {slice_features.shape=}, {slice_features[0]=}")
+features_rankin_idx = saved_data["features_rankin_idx"]
+logger.debug(f"loaded features_rankin_idx with {features_rankin_idx.shape=}")
+
+print(slice_meta[0])
+list_of_slice_meta = slice_meta.tolist()
 
 
 def t_test(slice_meta, slice_features):
     x = []
 
-    idx = np.nonzero(slice_meta[:, 3] == "Benign")[0]
-    x.append(slice_features[idx, :])
+    benign_indices = np.nonzero(slice_meta[:, 3] == "Benign")[0]
+    x.append(slice_features[benign_indices, :])
 
-    idx = np.nonzero(slice_meta[:, 3] == "Malignant")[0]
-    x.append(slice_features[idx, :])
+    mali_indices = np.nonzero(slice_meta[:, 3] == "Malignant")[0]
+    x.append(slice_features[mali_indices, :])
 
-    idx = np.nonzero(slice_meta[:, 3] == "NoNod")[0]
-    x.append(slice_features[idx, :])
+    no_nod_indices = np.nonzero(slice_meta[:, 3] == "NoNod")[0]
+    x.append(slice_features[no_nod_indices, :])
 
     p_val = []
 
@@ -111,6 +119,12 @@ def save_box_plot_features(feat, y_label, feat_idx):
 
 
 if __name__ == "__main__":
+    print(slice_features.shape)
+    print(len(features))
+    print(ranking_idx.shape)
+    assert all(
+        ranking_idx == features_rankin_idx
+    ), f"{ranking_idx=} != {features_rankin_idx=}"
     assert slice_features.shape[0] == slice_meta.shape[0]
     assert slice_features.shape[1] == len(features)
     for i in range(len(features)):

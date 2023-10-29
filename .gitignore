@@ -1,5 +1,6 @@
 .nogit
 **/.DS_Store
+output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

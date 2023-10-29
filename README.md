@@ -44,6 +44,8 @@ python __main__.py
 Run the code in dev mode.
 
 ```bash
-export DEV_MODE=1  # On Unix-like systems
-set DEV_MODE=1     # On Windows
+# On Unix-like systems
+export DEV_MODE=1
+# On Windows
+set DEV_MODE=1
 ```
