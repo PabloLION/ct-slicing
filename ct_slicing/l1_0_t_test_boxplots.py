@@ -11,7 +11,7 @@ Universitat Autonoma de Barcelona
 
 # Not mentioned in class.
 # Unit: Data Exploration / Features Exploration
-# Data: from unit "PyRadiomics" under Section "Features Extraction"
+# Data: from "Features Extraction / PyRadiomics"
 # Resource:
 # * T-Test: https://thedatascientist.com/how-to-do-a-t-test-in-python/
 
