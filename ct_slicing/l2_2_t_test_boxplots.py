@@ -15,22 +15,23 @@ Universitat Autonoma de Barcelona
 # * T-Test: https://thedatascientist.com/how-to-do-a-t-test-in-python/
 
 import os
+
 import numpy as np
-from scipy import stats
 from matplotlib import pyplot as plt
+from scipy import stats
 
 from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER
+from ct_slicing.log import logger
 
+SAVED_PATH = DATA_FOLDER / "py-radiomics" / "slice_glcm1d.npz"
+OUTPUT_DIR = OUTPUT_FOLDER / "t_test_box_plots"
 
-def BoxPlotFeatures(feat, y, feature_names, output_dir):
-    for c, fn in enumerate(feature_names):
-        idx_Malignant = np.nonzero(y == "Malignant")[0]
-        idx_Benign = np.nonzero(y == "Benign")[0]
-        group = [feat[idx_Malignant, c], feat[idx_Benign, c]]
-        plt.figure()
-        plt.boxplot(group, labels=["Malignant", "Benign"])
-        plt.title(str(c) + " " + fn)
-        plt.savefig(os.path.join(output_dir, fn + ".png"))
+saved_data = np.load(SAVED_PATH, allow_pickle=True)
+logger.debug(saved_data.files)
+slice_meta = saved_data["slice_meta"]
+slice_features = saved_data["slice_features"]  # not "slice_flat"
+logger.debug(f"loaded slice_meta with {slice_meta.shape=}, {slice_meta[0]=}")
+logger.debug(f"loaded features with {slice_features.shape=}, {slice_features[0]=}")
 
 
 def t_test(slice_meta, slice_features):
@@ -58,26 +59,14 @@ def t_test(slice_meta, slice_features):
     return p_val, ranking_idx, p_val_sort
 
 
-######################################
-
-
-FILENAME = DATA_FOLDER / "py-radiomics" / "slice_glcm1d.npz"
-
-data = np.load(FILENAME, allow_pickle=True)
-print(data.files)
-
-print(data["slice_meta"].shape)
-print(data["slice_meta"][0])
-
-# TODO: slice_flat is missing from the file
-print(data["slice_flat"].shape)
-print(data["slice_flat"][0])
-
-slice_features = data["slice_flat"]
-slice_meta = data["slice_meta"]
 p_val, ranking_idx, pval_sort = t_test(slice_meta, slice_features)
 
-columns = [
+
+# print("p_val: ", p_val)
+# print("ranking_idx: ", ranking_idx)
+# print("pval_sort: ", pval_sort)
+
+features = [
     "original_glcm_Autocorrelation",
     "original_glcm_ClusterProminence",
     "original_glcm_ClusterShade",
@@ -104,10 +93,29 @@ columns = [
     "original_glcm_SumSquares",
 ]
 
-output_dir = OUTPUT_FOLDER
-BoxPlotFeatures(
-    feat=slice_features,
-    y=slice_meta[:, 3],
-    feature_names=columns,
-    output_dir=output_dir,
-)
+
+def save_box_plot_features(feat, y_label, feat_idx):
+    feature_name = features[feat_idx]
+    c = feat_idx
+    logger.debug(f"Plotting for {feature_name=}")
+    idx_Malignant = np.nonzero(y_label == "Malignant")[0]
+    idx_Benign = np.nonzero(y_label == "Benign")[0]
+    group = [feat[idx_Malignant, c], feat[idx_Benign, c]]
+    plt.figure()
+    plt.boxplot(group, labels=["Malignant", "Benign"])
+    plt.title(str(c) + " " + feature_name)
+    output_path = OUTPUT_DIR / (feature_name + ".png")
+    plt.savefig(output_path)
+    plt.close()
+    logger.debug(f"Saved {output_path=}")
+
+
+if __name__ == "__main__":
+    assert slice_features.shape[0] == slice_meta.shape[0]
+    assert slice_features.shape[1] == len(features)
+    for i in range(len(features)):
+        save_box_plot_features(
+            feat=slice_features,
+            y_label=slice_meta[:, 3],
+            feat_idx=i,
+        )

@@ -8,6 +8,9 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
+# Unit: Segmentation
+# Data: from Unit "Full Dataset"
+
 from ct_slicing.log import logger
 from vis_lib.VolumeCutBrowser import VolumeCutBrowser, CutDirection  # local
 from vis_lib.NiftyIO import read_nifty  # local

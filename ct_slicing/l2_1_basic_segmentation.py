@@ -8,8 +8,8 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-import os
-from pathlib import Path
+# Unit: Segmentation
+# Data: from Unit "Full Dataset"
 
 import matplotlib.pyplot as plt
 from ct_slicing.config.data_path import DATA_FOLDER
