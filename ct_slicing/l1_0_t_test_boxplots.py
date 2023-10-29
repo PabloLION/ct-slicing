@@ -154,7 +154,10 @@ def t_test(
 
 
 def save_box_plot_features(
-    benign_cases: np.ndarray, malignant_cases: np.ndarray, feat_idx: int
+    benign_cases: np.ndarray,
+    malignant_cases: np.ndarray,
+    p_rank: int,
+    feature_info: tuple[float, int, str],
 ):
     """
     Save the box plot of the feature with index `feat_idx` in
@@ -168,16 +171,23 @@ def save_box_plot_features(
         `feat_idx`: the index of the feature in SLICE_FEATURE_NAMES to plot
     """
 
-    feature_name: str = SLICE_FEATURE_NAMES[feat_idx]
-    logger.debug(f"Plotting for {feature_name=}")
-    plot_title = f"Box Plot of {feat_idx}.{feature_name.lstrip('original_glcm_')}"
-    output_path = OUTPUT_DIR / (feature_name + ".png")
+    p_val, feat_idx, feat_full_name = feature_info
+    feat_name = feat_full_name.lstrip("original_glcm_")
+    logger.debug(f"Plotting for {feat_full_name=}")
+    plot_title = f"Box Plot of {feat_idx}.{feat_name}, p-value {p_val:.4f} ranked {p_rank+1} of {FEATURE_COUNT}"
+    output_path = OUTPUT_DIR / (f"{p_rank+1:02d}.{feat_name}.png")  # 02d: 2-digit rank
 
     plt.figure()
     plt.title(plot_title)
     plt.boxplot(
-        [malignant_cases[:, feat_idx], benign_cases[:, feat_idx]],
-        labels=["Malignant", "Benign"],
+        [
+            malignant_cases[:, feat_idx],
+            benign_cases[:, feat_idx],
+        ],
+        labels=[
+            f"Malignant\n{len(malignant_cases)} cases",
+            f"Benign\n{len(benign_cases)} cases",
+        ],
     )
     plt.savefig(output_path)
     plt.close()
@@ -190,5 +200,5 @@ if __name__ == "__main__":
     # sorted (p-value, index in SLICE_FEATURE_NAMES, corresponding feature name)
     sorted_features = t_test(benign_cases, malignant_cases)
 
-    for pv, fi, fn in sorted_features:
-        save_box_plot_features(benign_cases, malignant_cases, feat_idx=fi)
+    for p_rank, feature_info in enumerate(sorted_features):
+        save_box_plot_features(benign_cases, malignant_cases, p_rank, feature_info)
