@@ -8,8 +8,8 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-# Unit: Segmentation
-# Data: from Unit "Full Dataset"
+# Unit: Data Exploration / Volume Visualization
+# Data: from "LUNA Dataset / Full Dataset"
 
 from ct_slicing.log import logger
 from vis_lib.VolumeCutBrowser import VolumeCutBrowser, CutDirection  # local
