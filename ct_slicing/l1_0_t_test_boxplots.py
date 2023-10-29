@@ -110,9 +110,7 @@ def t_test(slice_meta, slice_features):
             these 24 features are in the order of SLICE_FEATURE_NAMES
 
     Returns:
-        p_val: the p-value of each feature in the t-test
-        ranking_idx: the ranking index of the p-value of each feature
-        pval_sort: the sorted p-value of each feature
+        sorted (p-value, index in SLICE_FEATURE_NAMES, corresponding feature name)
     """
 
     benign_indices = np.nonzero(slice_meta[:, 3] == "Benign")[0]
@@ -126,30 +124,25 @@ def t_test(slice_meta, slice_features):
     if not (benign_features.shape[1] == malignant_features.shape[1] == FEATURE_COUNT):
         raise ValueError("wrong args `slice_features` in t_test in t_test_box_plots")
 
-    p_val = []
-    for i in np.arange(24):
-        aux = stats.ttest_ind(benign_features[:, i], malignant_features[:, i])
-        p_val.append(aux[1])
+    p_values: list[float] = []
+    for i in np.arange(FEATURE_COUNT):
+        _t_stat, p_val, _df = stats.ttest_ind(
+            benign_features[:, i], malignant_features[:, i]
+        )
+        p_values.append(p_val)
 
-    p_val = np.array(p_val)
-    ranking_idx = np.argsort(p_val)
-    p_val_sort = p_val[ranking_idx]
+    sorted_features = sorted(zip(p_values, SLICE_FEATURE_NAMES, range(FEATURE_COUNT)))
 
-    return p_val, ranking_idx, p_val_sort
-
-
-# print("p_val: ", p_val)
-# print("ranking_idx: ", ranking_idx)
-# print("pval_sort: ", pval_sort)
+    return sorted_features
 
 
-def save_box_plot_features(feat, y_label, feat_idx):
+def save_box_plot_features(features, classifications, feat_idx):
     feature_name = SLICE_FEATURE_NAMES[feat_idx]
     c = feat_idx
     logger.debug(f"Plotting for {feature_name=}")
-    idx_Malignant = np.nonzero(y_label == "Malignant")[0]
-    idx_Benign = np.nonzero(y_label == "Benign")[0]
-    group = [feat[idx_Malignant, c], feat[idx_Benign, c]]
+    idx_Malignant = np.nonzero(classifications == "Malignant")[0]
+    idx_Benign = np.nonzero(classifications == "Benign")[0]
+    group = [features[idx_Malignant, c], features[idx_Benign, c]]
     plt.figure()
     plt.boxplot(group, labels=["Malignant", "Benign"])
     plt.title(str(c) + " " + feature_name)
@@ -162,12 +155,12 @@ def save_box_plot_features(feat, y_label, feat_idx):
 if __name__ == "__main__":
     slice_meta, slice_features = load_saved_data(SAVE_PATH)
 
-    # sort the features by its t-value
-    p_val, ranking_idx, pval_sort = t_test(slice_meta, slice_features)
+    # sorted (p-value, index in SLICE_FEATURE_NAMES, corresponding feature name)
+    sorted_features = t_test(slice_meta, slice_features)
 
-    for i in range(len(SLICE_FEATURE_NAMES)):
+    for pv, fi, fn in sorted_features:
         save_box_plot_features(
-            feat=slice_features,
-            y_label=slice_meta[:, 3],
-            feat_idx=i,
+            features=slice_features,
+            classifications=slice_meta[:, 3],
+            feat_idx=fi,
         )
