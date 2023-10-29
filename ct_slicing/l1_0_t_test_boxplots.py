@@ -194,7 +194,7 @@ def save_box_plot_features(
     logger.debug(f"Saved {output_path=}")
 
 
-if __name__ == "__main__":
+def main(load_saved_data, t_test, save_box_plot_features):
     benign_cases, malignant_cases = load_saved_data(SAVE_PATH)
 
     # sorted (p-value, index in SLICE_FEATURE_NAMES, corresponding feature name)
@@ -202,3 +202,7 @@ if __name__ == "__main__":
 
     for p_rank, feature_info in enumerate(sorted_features):
         save_box_plot_features(benign_cases, malignant_cases, p_rank, feature_info)
+
+
+if __name__ == "__main__":
+    main(load_saved_data, t_test, save_box_plot_features)
