@@ -57,7 +57,7 @@ def t_test(slice_meta, slice_features):
     p_val = []
 
     for i in np.arange(x[0].shape[1]):
-        # aux = stats.ttest_ind(x[0][:, i], x[1][:, i])
+        aux = stats.ttest_ind(x[0][:, i], x[1][:, i])
         p_val.append(aux[1])
 
     p_val = np.array(p_val)
