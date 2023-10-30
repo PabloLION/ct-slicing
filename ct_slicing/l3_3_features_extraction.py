@@ -8,7 +8,9 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-import os
+# Unit: Feature Extraction / PyRadiomics
+
+
 import numpy as np
 import pandas as pd
 from collections import OrderedDict

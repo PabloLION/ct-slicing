@@ -1,9 +1,16 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Dec 14 20:26:57 2018
+__author__ = "Debora Gil"
+__license__ = "GPL"
+__email__ = "debora@cvc.uab.es"
+__year__ = "2023"
+__doc__ = """Source code for volume visualization
 
-@author: debora
+Computer Vision Center
+Universitat Autonoma de Barcelona
 """
+
+# Unit: Feature Extraction / Local Descriptors
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
