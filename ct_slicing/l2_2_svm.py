@@ -16,31 +16,29 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.utils import Bunch
 
+from ct_slicing.log import logger
+
+
 # Load dataset
 cancer: Bunch = cast(Bunch, datasets.load_breast_cancer())
-# print the names of the 13 features
-print("Features: ", cancer.feature_names)
-
-# print the label type of cancer('malignant' 'benign')
-print("Labels: ", cancer.target_names)
-# Import train_test_split function
+logger.info(f"Features: {cancer.feature_names}")  # print 13 features
+logger.info(f"Labels: {cancer.target_names}")  # 'malignant' 'benign'
 
 # Split dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split(
+x_train, x_test, y_train, y_test = train_test_split(
     cancer.data, cancer.target, test_size=0.3, random_state=109
 )  # 70% training and 30% test
 
+# SVC: Support Vector Classification implementation based on libsvm
+classifier = SVC(probability=True, class_weight="balanced")
+classifier.fit(x_train, y_train)
 
-clf2 = SVC(probability=True, class_weight="balanced")
-clf2.fit(X_train, y_train)
+#
+calibrated_classifier = CalibratedClassifierCV(classifier)
+calibrated_classifier.fit(x_train, y_train)
 
 
-# Use CalibratedClassifierCV to calibrate probabilities
-calibrated_classifier = CalibratedClassifierCV(clf2, n_jobs=-1)
-calibrated_classifier.fit(X_train, y_train)
-
-
-y_pred_fold_tr = calibrated_classifier.predict(X_train)
+y_pred_fold_tr = calibrated_classifier.predict(x_train)
 train_report_dict = metrics.classification_report(
     y_train,
     y_pred_fold_tr,
