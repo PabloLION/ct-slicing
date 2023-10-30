@@ -26,6 +26,7 @@ from ct_slicing.log import logger
 
 SAVE_PATH = DATA_FOLDER / "py-radiomics" / "slice_glcm1d.npz"
 OUTPUT_DIR = OUTPUT_FOLDER / "t_test_box_plots"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 FEATURE_COUNT = 24
 SLICE_FEATURE_NAMES: list[str] = [

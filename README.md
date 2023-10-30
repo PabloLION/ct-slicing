@@ -39,6 +39,13 @@ Run the script
 python __main__.py
 ```
 
+## File Naming Convention
+
+- `__main__.py`: Main entry point of the program
+- `__init__.py`: Python package initializer
+- `*.py`: Python modules
+- `lX_Y_file_name.py`: Python modules for session X, part Y. Both X and Y are 1-indexed order in the plan (not actually fulfilled).
+
 ## Contribute
 
 Run the code in dev mode.
