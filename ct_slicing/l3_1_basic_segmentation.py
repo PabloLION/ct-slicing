@@ -42,34 +42,39 @@ VolumeCutBrowser(nii_roi, CutDirection.ShortAxis)
 
 ### 1. PRE-PROCESSING
 # 1.1 Gaussian Filtering
-sig = 1
-niiROIGauss = filters.gaussian_filter(nii_roi, sigma=sig)
+sigma = 1
+nii_roi_gauss = filters.gaussian_filter(nii_roi, sigma=sigma)
 # 1.2 MedFilter
-sze = 3
-niiROIMed = filters.median_filter(nii_roi, sze)
+size = 3
+nii_roi_median = filters.median_filter(nii_roi, size)
 
-###
+### 2. BINARIZATION / THRESHOLDING / PROCESSING
 
-### 2. BINARIZATION
-Th = threshold_otsu(nii_roi)
-niiROISeg = nii_roi > Th
+otsu_mask = threshold_otsu(nii_roi)
+# #TODO: here this Otsu method is reading the
+# histogram of all the images but the images do not have uniformed gray scale
+# of their background. So the threshold is not accurate.
+nii_roi_otsu = nii_roi > otsu_mask
+
 # ROI Histogram
 fig, ax = plt.subplots(1, 1)
 ax.hist(nii_roi.flatten(), bins=50, edgecolor="k")
+
 # Visualize Lesion Segmentation
-VolumeCutBrowser(nii_roi, CutDirection.ShortAxis, contour_stack=niiROISeg)
-VolumeCutBrowser(nii_roi, CutDirection.ShortAxis, contour_stack=niiROIGauss)
-VolumeCutBrowser(nii_roi, CutDirection.ShortAxis, contour_stack=niiROIMed)
+# #TODO: seems the first two are wrong.
+VolumeCutBrowser(nii_roi, CutDirection.ShortAxis, contour_stack=nii_roi_otsu)
+VolumeCutBrowser(nii_roi, CutDirection.ShortAxis, contour_stack=nii_roi_gauss)
+VolumeCutBrowser(nii_roi, CutDirection.ShortAxis, contour_stack=nii_roi_median)
 
 
 ### 3.POST-PROCESSING
 
 # 3.1  Opening
-szeOp = 3
-se = Morpho.cube(szeOp)
-niiROISegOpen = Morpho.binary_opening(niiROISeg, se)
+size_open = 3
+se = Morpho.cube(size_open)
+nii_roi_seg_open = Morpho.binary_opening(nii_roi_otsu, se)
 
 # 3.2  Closing
-szeCl = 3
-se = Morpho.cube(szeCl)
-niiROISegClose = Morpho.binary_closing(niiROISeg, se)
+size_close = 3
+se = Morpho.cube(size_close)
+nii_roi_seg_close = Morpho.binary_closing(nii_roi_otsu, se)
