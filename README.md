@@ -18,6 +18,14 @@ To activate the virtual environment created by poetry:
 poetry shell
 ```
 
+### Known Installation Issues
+
+Poetry cannot install `PyRadiomics = "^3.0.1"`, use pip instead:
+
+```bash
+pip install PyRadiomics==3.0.1
+```
+
 ### Backup of old version with pip
 
 Set up and activate virtual environment (Optional)
