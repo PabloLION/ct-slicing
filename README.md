@@ -24,6 +24,8 @@ Poetry cannot install `PyRadiomics = "^3.0.1"`, use pip instead:
 
 ```bash
 pip install PyRadiomics==3.0.1
+pip install mayavi==4.8.1
+# mayavi==4.8.1 requires py<=3.10
 ```
 
 ### Backup of old version with pip
