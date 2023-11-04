@@ -26,7 +26,7 @@ from sklearn.cluster import KMeans
 
 from .config.data_path import DATA_FOLDER
 from .vis_lib.NiftyIO import CoordinateOrder, read_nifty
-from .vis_lib.VolumeCutBrowser import VolumeCutBrowser
+from .vis_lib.VolumeCutBrowser import CutDirection, VolumeCutBrowser
 from .l3_5_gabor_filters import GaborFilterBank2D, GaborFilterBank3D
 from .l3_6_browse_gabor_filt_bank import BrowseGaborFiltBank
 
@@ -181,6 +181,8 @@ elif gabor_params == "non_default":
     GaborBank2D_1, GaborBank2D_2, params = GaborFilterBank2D(
         sigma=sigGab, frequency=freqGab
     )
+else:
+    raise Exception("Incorrect gabor_params name.")
 
 # Show Filters
 BrowseGaborFiltBank(GaborBank2D_1, params)
@@ -201,10 +203,10 @@ for k in range(NFilt):
     imGab1[:, :, k] = ndi.convolve(im, GaborBank2D_1[k], mode="wrap")
     imGab2[:, :, k] = ndi.convolve(im, GaborBank2D_2[k], mode="wrap")
 
-VolumeCutBrowser(imGab1)
+VolumeCutBrowser(imGab1, cut_dir=CutDirection.Sagittal)
 BrowseGaborFiltBank(GaborBank2D_1, params)
 
-VolumeCutBrowser(imGab2)
+VolumeCutBrowser(imGab2, cut_dir=CutDirection.Sagittal)
 BrowseGaborFiltBank(GaborBank2D_2, params)
 
 

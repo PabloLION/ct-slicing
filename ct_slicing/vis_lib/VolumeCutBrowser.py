@@ -28,7 +28,7 @@ class CutDirection(Enum):
 
     ShortAxis = "SA"  # cut in the short axis
     Sagittal = "Sag"  # cut in the sagittal axis
-    Coronal = "Cor"  # cut in the coronal axis
+    Coronal = "Cor"  # ct in the coronal axis
 
     @staticmethod
     def to_idx(cut_dir: "CutDirection") -> int:
@@ -77,8 +77,9 @@ class VolumeCutDirectionError(ValueError):
 class VolumeCutBrowser:
     """
     Visualization of a volume in a given direction.
+    Originally, cut_dir was default to "SA" (short axis).
 
-    # EXAMPLE:
+    # EXAMPLE: #TODO: outdated
     # DataDir='C://Data_Session1//Case0016';
     # NIIFile='LIDC-IDRI-0016_GT1.nii.gz'
     # nii_vol,_=NiftyIO.readNifty(os.path.join(ServerDir,NIIFile))
