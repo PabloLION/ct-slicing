@@ -70,7 +70,7 @@ def read_nifty(
     image = sitk.ReadImage(file_path)
     metadata = NiiMetadata(image.GetOrigin(), image.GetSpacing(), image.GetDirection())
 
-    print(f"Successfully read Nifty file with {metadata=} from {file_path=}")
+    f"Successfully read Nifty file with {metadata=} from {file_path=}"  # TODO: logger
 
     # Convert SimpleITK image to Numpy array. By default, the dimension is in (z,y,x) order.
     volume_zyx = sitk.GetArrayFromImage(image)
@@ -82,9 +82,10 @@ def read_nifty(
     else:
         raise CoordinateOrderError(coordinate_order)
 
-    print("Volume shape: {}".format(volume.shape))
-    print("Minimum value: {}".format(np.min(volume)))
-    print("Maximum value: {}".format(np.max(volume)))
+    # #TODO: logger
+    # print("Volume shape: {}".format(volume.shape))
+    # print("Minimum value: {}".format(np.min(volume)))
+    # print("Maximum value: {}".format(np.max(volume)))
 
     return volume, metadata  # return two items.
 

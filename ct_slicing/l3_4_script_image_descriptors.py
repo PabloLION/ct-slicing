@@ -21,14 +21,15 @@ from mayavi import mlab
 import matplotlib.pyplot as plt
 from scipy import ndimage as ndi
 from scipy.ndimage import filters as filt
+from scipy.ndimage import sobel, gaussian_filter
 from skimage.filters import threshold_otsu
 from sklearn.cluster import KMeans
 
-from .config.data_path import DATA_FOLDER
-from .vis_lib.NiftyIO import CoordinateOrder, read_nifty
-from .vis_lib.VolumeCutBrowser import CutDirection, VolumeCutBrowser
-from .l3_5_gabor_filters import GaborFilterBank2D, GaborFilterBank3D
-from .l3_6_browse_gabor_filt_bank import BrowseGaborFiltBank
+from ct_slicing.config.data_path import DATA_FOLDER
+from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty
+from ct_slicing.vis_lib.VolumeCutBrowser import CutDirection, VolumeCutBrowser
+from ct_slicing.l3_5_gabor_filters import GaborFilterBank2D, GaborFilterBank3D
+from ct_slicing.l3_6_browse_gabor_filt_bank import BrowseGaborFilterBank
 
 ######## PARAMETERS
 CASE_NAME = "LIDC-IDRI-0001"
@@ -88,7 +89,7 @@ else:
 
 # Image Filtering
 if filter_image == "gaussian":
-    img = filt.gaussian_filter(im, sigma=sig)
+    img = gaussian_filter(im, sigma=sig)
 elif filter_image == "median":
     img = filt.median_filter(im, Medsze)
 else:
@@ -102,9 +103,9 @@ else:
 #      for different filters and analyze results
 
 # Derivative along x-axis
-sx = filt.sobel(img, axis=1, mode="constant")
+sx = sobel(img, axis=1, mode="constant")
 # Derivative along y-axis
-sy = filt.sobel(img, axis=0, mode="constant")
+sy = sobel(img, axis=0, mode="constant")
 # Image Gradient (Sobel Edge Detector)
 EdgeSob = np.sqrt(sx**2 + sy**2)
 
@@ -132,11 +133,11 @@ ax.set_title("Gradient Magnitude (EdgeDetector)")
 #      the opposite 1-'square' and 'filled_square'
 
 # Second Derivative along x-axis
-sx = filt.sobel(img, axis=1, mode="constant")
-sxx = filt.sobel(sx, axis=1, mode="constant")
+sx = sobel(img, axis=1, mode="constant")
+sxx = sobel(sx, axis=1, mode="constant")
 # Second Derivative along y-axis
-sy = filt.sobel(img, axis=0, mode="constant")
-syy = filt.sobel(sy, axis=0, mode="constant")
+sy = sobel(img, axis=0, mode="constant")
+syy = sobel(sy, axis=0, mode="constant")
 # Laplacian (Ridge/Valley Detector)
 Lap = sxx + syy
 
@@ -185,16 +186,16 @@ else:
     raise Exception("Incorrect gabor_params name.")
 
 # Show Filters
-BrowseGaborFiltBank(GaborBank2D_1, params)
-BrowseGaborFiltBank(GaborBank2D_2, params)
+BrowseGaborFilterBank(GaborBank2D_1, params)
+BrowseGaborFilterBank(GaborBank2D_2, params)
 
 Gab2Show = 1
 fig1 = mlab.figure()
 mlab.surf(GaborBank2D_1[Gab2Show], warp_scale="auto")
 
 # Apply Filters
-NFilt = np.shape(GaborBank2D_1)
-NFilt = NFilt[0]
+NFilt = len(GaborBank2D_1)
+print("Number of Filters: " + str(NFilt))
 
 Ressze = np.concatenate((im.shape, np.array([NFilt])))
 imGab1 = np.empty(Ressze)
@@ -204,10 +205,10 @@ for k in range(NFilt):
     imGab2[:, :, k] = ndi.convolve(im, GaborBank2D_2[k], mode="wrap")
 
 VolumeCutBrowser(imGab1, cut_dir=CutDirection.Sagittal)
-BrowseGaborFiltBank(GaborBank2D_1, params)
+BrowseGaborFilterBank(GaborBank2D_1, params)
 
 VolumeCutBrowser(imGab2, cut_dir=CutDirection.Sagittal)
-BrowseGaborFiltBank(GaborBank2D_2, params)
+BrowseGaborFilterBank(GaborBank2D_2, params)
 
 
 ### 4. FEATURE SPACES
@@ -223,10 +224,10 @@ im = (im - im.min()) / (im.max() - im.min())
 imMask = niiMask[:, :, k]
 
 # SA cut Laplacian
-sx = filt.sobel(im, axis=1, mode="constant")
-sxx = filt.sobel(sx, axis=1, mode="constant")
-sy = filt.sobel(im, axis=0, mode="constant")
-syy = filt.sobel(sy, axis=0, mode="constant")
+sx = sobel(im, axis=1, mode="constant")
+sxx = sobel(sx, axis=1, mode="constant")
+sy = sobel(im, axis=0, mode="constant")
+syy = sobel(sy, axis=0, mode="constant")
 Lap = sxx + syy
 
 ### 4.1 Intensity thresholding

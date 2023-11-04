@@ -16,11 +16,16 @@ import matplotlib.pyplot as plt
 import sys
 
 
-class BrowseGaborFiltBank:
+class BrowseGaborFilterBank:
+    NFilt: int
+
     def __init__(self, GaborBank2D, params):
         self.GaborBank2D = GaborBank2D
-        self.NFilt = np.shape(self.GaborBank2D)
-        self.NFilt = self.NFilt[0]
+        self.NFilt = (
+            len(GaborBank2D)
+            if isinstance(GaborBank2D, list)
+            else np.shape(GaborBank2D)[0]
+        )
         self.params = params
         self.idx = 0
         self.fig, self.ax1 = plt.subplots(1, 1)
