@@ -8,6 +8,7 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
+# TODO: a lot of warnings
 
 import pandas as pd
 from collections import OrderedDict

@@ -203,6 +203,7 @@ def main(load_saved_data, t_test, save_box_plot_features):
 
     for p_rank, feature_info in enumerate(sorted_features):
         save_box_plot_features(benign_cases, malignant_cases, p_rank, feature_info)
+    logger.info(f"Saved {len(sorted_features)} box plots in {OUTPUT_DIR=}")
 
 
 if __name__ == "__main__":
