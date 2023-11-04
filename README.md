@@ -23,9 +23,8 @@ poetry shell
 Poetry cannot install `PyRadiomics = "^3.0.1"`, use pip instead:
 
 ```bash
+# PyRadiomics does not support PEP-517 https://github.com/AIM-Harvard/pyradiomics/issues/787
 pip install PyRadiomics==3.0.1
-pip install mayavi==4.8.1
-# mayavi==4.8.1 requires py<=3.10
 ```
 
 ### Backup of old version with pip
