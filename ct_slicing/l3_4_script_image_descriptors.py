@@ -9,54 +9,33 @@ Universitat Autonoma de Barcelona
 """
 
 # Unit: Feature Extraction / Local Descriptors
-# TODO: blocked by missing file.
-
 ### REFERENCES
 # www.scipy-lectures.org/advanced/image_processing/#edge-detection
 
-### IMPORT PY LIBRARIES
-# Python Library 2 manage volumetric data
-import numpy as np
-
-# Mayavi Visualization Functions
-from mayavi import mlab
-
-# Pyhton standard Visualization Library
-import matplotlib.pyplot as plt
-
-# Pyhton standard IOs Library
 import os
 import sys
 
-# Basic Processing
-from skimage.filters import threshold_otsu
-from scipy.ndimage import filters as filt
-from scipy import ndimage as ndi
 
-# Kmeans Clustering
+import numpy as np
+from mayavi import mlab
+import matplotlib.pyplot as plt
+from scipy import ndimage as ndi
+from scipy.ndimage import filters as filt
+from skimage.filters import threshold_otsu
 from sklearn.cluster import KMeans
 
-### IMPORT SESSION FUNCTIONS
-#### Session Code Folder
-CodeMainDir = r""
-sys.path.append(CodeMainDir)
-
-from ct_slicing.vis_lib.NiftyIO import read_nifty, CoordinateOrder
-from ct_slicing.vis_lib.VolumeCutBrowser import VolumeCutBrowser
-
-# Image Basic Descriptors
+from .config.data_path import DATA_FOLDER
+from .vis_lib.NiftyIO import CoordinateOrder, read_nifty
+from .vis_lib.VolumeCutBrowser import VolumeCutBrowser
 from .l3_5_gabor_filters import GaborFilterBank2D, GaborFilterBank3D
 from .l3_6_browse_gabor_filt_bank import BrowseGaborFiltBank
 
-
 ######## PARAMETERS
-#### Data Folders
-SessionDataFolder = 
-CaseFolder = "Case0016"
-ROIFolder = "LesionROIs"
-MaskROINiiFile = "LIDC-IDRI-0016_GT1_4_Mask.nii.gz"
-ROINiiFile = "LIDC-IDRI-0016_GT1_4.nii.gz"
-NiiFile = "LIDC-IDRI-0016_GT1.nii.gz"
+CASE_NAME = "LIDC-IDRI-0001"
+
+ROI_PATH = DATA_FOLDER / "VOIs" / "image" / (CASE_NAME + "_R_1.nii.gz")
+MASK_PATH = DATA_FOLDER / "CT" / "nodule_mask" / (CASE_NAME + "_R_1.nii.gz")
+IMAGE_PATH = DATA_FOLDER / "CT" / "image" / (CASE_NAME + ".nii.gz")
 
 #### Processing Parameters
 
@@ -69,18 +48,9 @@ gabor_params = "default"  # default, non_default
 ######## LOAD DATA
 
 #### Load ROI Volumes
-
-NiiPath = os.path.join(SessionDataFolder, CaseFolder, ROIFolder, ROINiiFile)
-NiiPath = NiiPath.replace("\\", "/")
-niiROI, _ = read_nifty(NiiPath)
-
-NiiPath = os.path.join(SessionDataFolder, CaseFolder, ROIFolder, MaskROINiiFile)
-NiiPath = NiiPath.replace("\\", "/")
-niiMask, _ = read_nifty(NiiPath)
-
-NiiPath = os.path.join(SessionDataFolder, CaseFolder, ROIFolder, NiiFile)
-NiiPath = NiiPath.replace("\\", "/")
-niivol, _ = read_nifty(NiiPath)
+niiROI, _ = read_nifty(ROI_PATH)
+niiMask, _ = read_nifty(MASK_PATH)
+niivol, _ = read_nifty(IMAGE_PATH)
 
 
 ### Define Use Case Image
