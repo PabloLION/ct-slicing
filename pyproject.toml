@@ -21,6 +21,7 @@ openpyxl = "^3.1.2"
 pyqt5 = "^5.15.10"
 torch = "^2.1.0"
 torchvision = "^0.16.0"
+rich = "^13.6.0"
 
 
 [build-system]
