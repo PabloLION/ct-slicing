@@ -23,16 +23,24 @@ from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
 
 
 setVerbosity(60)
-DATA_SET = "CT"
-PATIENT_ID = "LIDC-IDRI-0003"
-PATIENT_NODULE_INDEX = 2
+# DATA_SET = "CT"
+# PATIENT_ID = "LIDC-IDRI-0003"
+# PATIENT_NODULE_INDEX = 2
 # These original values are not valid for l3_5_featuresExtractionSVM.py
 # because the "diagnosis" column all "malign"
 
 ## Testing with VOIs
+# diagnosis = 0 case
 # DATA_SET = "VOIs"
 # PATIENT_ID = "LIDC-IDRI-0004"
-# NODULE_ID = 1
+# PATIENT_NODULE_INDEX = 1
+
+# diagnosis = 1 case
+DATA_SET = "CT"
+PATIENT_ID = "LIDC-IDRI-0003"
+PATIENT_NODULE_INDEX = 2
+
+# TODO: extract this part to data loading module
 
 DEFAULT_EXPORT_XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"
 META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
@@ -82,16 +90,13 @@ def set_gray_level(image: np.ndarray, levels: int) -> np.ndarray:
     return image
 
 
-def write_to_excel(df: pd.DataFrame, path: Path):
-    # write to a .xlsx file.
+def append_to_excel(df: pd.DataFrame, path: Path):
+    # append DataFrame to excel file
 
-    if df["diagnosis"].unique().size == 1:
-        print("!!! Only one class in the dataframe, not saving !!!")  # TODO: log
-        return
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     # append instead of overwrite to get more "diagnosis" classes for later
     # classification. (l3_5_features_extraction_svm.py)
-    writer = pd.ExcelWriter(path, engine="xlsxwriter", mode="a")
+    writer = pd.ExcelWriter(path, engine="openpyxl", mode="a", if_sheet_exists="new")
     df.to_excel(writer, sheet_name="Sheet1", index=False)
     writer.close()
 
@@ -124,7 +129,7 @@ def get_features(
     return dict(items)
 
 
-def slice_mode(
+def get_record(
     patient_id: str,
     nodule_id: int,
     diagnosis: int,
@@ -164,14 +169,77 @@ def slice_mode(
         feat_dict = get_features(feature_vector, i, patient_id, nodule_id, diagnosis)
         record.append(feat_dict)
 
+    return record
+
+
+def slice_mode(
+    patient_id: str,
+    nodule_id: int,
+    diagnosis: int,
+    image: np.ndarray,
+    mask: np.ndarray,
+    img_meta: NiiMetadata,
+    mask_meta: NiiMetadata,
+    extractor: featureextractor.RadiomicsFeatureExtractor,
+    mask_min_pixels: int = 200,
+):
+    record = []
+
+    get_record(
+        patient_id,
+        nodule_id,
+        diagnosis,
+        image,
+        mask,
+        img_meta,
+        mask_meta,
+        extractor,
+        mask_min_pixels,
+    )
+
     df = pd.DataFrame.from_records(record)
     return df
 
 
-def main():
+def extend_records_target(
+    patient_id: str,
+    nodule_id: int,
+    diagnosis: int,
+    image: np.ndarray,
+    mask: np.ndarray,
+    img_meta: NiiMetadata,
+    mask_meta: NiiMetadata,
+    extractor: featureextractor.RadiomicsFeatureExtractor,
+    mask_min_pixels: int = 200,
+    records_target: list[dict[str, float]] | None = None,
+):
+    if records_target is None:
+        records_target = []
+
+    record = get_record(
+        patient_id,
+        nodule_id,
+        diagnosis,
+        image,
+        mask,
+        img_meta,
+        mask_meta,
+        extractor,
+        mask_min_pixels,
+    )
+    records_target.extend(record)
+
+
+def extract_feature(
+    img_path: Path, mask_path: Path, export_excel_path: Path = DEFAULT_EXPORT_XLSX_PATH
+):
+    """
+    extract features from a single patient and append to an excel file.
+    """
+
     # Reading image and mask
-    image, img_meta = read_nifty(IMG, coordinate_order=CoordinateOrder.xyz)
-    mask, mask_meta = read_nifty(MASK, coordinate_order=CoordinateOrder.xyz)
+    image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
+    mask, mask_meta = read_nifty(mask_path, coordinate_order=CoordinateOrder.xyz)
 
     df_metadata = pd.read_excel(
         META_DATA_PATH,
@@ -179,11 +247,11 @@ def main():
         engine="openpyxl",
     )
 
-    nodule_identity = df_metadata[  # TODO: possibly always "1"
+    nodule_identity = df_metadata[
         (df_metadata.patient_id == PATIENT_ID)
         & (df_metadata.nodule_id == PATIENT_NODULE_INDEX)
     ]
-    assert len(nodule_identity) == 1
+    assert len(nodule_identity) == 1, f"Error: Found {len(nodule_identity)} rows"
     diagnosis: int = nodule_identity.Diagnosis_value.values[0]
 
     # pre-processing
@@ -204,8 +272,9 @@ def main():
         mask_min_pixels=200,
     )
 
-    write_to_excel(df, DEFAULT_EXPORT_XLSX_PATH)
+    append_to_excel(df, export_excel_path)
 
 
 if __name__ == "__main__":
-    main()
+    records_target = []
+    extract_feature(IMG, MASK, DEFAULT_EXPORT_XLSX_PATH)
