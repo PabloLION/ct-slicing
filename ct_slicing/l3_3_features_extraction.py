@@ -164,32 +164,6 @@ def get_record(
     return record
 
 
-def slice_mode(
-    patient_id: str,
-    patient_nodule_index: int,
-    diagnosis: int,
-    image: np.ndarray,
-    mask: np.ndarray,
-    img_meta: NiiMetadata,
-    mask_meta: NiiMetadata,
-    extractor: featureextractor.RadiomicsFeatureExtractor,
-    mask_min_pixels: int = 200,
-) -> pd.DataFrame:
-    return pd.DataFrame.from_records(
-        get_record(
-            patient_id,
-            patient_nodule_index,
-            diagnosis,
-            image,
-            mask,
-            img_meta,
-            mask_meta,
-            extractor,
-            mask_min_pixels,
-        )
-    )
-
-
 def extend_records_target(
     patient_id: str,
     nodule_id: int,
@@ -254,8 +228,10 @@ def extract_feature(
     image = set_range(image, in_min=0, in_max=4000)
     image = set_gray_level(image, levels=24)
 
+    extractor = featureextractor.RadiomicsFeatureExtractor(RADIOMICS_PARAMS_STR)
+    mask_min_pixels = 200
     # Extract features slice by slice.
-    df = slice_mode(
+    record = get_record(
         patient_id,
         patient_nodule_index,
         diagnosis,
@@ -263,10 +239,11 @@ def extract_feature(
         mask,
         img_meta,
         mask_meta,
-        extractor=featureextractor.RadiomicsFeatureExtractor(RADIOMICS_PARAMS_STR),
-        mask_min_pixels=200,
+        extractor,
+        mask_min_pixels,
     )
 
+    df = pd.DataFrame.from_records(record)
     return df
 
 
