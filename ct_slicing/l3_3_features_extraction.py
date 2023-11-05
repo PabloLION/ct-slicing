@@ -13,6 +13,7 @@ Universitat Autonoma de Barcelona
 
 
 from pathlib import Path
+from typing import Literal
 import numpy as np
 import pandas as pd
 import SimpleITK as sitk
@@ -22,7 +23,9 @@ from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
 from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
 
 
-setVerbosity(60)
+setVerbosity(60)  # TODO: how to quietly run? (verbosity level 60 is showing info)
+RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
+
 # DATA_SET = "CT"
 # PATIENT_ID = "LIDC-IDRI-0003"
 # PATIENT_NODULE_INDEX = 2
@@ -40,24 +43,26 @@ DATA_SET = "CT"
 PATIENT_ID = "LIDC-IDRI-0003"
 PATIENT_NODULE_INDEX = 2
 
+
 # TODO: extract this part to data loading module
+def get_img_mask_pair_paths(
+    data_set: Literal["CT", "VOIs"], patient_id: str, nodule_index: int
+):
+    img_folder = DATA_FOLDER / data_set / "image"
+    mask_folder = DATA_FOLDER / data_set / "nodule_mask"
+    if data_set == "CT":
+        img_path = img_folder / f"{patient_id}.nii.gz"
+    elif data_set == "VOIs":
+        img_path = img_folder / f"{patient_id}_R_{nodule_index}.nii.gz"
+    else:
+        raise ValueError(f'data_set can only be "CT" or "VOIs", not {data_set}')
+
+    mask_path = mask_folder / f"{patient_id}_R_{nodule_index}.nii.gz"
+    return img_path, mask_path
+
 
 DEFAULT_EXPORT_XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"
 META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
-
-
-IMG_FOLDER = DATA_FOLDER / DATA_SET / "image"
-MASK_FOLDER = DATA_FOLDER / DATA_SET / "nodule_mask"
-if DATA_SET == "CT":
-    IMG = IMG_FOLDER / f"{PATIENT_ID}.nii.gz"
-elif DATA_SET == "VOIs":
-    IMG = IMG_FOLDER / f"{PATIENT_ID}_R_{PATIENT_NODULE_INDEX}.nii.gz"
-else:
-    raise ValueError(f'DATA_SET can only be "CT" or "VOIs", not {DATA_SET}')
-
-MASK = MASK_FOLDER / f"{PATIENT_ID}_R_{PATIENT_NODULE_INDEX}.nii.gz"
-
-radiomics_params = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
 
 
 def shift_values(image: np.ndarray, value: int) -> np.ndarray:
@@ -268,7 +273,7 @@ def extract_feature(
         mask,
         img_meta,
         mask_meta,
-        extractor=featureextractor.RadiomicsFeatureExtractor(radiomics_params),
+        extractor=featureextractor.RadiomicsFeatureExtractor(RADIOMICS_PARAMS_STR),
         mask_min_pixels=200,
     )
 
@@ -277,4 +282,6 @@ def extract_feature(
 
 if __name__ == "__main__":
     records_target = []
+    IMG, MASK = get_img_mask_pair_paths(DATA_SET, PATIENT_ID, PATIENT_NODULE_INDEX)
+
     extract_feature(IMG, MASK, DEFAULT_EXPORT_XLSX_PATH)
