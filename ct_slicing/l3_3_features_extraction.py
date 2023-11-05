@@ -9,30 +9,60 @@ Universitat Autonoma de Barcelona
 """
 
 # Unit: Feature Extraction / PyRadiomics
+# Unit: Feature Extraction / PreTrained Networks
 
 
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from collections import OrderedDict
 import SimpleITK as sitk
-from radiomics import featureextractor
-from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
-from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty
+from radiomics import featureextractor, setVerbosity
 
-from radiomics import setVerbosity
+
+from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
+from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
+
 
 setVerbosity(60)
+DATA_SET = "CT"
+PATIENT_ID = "LIDC-IDRI-0003"
+NODULE_ID = 2
+# These original values are not valid for l3_5_featuresExtractionSVM.py
+# because the "diagnosis" column all "malign"
 
-XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"
+## Testing with VOIs
+# DATA_SET = "VOIs"
+# PATIENT_ID = "LIDC-IDRI-0004"
+# NODULE_ID = 1
+
+DEFAULT_EXPORT_XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"
+META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
 
 
-def ShiftValues(image, value):
+IMG_FOLDER = DATA_FOLDER / DATA_SET / "image"
+MASK_FOLDER = DATA_FOLDER / DATA_SET / "nodule_mask"
+if DATA_SET == "CT":
+    IMG = IMG_FOLDER / f"{PATIENT_ID}.nii.gz"
+elif DATA_SET == "VOIs":
+    IMG = IMG_FOLDER / f"{PATIENT_ID}_R_{NODULE_ID}.nii.gz"
+else:
+    raise ValueError(f'DATA_SET can only be "CT" or "VOIs", not {DATA_SET}')
+
+MASK = MASK_FOLDER / f"{PATIENT_ID}_R_{NODULE_ID}.nii.gz"
+
+radiomics_params = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
+
+
+def shift_values(image: np.ndarray, value: int) -> np.ndarray:
+    """Was called ShiftValues"""
+
     image = image + value
     print("Range after Shift: {:.2f} - {:.2f}".format(image.min(), image.max()))
     return image
 
 
-def SetRange(image, in_min, in_max):
+def set_range(image: np.ndarray, in_min: int, in_max: int) -> np.ndarray:
     image = (image - image.min()) / (image.max() - image.min())
     image = image * (in_max - in_min) + in_min
 
@@ -42,7 +72,7 @@ def SetRange(image, in_min, in_max):
     return image
 
 
-def SetGrayLevel(image, levels):
+def SetGrayLevel(image: np.ndarray, levels: int) -> np.ndarray:
     # array's values between 0 & 1
     image = image * levels
     image = image.astype(np.uint8)  # get into integer values
@@ -50,142 +80,126 @@ def SetGrayLevel(image, levels):
     return image
 
 
-def saveXLSX(filename, df):
+def write_to_excel(df: pd.DataFrame, path: Path):
     # write to a .xlsx file.
 
+    if df["diagnosis"].unique().size == 1:
+        print("!!! Only one class in the dataframe, not saving !!!")  # TODO: log
+        return
     # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter(filename, engine="xlsxwriter")
-    # Convert the dataframe to an XlsxWriter Excel object.
+    writer = pd.ExcelWriter(path, engine="xlsxwriter")
     df.to_excel(writer, sheet_name="Sheet1", index=False)
-    # Close the Pandas Excel writer and output the Excel file.
     writer.close()
 
 
-def GetFeatures(featureVector, i, patient_id, nodule_id, diagnosis):
+def get_features(
+    feature_vector: dict, i: int, patient_id: str, nodule_id: int, diagnosis: int
+) -> dict[str, float]:
+    """Was called getFeatures"""
+
     new_row = {}
     # Showing the features and its calculated values
-    for featureName in featureVector.keys():
+    for feature_name in feature_vector.keys():
         # print("Computed {}: {}".format(featureName, featureVector[featureName]))
         if (
-            ("firstorder" in featureName)
-            or ("glszm" in featureName)
-            or ("glcm" in featureName)
-            or ("glrlm" in featureName)
-            or ("gldm" in featureName)
-            or ("shape" in featureName)
+            ("firstorder" in feature_name)
+            or ("glszm" in feature_name)
+            or ("glcm" in feature_name)
+            or ("glrlm" in feature_name)
+            or ("gldm" in feature_name)
+            or ("shape" in feature_name)
         ):
-            new_row.update({featureName: featureVector[featureName]})
-    lst = sorted(new_row.items())  # Ordering the new_row dictionary
+            new_row.update({feature_name: feature_vector[feature_name]})
+    items = sorted(new_row.items())  # Ordering the new_row dictionary
     # Adding some columns
-    lst.insert(0, ("diagnosis", diagnosis))
-    lst.insert(0, ("slice_number", i))
-    lst.insert(0, ("nodule_id", nodule_id))
-    lst.insert(0, ("patient_id", patient_id))
-    od = OrderedDict(lst)
-    return od
+    items.insert(0, ("diagnosis", diagnosis))
+    items.insert(0, ("slice_number", i))
+    items.insert(0, ("nodule_id", nodule_id))
+    items.insert(0, ("patient_id", patient_id))
+    # In Python 3.7 and later, the built-in dict type maintains insertion order by default.
+    return dict(items)
 
 
-def SliceMode(
-    patient_id,
-    nodule_id,
-    diagnosis,
-    image,
-    mask,
-    meta1,
-    meta2,
-    extractor,
-    maskMinPixels=200,
+def slice_mode(
+    patient_id: str,
+    nodule_id: int,
+    diagnosis: int,
+    image: np.ndarray,
+    mask: np.ndarray,
+    img_meta: NiiMetadata,
+    mask_meta: NiiMetadata,
+    extractor: featureextractor.RadiomicsFeatureExtractor,
+    mask_min_pixels: int = 200,
 ):
-    myList = []
-    i = 0
+    record = []
 
-    while i < image.shape[2]:  # X, Y, Z
+    for i in range(image.shape[2]):  # X, Y, Z
         # Get the axial cut
-        img_slice = image[:, :, i]
         mask_slice = mask[:, :, i]
-        try:
-            if maskMinPixels < mask_slice.sum():
-                # Get back to the format sitk
-                img_slice_sitk = sitk.GetImageFromArray(img_slice)
-                mask_slice_sitk = sitk.GetImageFromArray(mask_slice)
+        if mask_min_pixels >= mask_slice.sum():
+            print(  # TODO: log
+                f"Skipping slice {i} because it has less than {mask_min_pixels} pixels"
+            )
+            continue
+        img_slice = image[:, :, i]
 
-                # Recover the pixel dimension in X and Y
-                (x1, y1, z1) = meta1.spacing
-                (x2, y2, z2) = meta2.spacing
-                img_slice_sitk.SetSpacing((float(x1), float(y1)))
-                mask_slice_sitk.SetSpacing((float(x2), float(y2)))
+        # Get back to the format sitk
+        img_slice_sitk = sitk.GetImageFromArray(img_slice)
+        mask_slice_sitk = sitk.GetImageFromArray(mask_slice)
 
-                # Extract features
-                featureVector = extractor.execute(
-                    img_slice_sitk, mask_slice_sitk, voxelBased=False
-                )
-                od = GetFeatures(featureVector, i, patient_id, nodule_id, diagnosis)
-                myList.append(od)
-            # else:
-            #     print("features extraction skipped in slice-i: {}".format(i))
-        except:
-            print("Exception: skipped in slice-i: {}".format(i))
-        i = i + 1
+        # Recover the pixel dimension in X and Y
+        (x1, y1, _z1) = img_meta.spacing
+        (x2, y2, _z2) = mask_meta.spacing
+        img_slice_sitk.SetSpacing((float(x1), float(y1)))
+        mask_slice_sitk.SetSpacing((float(x2), float(y2)))
 
-    df = pd.DataFrame.from_records(myList)
+        # Extract features
+        feature_vector = extractor.execute(
+            img_slice_sitk, mask_slice_sitk, voxelBased=False
+        )
+        feat_dict = get_features(feature_vector, i, patient_id, nodule_id, diagnosis)
+        record.append(feat_dict)
+
+    df = pd.DataFrame.from_records(record)
     return df
 
 
-#### Parameters to be configured
-IMG_FOLDER = DATA_FOLDER / "CT" / "image"
-MASK_FOLDER = DATA_FOLDER / "CT" / "nodule_mask"
-IMG = IMG_FOLDER / "LIDC-IDRI-0003.nii.gz"
-MASK = MASK_FOLDER / "LIDC-IDRI-0003_R_2.nii.gz"
-
-radiomics_params = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
-
-####
-
-
-# Use a parameter file, this customizes the extraction settings and
-# also specifies the input image types to use and
-# which features should be extracted.
-
-# Initializing the feature extractor
-extractor = featureextractor.RadiomicsFeatureExtractor(radiomics_params)
-
-
 # Reading image and mask
-image, meta1 = read_nifty(IMG, coordinate_order=CoordinateOrder.xyz)
-mask, meta2 = read_nifty(MASK, coordinate_order=CoordinateOrder.xyz)
+image, img_meta = read_nifty(IMG, coordinate_order=CoordinateOrder.xyz)
+mask, mask_meta = read_nifty(MASK, coordinate_order=CoordinateOrder.xyz)
 
-patient_id = "LIDC-IDRI-0003"
-nodule_id = 2
-
-df_mv = pd.read_excel(
-    "MetadatabyNoduleMaxVoting.xlsx",
+df_metadata = pd.read_excel(
+    META_DATA_PATH,
     sheet_name="ML4PM_MetadatabyNoduleMaxVoting",
     engine="openpyxl",
 )
 
-diagnosis = df_mv[
-    (df_mv.patient_id == patient_id) & (df_mv.nodule_id == nodule_id)
-].Diagnosis_value.values[0]
+diagnosis_all = df_metadata[  # TODO: possibly always "1"
+    (df_metadata.patient_id == PATIENT_ID) & (df_metadata.nodule_id == NODULE_ID)
+].Diagnosis_value.values
+assert len(diagnosis_all) == 1
+diagnosis: int = diagnosis_all[0]
+
 
 ### PREPROCESSING
-image = ShiftValues(image, value=1024)
-image = SetRange(image, in_min=0, in_max=4000)
+image = shift_values(image, value=1024)
+image = set_range(image, in_min=0, in_max=4000)
 image = SetGrayLevel(image, levels=24)
 
 
 # Extract features slice by slice.
-df = SliceMode(
-    patient_id,
-    nodule_id,
+df = slice_mode(
+    PATIENT_ID,
+    NODULE_ID,
     diagnosis,
     image,
     mask,
-    meta1,
-    meta2,
-    extractor,
-    maskMinPixels=200,
+    img_meta,
+    mask_meta,
+    extractor=featureextractor.RadiomicsFeatureExtractor(radiomics_params),
+    mask_min_pixels=200,
 )
 
 # if you get this message: "ModuleNotFoundError: No module named 'xlsxwriter'"
 # then install it doing this: pip install xlsxwriter
-saveXLSX("features.xlsx", df)
+write_to_excel(df, DEFAULT_EXPORT_XLSX_PATH)
