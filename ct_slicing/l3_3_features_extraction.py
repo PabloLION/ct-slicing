@@ -193,11 +193,11 @@ def extend_records_target(
     records_target.extend(record)
 
 
-def extract_feature(
+def extract_feature_record(
     data_set: Literal["CT", "VOIs"],
     patient_id: str,
     patient_nodule_index: int,
-) -> pd.DataFrame:
+) -> list[dict[str, float]]:
     """
     extract features from a single patient and return a DataFrame
     """
@@ -242,7 +242,17 @@ def extract_feature(
         extractor,
         mask_min_pixels,
     )
+    return record
 
+
+def extract_feature(
+    data_set: Literal["CT", "VOIs"],
+    patient_id: str,
+    patient_nodule_index: int,
+):
+    """Was the script body"""
+
+    record = extract_feature_record(data_set, patient_id, patient_nodule_index)
     df = pd.DataFrame.from_records(record)
     return df
 
