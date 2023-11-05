@@ -36,7 +36,7 @@ from NiftyIO import readNifty
 # Volume Visualization
 from VolumeCutBrowser import VolumeCutBrowser
 # Segmentation Quality Scores
-from SegmentationQualityScores import RelVolDiff,VOE,DICE,DistScores
+from l5_3_k_fold_sample_code import RelVolDiff,VOE,DICE,DistScores
 
 
 ######## 1. LOAD DATA
