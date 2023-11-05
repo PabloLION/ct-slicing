@@ -26,10 +26,10 @@ from skimage.filters import threshold_otsu
 from sklearn.cluster import KMeans
 
 from ct_slicing.config.data_path import DATA_FOLDER
-from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty
+from ct_slicing.vis_lib.NiftyIO import read_nifty
 from ct_slicing.vis_lib.VolumeCutBrowser import CutDirection, VolumeCutBrowser
-from ct_slicing.l3_5_gabor_filters import GaborFilterBank2D, GaborFilterBank3D
-from ct_slicing.l3_6_browse_gabor_filt_bank import BrowseGaborFilterBank
+from ct_slicing.filter_lib.gabor_filters import GaborFilterBank2D
+from ct_slicing.filter_lib.browse_gabor_filt_bank import BrowseGaborFilterBank
 
 ######## PARAMETERS
 CASE_NAME = "LIDC-IDRI-0001"
