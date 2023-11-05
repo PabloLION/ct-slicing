@@ -15,10 +15,8 @@ Universitat Autonoma de Barcelona
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from collections import OrderedDict
 import SimpleITK as sitk
 from radiomics import featureextractor, setVerbosity
-
 
 from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
 from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
@@ -27,7 +25,7 @@ from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
 setVerbosity(60)
 DATA_SET = "CT"
 PATIENT_ID = "LIDC-IDRI-0003"
-NODULE_ID = 2
+PATIENT_NODULE_INDEX = 2
 # These original values are not valid for l3_5_featuresExtractionSVM.py
 # because the "diagnosis" column all "malign"
 
@@ -45,11 +43,11 @@ MASK_FOLDER = DATA_FOLDER / DATA_SET / "nodule_mask"
 if DATA_SET == "CT":
     IMG = IMG_FOLDER / f"{PATIENT_ID}.nii.gz"
 elif DATA_SET == "VOIs":
-    IMG = IMG_FOLDER / f"{PATIENT_ID}_R_{NODULE_ID}.nii.gz"
+    IMG = IMG_FOLDER / f"{PATIENT_ID}_R_{PATIENT_NODULE_INDEX}.nii.gz"
 else:
     raise ValueError(f'DATA_SET can only be "CT" or "VOIs", not {DATA_SET}')
 
-MASK = MASK_FOLDER / f"{PATIENT_ID}_R_{NODULE_ID}.nii.gz"
+MASK = MASK_FOLDER / f"{PATIENT_ID}_R_{PATIENT_NODULE_INDEX}.nii.gz"
 
 radiomics_params = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
 
@@ -72,10 +70,14 @@ def set_range(image: np.ndarray, in_min: int, in_max: int) -> np.ndarray:
     return image
 
 
-def SetGrayLevel(image: np.ndarray, levels: int) -> np.ndarray:
-    # array's values between 0 & 1
-    image = image * levels
-    image = image.astype(np.uint8)  # get into integer values
+def set_gray_level(image: np.ndarray, levels: int) -> np.ndarray:
+    """Was called SetGrayLevel
+
+    Args:
+        image (np.ndarray): an image with values between 0 and 1
+        levels (int): the number of gray levels to use
+    """
+    image = (image * levels).astype(np.uint8)  # get into integer values
     print("Range after SetGrayLevel: {:.2f} - {:.2f}".format(image.min(), image.max()))
     return image
 
@@ -87,7 +89,9 @@ def write_to_excel(df: pd.DataFrame, path: Path):
         print("!!! Only one class in the dataframe, not saving !!!")  # TODO: log
         return
     # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter(path, engine="xlsxwriter")
+    # append instead of overwrite to get more "diagnosis" classes for later
+    # classification. (l3_5_features_extraction_svm.py)
+    writer = pd.ExcelWriter(path, engine="xlsxwriter", mode="a")
     df.to_excel(writer, sheet_name="Sheet1", index=False)
     writer.close()
 
@@ -174,23 +178,24 @@ df_metadata = pd.read_excel(
     engine="openpyxl",
 )
 
-diagnosis_all = df_metadata[  # TODO: possibly always "1"
-    (df_metadata.patient_id == PATIENT_ID) & (df_metadata.nodule_id == NODULE_ID)
-].Diagnosis_value.values
-assert len(diagnosis_all) == 1
-diagnosis: int = diagnosis_all[0]
+nodule_identity = df_metadata[  # TODO: possibly always "1"
+    (df_metadata.patient_id == PATIENT_ID)
+    & (df_metadata.nodule_id == PATIENT_NODULE_INDEX)
+]
+assert len(nodule_identity) == 1
+diagnosis: int = nodule_identity.Diagnosis_value.values[0]
 
 
 ### PREPROCESSING
 image = shift_values(image, value=1024)
 image = set_range(image, in_min=0, in_max=4000)
-image = SetGrayLevel(image, levels=24)
+image = set_gray_level(image, levels=24)
 
 
 # Extract features slice by slice.
 df = slice_mode(
     PATIENT_ID,
-    NODULE_ID,
+    PATIENT_NODULE_INDEX,
     diagnosis,
     image,
     mask,
