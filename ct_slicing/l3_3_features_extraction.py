@@ -220,14 +220,17 @@ def extend_records_target(
 
 
 def extract_feature(
-    img_path: Path,
-    mask_path: Path,
+    data_set: Literal["CT", "VOIs"],
     patient_id: str,
     patient_nodule_index: int,
 ) -> pd.DataFrame:
     """
     extract features from a single patient and return a DataFrame
     """
+
+    img_path, mask_path = get_img_mask_pair_paths(
+        data_set, patient_id, patient_nodule_index
+    )
 
     # Reading image and mask
     image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
@@ -281,9 +284,6 @@ if __name__ == "__main__":
     ]
 
     data_set, patient_id, patient_nodule_index = "CT", "LIDC-IDRI-0003", 2
-    img_path, mask_path = get_img_mask_pair_paths(
-        data_set, patient_id, patient_nodule_index
-    )
 
-    df = extract_feature(img_path, mask_path, patient_id, patient_nodule_index)
+    df = extract_feature(data_set, patient_id, patient_nodule_index)
     write_excel(df, DEFAULT_EXPORT_XLSX_PATH)
