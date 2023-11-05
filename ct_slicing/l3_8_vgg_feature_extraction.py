@@ -34,7 +34,7 @@ transform = transforms.Compose(
 )
 
 # Load a pre-trained VGG16 or VGG19 model
-model = models.vgg16(pretrained=True)
+model = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
 # model = models.vgg19(pretrained=True)
 
 ##############################################
@@ -138,51 +138,54 @@ y = np.array(y)  # convert the ground truth list to a numpy array.
 
 #####################################
 
-# # DATA SPLITTING
-# X_train, X_test, y_train, y_test = train_test_split(all_features, y, test_size=0.3, random_state=42)
+# DATA SPLITTING
+# X_train, X_test, y_train, y_test = train_test_split(
+#     all_features, y, test_size=0.3, random_state=42
+# )
+X_train, X_test, y_train, y_test = all_features, all_features, y, y
 
-# #####################################
+#####################################
 
-# # Create and training a SVM classifier
-# clf2 = svm.SVC(probability=True, class_weight='balanced')
-# clf2.fit(X_train, y_train)
+# Create and training a SVM classifier
+clf2 = svm.SVC(probability=True, class_weight="balanced")
+clf2.fit(X_train, y_train)
 
-# y_pred_uncalib = clf2.predict(X_train)
+y_pred_uncalib = clf2.predict(X_train)
 
-# train_report_dict = classification_report(
-# 	y_train,
-# 	y_pred_uncalib,
-# 	labels = [0, 1],
-# 	target_names=['benign', 'malign'],
-# 	sample_weight=None,
-# 	digits=3,
-# 	output_dict=False,
-# 	zero_division=0
-# 	)
+train_report_dict = classification_report(
+    y_train,
+    y_pred_uncalib,
+    labels=[0, 1],
+    target_names=["benign", "malign"],
+    sample_weight=None,
+    digits=3,
+    output_dict=False,
+    zero_division=0,
+)
 
-# print(train_report_dict)
-
-
-# # Show the probabilities of the prediction
-# print(clf2.predict_proba(X_train))
+print(train_report_dict)
 
 
-# # Use the probabilities to calibrate a new model
-# calibrated_classifier = CalibratedClassifierCV(clf2, n_jobs=-1)
-# calibrated_classifier.fit(X_train, y_train)
+# Show the probabilities of the prediction
+print(clf2.predict_proba(X_train))
+
+
+# Use the probabilities to calibrate a new model
+calibrated_classifier = CalibratedClassifierCV(clf2, n_jobs=-1, cv=2)
+# calibrated_classifier.fit(X_train, y_train) # not fixable with 2 samples only
 
 
 # y_pred_calib = calibrated_classifier.predict(X_train)
 
 # train_report_dict = classification_report(
-# 	y_train,
-# 	y_pred_calib,
-# 	labels = [0, 1],
-# 	target_names=['benign', 'malign'],
-# 	sample_weight=None,
-# 	digits=3,
-# 	output_dict=False,
-# 	zero_division=0
-# 	)
+#     y_train,
+#     y_pred_calib,
+#     labels=[0, 1],
+#     target_names=["benign", "malign"],
+#     sample_weight=None,
+#     digits=3,
+#     output_dict=False,
+#     zero_division=0,
+# )
 
 # print(train_report_dict)
