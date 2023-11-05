@@ -14,7 +14,6 @@ __year__ = "2023"
 
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 
 from skimage.filters import threshold_otsu
 from skimage import morphology as Morpho
@@ -36,13 +35,8 @@ from ct_slicing.vis_lib.segmentation_quality_scores import (
 ######## 1. LOAD DATA
 
 #### Data Folders
-SessionDataFolder = "/Users/pau/Downloads/OneDrive_1_12-4-2023"  # r'D:\Teaching\Master\DataSci4Health\2023_ML4PM\Week 08 - Introduction\Dataset'
-os.chdir(SessionDataFolder)
-
-
 IMG_PATH = DATA_FOLDER / "CT" / "image" / "LIDC-IDRI-0001.nii.gz"
-MASK_PATH = DATA_FOLDER / "CT" / "nodule_mask" / "LIDC-IDRI-0001.nii.gz"
-
+MASK_PATH = DATA_FOLDER / "CT" / "nodule_mask" / "LIDC-IDRI-0001_R_1.nii.gz"
 
 #### Load Intensity Volume
 niiROI, _ = read_nifty(IMG_PATH)
@@ -55,11 +49,20 @@ niiROISeg = niiROI > Th
 
 ### 3. VALIDATION SCORES
 # Axial Cut
-k = int(
-    niiROI.shape[2] / 2
-)  # Cut at the middle of the volume. Change k to get other cuts
+# k = int(niiROI.shape[2] / 2) # Wrong: SAGT is all 0
+# Cut at the middle of the volume. Change k to get other cuts
+
+
+sums = np.sum(niiROIGT, axis=(0, 1))
+k = np.argmax(sums)  # I added this line other wize SAGT would be all 0
+
+
 SA = niiROI[:, :, k]
 SAGT = niiROIGT[:, :, k]
+
+assert np.all(SAGT == 0) == False, f"SAGT is all 0? {np.all(SAGT == 0)}"
+
+
 SASeg = niiROISeg[:, :, k]
 
 # 3.1 Visualize GT contours over SA
@@ -91,6 +94,7 @@ j = BorderGT[0][:, 1].astype(int)
 # Show histogram
 fig = plt.figure()
 plt.hist(DistSeg[i, j], bins=50, edgecolor="k")
+plt.show()
 
 # 3.3.3 Distance Scores
 AvgDist, MxDist = DistScores(SASeg, SAGT)
