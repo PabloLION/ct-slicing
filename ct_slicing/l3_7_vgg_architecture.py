@@ -11,12 +11,14 @@ Universitat Autonoma de Barcelona
 import torchvision.models as models
 
 # Load the pre-trained model VGG16
-model = models.vgg16(pretrained=True)
+model = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
+# pretrained=True is deprecated, use weights=models.VGG16_Weights.IMAGENET1K_V1 instead
 
 # Show the architecture of the VGG16 model
-print(model)
+print(model)  # similar to next line
+print(model.named_parameters)
 
-# # Show the layer's weights of the VGG16 model
-# for name, param in model.named_parameters():
-#     if param.requires_grad:
-#         print(name, param.data)
+# Show the layer's weights of the VGG16 model
+for name, param in model.named_parameters():
+    if param.requires_grad:
+        print(name, param.data)
