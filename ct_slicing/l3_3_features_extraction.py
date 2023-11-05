@@ -174,23 +174,20 @@ def slice_mode(
     mask_meta: NiiMetadata,
     extractor: featureextractor.RadiomicsFeatureExtractor,
     mask_min_pixels: int = 200,
-):
-    record = []
-
-    get_record(
-        patient_id,
-        patient_nodule_index,
-        diagnosis,
-        image,
-        mask,
-        img_meta,
-        mask_meta,
-        extractor,
-        mask_min_pixels,
+) -> pd.DataFrame:
+    return pd.DataFrame.from_records(
+        get_record(
+            patient_id,
+            patient_nodule_index,
+            diagnosis,
+            image,
+            mask,
+            img_meta,
+            mask_meta,
+            extractor,
+            mask_min_pixels,
+        )
     )
-
-    df = pd.DataFrame.from_records(record)
-    return df
 
 
 def extend_records_target(
