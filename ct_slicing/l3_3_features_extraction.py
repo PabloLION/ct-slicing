@@ -135,9 +135,9 @@ def get_record(
     for i in range(image.shape[2]):  # X, Y, Z
         # Get the axial cut
         mask_slice = mask[:, :, i]
-        if mask_min_pixels >= mask_slice.sum():
+        if mask_slice.sum() < mask_min_pixels:
             print(  # TODO: log
-                f"Skipping slice {i} because it has less than {mask_min_pixels} pixels"
+                f"Skipping slice {i} of {patient_id} nodule {patient_nodule_index} because it has less than {mask_min_pixels} pixels"
             )
             continue
         img_slice = image[:, :, i]
@@ -162,35 +162,6 @@ def get_record(
         record.append(feat_dict)
 
     return record
-
-
-def extend_records_target(
-    patient_id: str,
-    nodule_id: int,
-    diagnosis: int,
-    image: np.ndarray,
-    mask: np.ndarray,
-    img_meta: NiiMetadata,
-    mask_meta: NiiMetadata,
-    extractor: featureextractor.RadiomicsFeatureExtractor,
-    mask_min_pixels: int = 200,
-    records_target: list[dict[str, float]] | None = None,
-):
-    if records_target is None:
-        records_target = []
-
-    record = get_record(
-        patient_id,
-        nodule_id,
-        diagnosis,
-        image,
-        mask,
-        img_meta,
-        mask_meta,
-        extractor,
-        mask_min_pixels,
-    )
-    records_target.extend(record)
 
 
 def extract_feature_record(
@@ -254,12 +225,13 @@ def extract_feature(
 
     record = extract_feature_record(data_set, patient_id, patient_nodule_index)
     df = pd.DataFrame.from_records(record)
-    return df
+    write_excel(df, DEFAULT_EXPORT_XLSX_PATH)
 
 
 if __name__ == "__main__":
-    records_target = []
+    records = []
 
+    # TODO: extract this part to data loading module
     patient_nodule_diagnosis = [
         # (patient_id, patient_nodule_index, diagnosis)
         ("LIDC-IDRI-0001", 1, 1),
@@ -270,7 +242,14 @@ if __name__ == "__main__":
         ("LIDC-IDRI-0005", 2, 0),
     ]
 
-    data_set, patient_id, patient_nodule_index = "CT", "LIDC-IDRI-0003", 2
+    records = []
+    for patient_id, patient_nodule_index, diagnosis in patient_nodule_diagnosis:
+        record = extract_feature_record(
+            data_set="CT",
+            patient_id=patient_id,
+            patient_nodule_index=patient_nodule_index,
+        )
+        records.extend(record)
+    df = pd.DataFrame.from_records(records)
 
-    df = extract_feature(data_set, patient_id, patient_nodule_index)
     write_excel(df, DEFAULT_EXPORT_XLSX_PATH)
