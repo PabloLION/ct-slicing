@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-__author__ = "Guillermo Torres, Debora Gil and Pau Cano"
-__license__ = "GPLv3"
-__email__ = "gtorres,debora,pau@cvc.uab.cat"
+__author__ = "Debora Gil, Guillermo Torres, Carles Sanchez, Pau Cano"
+__license__ = "GPL"
+__email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
+__doc__ = """Source code for volume visualization
+
+Computer Vision Center
+Universitat Autonoma de Barcelona
 """
 
 import torch
@@ -16,20 +17,25 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import classification_report
+
 # from NiftyIO import readNifty
 
 
 # Create a transformation for processing the image
-transform = transforms.Compose([
-    transforms.ToPILImage(),  # Convertir el tensor a una imagen PIL
-    transforms.Resize((224, 224)),  # Redimensionar la imagen a 224x224 píxeles
-    transforms.ToTensor(),  # Convertir la imagen a un tensor de PyTorch
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalizar el tensor
-])
+transform = transforms.Compose(
+    [
+        transforms.ToPILImage(),  # Convertir el tensor a una imagen PIL
+        transforms.Resize((224, 224)),  # Redimensionar la imagen a 224x224 píxeles
+        transforms.ToTensor(),  # Convertir la imagen a un tensor de PyTorch
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        ),  # Normalizar el tensor
+    ]
+)
 
 # Load a pre-trained VGG16 or VGG19 model
-model = models.vgg16(pretrained=True)  
-#model = models.vgg19(pretrained=True)
+model = models.vgg16(pretrained=True)
+# model = models.vgg19(pretrained=True)
 
 ##############################################
 
@@ -42,9 +48,9 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
 ################################
 
 ########################
-## Insert here your code ... 
+## Insert here your code ...
 ## "ONE SLICE" and "ANOTHER SLICE" must be replaced by your code.
-## Add a loop to read the nodules and pass a slice at a time through the VGG network 
+## Add a loop to read the nodules and pass a slice at a time through the VGG network
 ## to make the features extraction from the first ReLU of the classifier sequence.
 ##
 ## print(model)
@@ -70,7 +76,7 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
 X = np.random.rand(224, 224)  # IT SHOULD BE REPLACED BY THE SLICE OF THE NODULE
 
 # Replicate the arry in three channels
-X = np.stack([X] * 3, axis=2)   # (224, 224, 3)
+X = np.stack([X] * 3, axis=2)  # (224, 224, 3)
 
 # Transpose the axis: (3, 224, 224)
 X = X.transpose((2, 0, 1))
@@ -105,13 +111,13 @@ y.append(0)
 #####################################
 
 ####### ANOTHER SLICE ########
-X = np.random.rand(224, 224) # IT SHOULD BE REPLACED BY THE SLICE OF THE NODULE
-X = np.stack([X] * 3, axis=2)   # (224, 224, 3)
+X = np.random.rand(224, 224)  # IT SHOULD BE REPLACED BY THE SLICE OF THE NODULE
+X = np.stack([X] * 3, axis=2)  # (224, 224, 3)
 X = X.transpose((2, 0, 1))
 tensor = torch.from_numpy(X)
 tensor = transform(tensor)
 tensor = tensor.unsqueeze(0)
-print(tensor.shape) 
+print(tensor.shape)
 
 # Extract features using the VGG model
 with torch.no_grad():
