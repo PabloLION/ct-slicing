@@ -23,12 +23,14 @@ from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
 from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
 
 
-setVerbosity(60)  # TODO: how to quietly run? (verbosity level 60 is showing info)
+setVerbosity(60)  # #TODO: how to quietly run? (verbosity level 60 is showing info)
+# #TODO: fix Shape features are only available 3D input (for 2D input, use shape2D). Found 2D input
+
 RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
 DEFAULT_MASK_MIN_PIXELS = 15  # was 200, too large to see `diagnosis==0` samples
 
 
-# TODO: extract this part to data loading module
+# #TODO: extract this part to data loading module
 def get_img_mask_pair_paths(
     data_set: Literal["CT", "VOIs"], patient_id: str, nodule_index: int
 ):
