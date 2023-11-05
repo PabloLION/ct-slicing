@@ -25,6 +25,7 @@ from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
 
 setVerbosity(60)  # TODO: how to quietly run? (verbosity level 60 is showing info)
 RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
+DEFAULT_MASK_MIN_PIXELS = 15  # was 200, too large to see `diagnosis==0` samples
 
 
 # TODO: extract this part to data loading module
@@ -128,7 +129,7 @@ def get_record(
     img_meta: NiiMetadata,
     mask_meta: NiiMetadata,
     extractor: featureextractor.RadiomicsFeatureExtractor,
-    mask_min_pixels: int = 200,
+    mask_min_pixels: int,
 ):
     record = []
 
@@ -160,6 +161,11 @@ def get_record(
             feature_vector, i, patient_id, patient_nodule_index, diagnosis
         )
         record.append(feat_dict)
+
+    if len(record) == 0:
+        print(  # TODO: log
+            f"!!!!!! Skipping patient {patient_id} nodule {patient_nodule_index} because it has no slices with more than {mask_min_pixels} pixels"
+        )
 
     return record
 
@@ -200,7 +206,7 @@ def extract_feature_record(
     image = set_gray_level(image, levels=24)
 
     extractor = featureextractor.RadiomicsFeatureExtractor(RADIOMICS_PARAMS_STR)
-    mask_min_pixels = 200
+    mask_min_pixels = DEFAULT_MASK_MIN_PIXELS
     # Extract features slice by slice.
     record = get_record(
         patient_id,
