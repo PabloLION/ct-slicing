@@ -222,15 +222,18 @@ def extract_feature_record(
     return record
 
 
-def extract_feature(
-    data_set: Literal["CT", "VOIs"],
-    patient_id: str,
-    patient_nodule_index: int,
-):
+def extract_feature(patient_nodule_diagnosis: list[tuple[str, int, int]]):
     """Was the script body"""
 
-    record = extract_feature_record(data_set, patient_id, patient_nodule_index)
-    df = pd.DataFrame.from_records(record)
+    records = []
+    for patient_id, patient_nodule_index, _diagnosis in patient_nodule_diagnosis:
+        record = extract_feature_record(
+            data_set="CT",
+            patient_id=patient_id,
+            patient_nodule_index=patient_nodule_index,
+        )
+        records.extend(record)
+    df = pd.DataFrame.from_records(records)
     write_excel(df, DEFAULT_EXPORT_XLSX_PATH)
 
 
@@ -241,21 +244,11 @@ if __name__ == "__main__":
     patient_nodule_diagnosis = [
         # (patient_id, patient_nodule_index, diagnosis)
         ("LIDC-IDRI-0001", 1, 1),
-        ("LIDC-IDRI-0003", 2, 1),
+        ("LIDC-IDRI-0003", 2, 1),  # originally only this case was processed
         ("LIDC-IDRI-0003", 3, 1),
         ("LIDC-IDRI-0003", 4, 1),
         ("LIDC-IDRI-0005", 1, 0),
         ("LIDC-IDRI-0005", 2, 0),
     ]
 
-    records = []
-    for patient_id, patient_nodule_index, diagnosis in patient_nodule_diagnosis:
-        record = extract_feature_record(
-            data_set="CT",
-            patient_id=patient_id,
-            patient_nodule_index=patient_nodule_index,
-        )
-        records.extend(record)
-    df = pd.DataFrame.from_records(records)
-
-    write_excel(df, DEFAULT_EXPORT_XLSX_PATH)
+    extract_feature(patient_nodule_diagnosis)
