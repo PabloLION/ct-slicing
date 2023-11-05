@@ -1,15 +1,12 @@
-"""
-This is a sample source code for basic validation of a segmentation method
-
-Computer Vision Center
-Universitat Autonoma de Barcelona
-
 __author__ = "Debora Gil, Guillermo Torres, Carles Sanchez, Pau Cano"
 __license__ = "GPL"
 __email__ = "debora,gtorres,csanchez,pcano@cvc.uab.es"
 __year__ = "2023"
-"""
+__doc__ = """Source code for volume visualization
 
+Computer Vision Center
+Universitat Autonoma de Barcelona
+"""
 # Unit: Segmentation Validation / Basic Validation (Segmentation)
 
 import numpy as np
