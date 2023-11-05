@@ -26,23 +26,6 @@ from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
 setVerbosity(60)  # TODO: how to quietly run? (verbosity level 60 is showing info)
 RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
 
-# DATA_SET = "CT"
-# PATIENT_ID = "LIDC-IDRI-0003"
-# PATIENT_NODULE_INDEX = 2
-# These original values are not valid for l3_5_featuresExtractionSVM.py
-# because the "diagnosis" column all "malign"
-
-## Testing with VOIs
-# diagnosis = 0 case
-# DATA_SET = "VOIs"
-# PATIENT_ID = "LIDC-IDRI-0004"
-# PATIENT_NODULE_INDEX = 1
-
-# diagnosis = 1 case
-DATA_SET = "CT"
-PATIENT_ID = "LIDC-IDRI-0003"
-PATIENT_NODULE_INDEX = 2
-
 
 # TODO: extract this part to data loading module
 def get_img_mask_pair_paths(
@@ -107,7 +90,11 @@ def append_to_excel(df: pd.DataFrame, path: Path):
 
 
 def get_features(
-    feature_vector: dict, i: int, patient_id: str, nodule_id: int, diagnosis: int
+    feature_vector: dict,
+    i: int,
+    patient_id: str,
+    patient_nodule_index: int,
+    diagnosis: int,
 ) -> dict[str, float]:
     """Was called getFeatures"""
 
@@ -128,7 +115,7 @@ def get_features(
     # Adding some columns
     items.insert(0, ("diagnosis", diagnosis))
     items.insert(0, ("slice_number", i))
-    items.insert(0, ("nodule_id", nodule_id))
+    items.insert(0, ("nodule_id", patient_nodule_index))
     items.insert(0, ("patient_id", patient_id))
     # In Python 3.7 and later, the built-in dict type maintains insertion order by default.
     return dict(items)
@@ -136,7 +123,7 @@ def get_features(
 
 def get_record(
     patient_id: str,
-    nodule_id: int,
+    patient_nodule_index: int,
     diagnosis: int,
     image: np.ndarray,
     mask: np.ndarray,
@@ -171,7 +158,9 @@ def get_record(
         feature_vector = extractor.execute(
             img_slice_sitk, mask_slice_sitk, voxelBased=False
         )
-        feat_dict = get_features(feature_vector, i, patient_id, nodule_id, diagnosis)
+        feat_dict = get_features(
+            feature_vector, i, patient_id, patient_nodule_index, diagnosis
+        )
         record.append(feat_dict)
 
     return record
@@ -179,7 +168,7 @@ def get_record(
 
 def slice_mode(
     patient_id: str,
-    nodule_id: int,
+    patient_nodule_index: int,
     diagnosis: int,
     image: np.ndarray,
     mask: np.ndarray,
@@ -192,7 +181,7 @@ def slice_mode(
 
     get_record(
         patient_id,
-        nodule_id,
+        patient_nodule_index,
         diagnosis,
         image,
         mask,
@@ -236,7 +225,11 @@ def extend_records_target(
 
 
 def extract_feature(
-    img_path: Path, mask_path: Path, export_excel_path: Path = DEFAULT_EXPORT_XLSX_PATH
+    img_path: Path,
+    mask_path: Path,
+    patient_id: str,
+    patient_nodule_index: int,
+    export_excel_path: Path = DEFAULT_EXPORT_XLSX_PATH,
 ):
     """
     extract features from a single patient and append to an excel file.
@@ -253,8 +246,8 @@ def extract_feature(
     )
 
     nodule_identity = df_metadata[
-        (df_metadata.patient_id == PATIENT_ID)
-        & (df_metadata.nodule_id == PATIENT_NODULE_INDEX)
+        (df_metadata.patient_id == patient_id)
+        & (df_metadata.nodule_id == patient_nodule_index)
     ]
     assert len(nodule_identity) == 1, f"Error: Found {len(nodule_identity)} rows"
     diagnosis: int = nodule_identity.Diagnosis_value.values[0]
@@ -266,8 +259,8 @@ def extract_feature(
 
     # Extract features slice by slice.
     df = slice_mode(
-        PATIENT_ID,
-        PATIENT_NODULE_INDEX,
+        patient_id,
+        patient_nodule_index,
         diagnosis,
         image,
         mask,
@@ -282,6 +275,20 @@ def extract_feature(
 
 if __name__ == "__main__":
     records_target = []
-    IMG, MASK = get_img_mask_pair_paths(DATA_SET, PATIENT_ID, PATIENT_NODULE_INDEX)
 
-    extract_feature(IMG, MASK, DEFAULT_EXPORT_XLSX_PATH)
+    ## Testing with VOIs
+    # diagnosis = 0 case
+    # DATA_SET = "VOIs"
+    # PATIENT_ID = "LIDC-IDRI-0004"
+    # PATIENT_NODULE_INDEX = 1
+
+    # These original values are not valid for l3_5_featuresExtractionSVM.py
+    # because the "diagnosis" column all "malign" (1) values.
+    data_set, patient_id, patient_nodule_index = "CT", "LIDC-IDRI-0003", 2
+    img_path, mask_path = get_img_mask_pair_paths(
+        data_set, patient_id, patient_nodule_index
+    )
+
+    extract_feature(
+        img_path, mask_path, patient_id, patient_nodule_index, DEFAULT_EXPORT_XLSX_PATH
+    )
