@@ -168,43 +168,44 @@ def slice_mode(
     return df
 
 
-# Reading image and mask
-image, img_meta = read_nifty(IMG, coordinate_order=CoordinateOrder.xyz)
-mask, mask_meta = read_nifty(MASK, coordinate_order=CoordinateOrder.xyz)
+def main():
+    # Reading image and mask
+    image, img_meta = read_nifty(IMG, coordinate_order=CoordinateOrder.xyz)
+    mask, mask_meta = read_nifty(MASK, coordinate_order=CoordinateOrder.xyz)
 
-df_metadata = pd.read_excel(
-    META_DATA_PATH,
-    sheet_name="ML4PM_MetadatabyNoduleMaxVoting",
-    engine="openpyxl",
-)
+    df_metadata = pd.read_excel(
+        META_DATA_PATH,
+        sheet_name="ML4PM_MetadatabyNoduleMaxVoting",
+        engine="openpyxl",
+    )
 
-nodule_identity = df_metadata[  # TODO: possibly always "1"
-    (df_metadata.patient_id == PATIENT_ID)
-    & (df_metadata.nodule_id == PATIENT_NODULE_INDEX)
-]
-assert len(nodule_identity) == 1
-diagnosis: int = nodule_identity.Diagnosis_value.values[0]
+    nodule_identity = df_metadata[  # TODO: possibly always "1"
+        (df_metadata.patient_id == PATIENT_ID)
+        & (df_metadata.nodule_id == PATIENT_NODULE_INDEX)
+    ]
+    assert len(nodule_identity) == 1
+    diagnosis: int = nodule_identity.Diagnosis_value.values[0]
+
+    # pre-processing
+    image = shift_values(image, value=1024)
+    image = set_range(image, in_min=0, in_max=4000)
+    image = set_gray_level(image, levels=24)
+
+    # Extract features slice by slice.
+    df = slice_mode(
+        PATIENT_ID,
+        PATIENT_NODULE_INDEX,
+        diagnosis,
+        image,
+        mask,
+        img_meta,
+        mask_meta,
+        extractor=featureextractor.RadiomicsFeatureExtractor(radiomics_params),
+        mask_min_pixels=200,
+    )
+
+    write_to_excel(df, DEFAULT_EXPORT_XLSX_PATH)
 
 
-### PREPROCESSING
-image = shift_values(image, value=1024)
-image = set_range(image, in_min=0, in_max=4000)
-image = set_gray_level(image, levels=24)
-
-
-# Extract features slice by slice.
-df = slice_mode(
-    PATIENT_ID,
-    PATIENT_NODULE_INDEX,
-    diagnosis,
-    image,
-    mask,
-    img_meta,
-    mask_meta,
-    extractor=featureextractor.RadiomicsFeatureExtractor(radiomics_params),
-    mask_min_pixels=200,
-)
-
-# if you get this message: "ModuleNotFoundError: No module named 'xlsxwriter'"
-# then install it doing this: pip install xlsxwriter
-write_to_excel(df, DEFAULT_EXPORT_XLSX_PATH)
+if __name__ == "__main__":
+    main()
