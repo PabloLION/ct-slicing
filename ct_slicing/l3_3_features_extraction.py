@@ -229,10 +229,9 @@ def extract_feature(
     mask_path: Path,
     patient_id: str,
     patient_nodule_index: int,
-    export_excel_path: Path = DEFAULT_EXPORT_XLSX_PATH,
-):
+) -> pd.DataFrame:
     """
-    extract features from a single patient and append to an excel file.
+    extract features from a single patient and return a DataFrame
     """
 
     # Reading image and mask
@@ -270,7 +269,7 @@ def extract_feature(
         mask_min_pixels=200,
     )
 
-    append_to_excel(df, export_excel_path)
+    return df
 
 
 if __name__ == "__main__":
@@ -289,6 +288,5 @@ if __name__ == "__main__":
         data_set, patient_id, patient_nodule_index
     )
 
-    extract_feature(
-        img_path, mask_path, patient_id, patient_nodule_index, DEFAULT_EXPORT_XLSX_PATH
-    )
+    df = extract_feature(img_path, mask_path, patient_id, patient_nodule_index)
+    append_to_excel(df, DEFAULT_EXPORT_XLSX_PATH)
