@@ -12,7 +12,7 @@ __year__ = "2023"
 
 from enum import Enum
 from pathlib import Path
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 import numpy as np
 import SimpleITK as sitk  # to read .nii Files
 
@@ -47,7 +47,7 @@ class CoordinateOrderError(ValueError):
 
 def read_nifty(
     file_path: Path, coordinate_order: CoordinateOrder = CoordinateOrder.xyz
-) -> tuple[np.ndarray, NiiMetadata]:
+) -> tuple[np.ndarray[Literal[3], np.dtype[np.float_]], NiiMetadata]:
     """
     Reads a NIfTI file and returns the volume and metadata.
 
@@ -82,6 +82,7 @@ def read_nifty(
     else:
         raise CoordinateOrderError(coordinate_order)
 
+    # add logger
     # #TODO: logger
     # print("Volume shape: {}".format(volume.shape))
     # print("Minimum value: {}".format(np.min(volume)))
