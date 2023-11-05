@@ -78,13 +78,11 @@ def set_gray_level(image: np.ndarray, levels: int) -> np.ndarray:
     return image
 
 
-def append_to_excel(df: pd.DataFrame, path: Path):
-    # append DataFrame to excel file
+def write_excel(df: pd.DataFrame, path: Path):
+    # (over)write DataFrame to excel file
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
-    # append instead of overwrite to get more "diagnosis" classes for later
-    # classification. (l3_5_features_extraction_svm.py)
-    writer = pd.ExcelWriter(path, engine="openpyxl", mode="a", if_sheet_exists="new")
+    writer = pd.ExcelWriter(path, engine="xlsxwriter")
     df.to_excel(writer, sheet_name="Sheet1", index=False)
     writer.close()
 
@@ -275,18 +273,20 @@ def extract_feature(
 if __name__ == "__main__":
     records_target = []
 
-    ## Testing with VOIs
-    # diagnosis = 0 case
-    # DATA_SET = "VOIs"
-    # PATIENT_ID = "LIDC-IDRI-0004"
-    # PATIENT_NODULE_INDEX = 1
+    patient_nodule_diagnosis = [
+        # (patient_id, patient_nodule_index, diagnosis)
+        ("LIDC-IDRI-0001", 1, 1),
+        ("LIDC-IDRI-0003", 2, 1),
+        ("LIDC-IDRI-0003", 3, 1),
+        ("LIDC-IDRI-0003", 4, 1),
+        ("LIDC-IDRI-0005", 1, 0),
+        ("LIDC-IDRI-0005", 2, 0),
+    ]
 
-    # These original values are not valid for l3_5_featuresExtractionSVM.py
-    # because the "diagnosis" column all "malign" (1) values.
     data_set, patient_id, patient_nodule_index = "CT", "LIDC-IDRI-0003", 2
     img_path, mask_path = get_img_mask_pair_paths(
         data_set, patient_id, patient_nodule_index
     )
 
     df = extract_feature(img_path, mask_path, patient_id, patient_nodule_index)
-    append_to_excel(df, DEFAULT_EXPORT_XLSX_PATH)
+    write_excel(df, DEFAULT_EXPORT_XLSX_PATH)
