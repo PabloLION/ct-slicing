@@ -31,6 +31,8 @@ from ct_slicing.vis_lib.VolumeCutBrowser import CutDirection, VolumeCutBrowser
 from ct_slicing.filter_lib.gabor_filters import GaborFilterBank2D
 from ct_slicing.filter_lib.browse_gabor_filt_bank import BrowseGaborFilterBank
 
+LESION_LABEL = "Lesion Values"
+
 ######## PARAMETERS
 CASE_NAME = "LIDC-IDRI-0001"
 
@@ -85,7 +87,7 @@ elif image_name == "SA_Mask":
     k = int(niiMask.shape[2] / 2)  # Cut at the middle of the volume
     im = niiMask[:, :, k]
 else:
-    raise Exception("Incorrect image name.")
+    raise ValueError("Incorrect image_name name.")
 
 # Image Filtering
 if filter_image == "gaussian":
@@ -103,9 +105,9 @@ else:
 #      for different filters and analyze results
 
 # Derivative along x-axis
-sx = sobel(img, axis=1, mode="constant")
+sx: np.ndarray = sobel(img, axis=1, mode="constant")
 # Derivative along y-axis
-sy = sobel(img, axis=0, mode="constant")
+sy: np.ndarray = sobel(img, axis=0, mode="constant")
 # Image Gradient (Sobel Edge Detector)
 EdgeSob = np.sqrt(sx**2 + sy**2)
 
@@ -134,10 +136,10 @@ ax.set_title("Gradient Magnitude (EdgeDetector)")
 
 # Second Derivative along x-axis
 sx = sobel(img, axis=1, mode="constant")
-sxx = sobel(sx, axis=1, mode="constant")
+sxx: np.ndarray = sobel(sx, axis=1, mode="constant")
 # Second Derivative along y-axis
 sy = sobel(img, axis=0, mode="constant")
-syy = sobel(sy, axis=0, mode="constant")
+syy: np.ndarray = sobel(sy, axis=0, mode="constant")
 # Laplacian (Ridge/Valley Detector)
 Lap = sxx + syy
 
@@ -183,7 +185,7 @@ elif gabor_params == "non_default":
         sigma=sigGab, frequency=freqGab
     )
 else:
-    raise Exception("Incorrect gabor_params name.")
+    raise ValueError("Incorrect gabor_params name.")
 
 # Show Filters
 BrowseGaborFilterBank(GaborBank2D_1, params)
@@ -248,7 +250,7 @@ plt.hist(
     edgecolor="k",
     alpha=0.5,
     facecolor="r",
-    label="Lesion Values",
+    label=LESION_LABEL,
 )
 plt.plot([Th, Th], [0, 4000], "k", lw=2, label="Otsu Threshold")
 plt.legend()
@@ -265,7 +267,7 @@ plt.legend()
 
 plt.figure()
 plt.plot(im.flatten(), Lap.flatten(), ".")
-plt.plot(im[np.nonzero(imMask)], Lap[np.nonzero(imMask)], "r.", label="Lesion Values")
+plt.plot(im[np.nonzero(imMask)], Lap[np.nonzero(imMask)], "r.", label=LESION_LABEL)
 plt.xlabel("Intensity")
 plt.ylabel("Laplacian")
 plt.title("Pixel Distribution in the Space of Values given by (Intensity,Laplacian).")
@@ -282,7 +284,7 @@ labels = kmeans.predict(X.transpose())
 
 plt.figure()
 plt.plot(im.flatten(), Lap.flatten(), ".")
-plt.plot(im[np.nonzero(imMask)], Lap[np.nonzero(imMask)], "r.", label="Lesion Values")
+plt.plot(im[np.nonzero(imMask)], Lap[np.nonzero(imMask)], "r.", label=LESION_LABEL)
 plt.xlabel("Intensity")
 plt.ylabel("Laplacian")
 plt.title("Pixel Distribution in the Space of Values given by (Intensity,Laplacian).")
