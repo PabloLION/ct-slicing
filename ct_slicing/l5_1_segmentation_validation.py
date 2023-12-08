@@ -60,16 +60,15 @@ in one slice. This might cause the threshold to be inaccurate.
 | max_dist            | MxDist        | MaxDist                                    |
 """
 
+from typing import cast
 import matplotlib.pyplot as plt
 import numpy as np
 
-from scipy.ndimage import filters as filt
-from scipy.ndimage.morphology import distance_transform_edt as bwdist
-from skimage import morphology as Morpho
+from scipy.ndimage import filters, distance_transform_edt as backward_dist
+from skimage import morphology
 from skimage.filters import threshold_otsu
 from skimage.measure import find_contours
 from vis_lib.NiftyIO import read_nifty
-from vis_lib.VolumeCutBrowser import VolumeCutBrowser
 
 from ct_slicing.config.data_path import DATA_FOLDER
 from ct_slicing.vis_lib.segmentation_quality_scores import (
@@ -129,17 +128,16 @@ slice_rel_diff = RelVolDiff(slice_otsu, slice_truth)  # #PR3: typo?
 
 # 3.3 Distance Measures
 # 3.3.1 Distance Map to Otsu Segmentation slice_cuts cut
-interior_slice_dist = bwdist(slice_otsu)  # Distance Map inside Segmentation
-exterior_slice_dist = bwdist(1 - slice_otsu)  # Distance Map outside Segmentation
-otsu_slice_dist = np.maximum(
-    interior_slice_dist, exterior_slice_dist
-)  # Distance Map at all points
+# Distance Map inside and outside Segmentation for dist map at all points
+interior_slice_dist = cast(np.ndarray, backward_dist(slice_otsu))
+exterior_slice_dist = cast(np.ndarray, backward_dist(1 - slice_otsu))
+otsu_slice_dist = np.maximum(interior_slice_dist, exterior_slice_dist)
 
-# 3.3.2 Distance from GT to Otsu Segmentation
-# GT Mask boundary points
+# 3.3.2 Distance from Ground Truth to Otsu Segmentation
+# Ground Truth Mask boundary points
 borders_truth = find_contours(slice_truth, 0.5)  # find a contour of the truth
 assert len(borders_truth) == 2, f"len(borders_truth) = {len(borders_truth)}"
-# #TODO: #PR5: why 2 contours? seems there's another contour that we didn't use.
+# #TODO: #PR5: why 2 contours? seems there's another contour that we don't need
 border_truth, border_another, *_ = borders_truth
 plt.plot(border_truth[:, 1], border_truth[:, 0], linestyle="dotted", color="y")
 plt.plot(border_another[:, 1], border_another[:, 0], linewidth=2, color="b")
