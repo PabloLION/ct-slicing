@@ -37,27 +37,27 @@ in one slice. This might cause the threshold to be inaccurate.
 
 ## Renaming
 
-| Renamed to             | Original Name | Meaning                                       |
-| ---------------------- | ------------- | --------------------------------------------- |
-| nii_otsu               | niiROISeg     | Segmentation result with otsu threshold       |
+| Renamed to          | Original Name | Meaning                                    |
+| ------------------- | ------------- | ------------------------------------------ |
+| nii_otsu            | niiROISeg     | Segmentation result with otsu threshold    |
 | slice_cut           | SA            | slice cut                                  |
-| slice_truth         | SAGT          | Ground truth                                  |
-| slice_index            | k             | index of the slice we are focusing on         |
+| slice_truth         | SAGT          | Ground truth                               |
+| slice_index         | k             | index of the slice we are focusing on      |
 | slice_otsu          | SAseg         | Segmentation result with otsu on slice cut |
-| whole_voe              | SegVOE        | VOE of the whole volume                       |
-| whole_dice             | SegDICE       | DICE of the whole volume                      |
-| whole_rel_diff         | SegRelDiff    | RelVolDiff of the whole volume                |
+| whole_voe           | SegVOE        | VOE of the whole volume                    |
+| whole_dice          | SegDICE       | DICE of the whole volume                   |
+| whole_rel_diff      | SegRelDiff    | RelVolDiff of the whole volume             |
 | slice_voe           | SegVOE_SA     | VOE of the slice cut                       |
 | slice_dice          | SegDICE_SA    | DICE of the slice cut                      |
 | slice_rel_diff      | SegRelDiff_SA | RelVolDiff of the slice cut                |
-| interior_slice_dist | DistSegInt    | Distance Map inside Segmentation (?)          |
-| exterior_slice_dist | DistSegExt    | Distance Map outside Segmentation (?)         |
-| otsu_slice_dist     | DistSeg       | Distance Map at all points (?)                |
-| borders_truth          | BorderGT      | Ground Truth Mask boundary points             |
-| border_ys              | i             | y values of border_truth                      |
-| border_xs              | j             | x values of border_truth                      |
-| average_dist           | AvgDist       | AvgDist                                       |
-| max_dist               | MxDist        | MaxDist                                       |
+| interior_slice_dist | DistSegInt    | Distance Map inside Segmentation (?)       |
+| exterior_slice_dist | DistSegExt    | Distance Map outside Segmentation (?)      |
+| otsu_slice_dist     | DistSeg       | Distance Map at all points (?)             |
+| borders_truth       | BorderGT      | Ground Truth Mask boundary points          |
+| border_ys           | i             | y values of border_truth                   |
+| border_xs           | j             | x values of border_truth                   |
+| average_dist        | AvgDist       | AvgDist                                    |
+| max_dist            | MxDist        | MaxDist                                    |
 """
 
 import matplotlib.pyplot as plt
