@@ -24,12 +24,14 @@ from sklearn.metrics import classification_report
 # Create a transformation for processing the image
 transform = transforms.Compose(
     [
-        transforms.ToPILImage(),  # Convertir el tensor a una imagen PIL
-        transforms.Resize((224, 224)),  # Redimensionar la imagen a 224x224 píxeles
-        transforms.ToTensor(),  # Convertir la imagen a un tensor de PyTorch
+        transforms.ToPILImage(),  # Convert the tensor to a PIL image
+        transforms.Resize(
+            (224, 224)
+        ),  # Change dimension of the image to 224x224 pixels
+        transforms.ToTensor(),  # Convert the image to a PyTorch tensor
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-        ),  # Normalizar el tensor
+        ),  # Normalize el tensor
     ]
 )
 
