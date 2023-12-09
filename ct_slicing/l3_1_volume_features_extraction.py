@@ -10,6 +10,7 @@ Universitat Autonoma de Barcelona
 
 import SimpleITK as itk
 from radiomics import featureextractor as feature_extractor, setVerbosity
+from ct_slicing.ct_logger import logger
 
 from ct_slicing.config.data_path import DATA_FOLDER, REPO_ROOT
 
@@ -46,4 +47,4 @@ featureVector = extractor.execute(imageITK, maskITK)
 
 # Showing the features and its calculated values
 for featureName in featureVector.keys():
-    print("Computed {}: {}".format(featureName, featureVector[featureName]))
+    logger.info("Computed {}: {}".format(featureName, featureVector[featureName]))

@@ -12,9 +12,6 @@ Universitat Autonoma de Barcelona
 ### REFERENCES
 # www.scipy-lectures.org/advanced/image_processing/#edge-detection
 
-import os
-import sys
-
 
 import numpy as np
 from mayavi import mlab
@@ -278,7 +275,7 @@ plt.legend()
 
 Lap = (Lap - Lap.min()) / (Lap.max() - Lap.min())
 X = np.array((im.flatten(), Lap.flatten()))
-kmeans = KMeans(n_clusters=2)
+kmeans = KMeans(n_clusters=2, n_init=10)
 kmeans = kmeans.fit(X.transpose())
 labels = kmeans.predict(X.transpose())
 

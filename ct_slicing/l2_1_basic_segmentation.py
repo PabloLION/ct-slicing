@@ -8,14 +8,14 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-# Unit: Segmentation
+# Unit: Volume Visualization and Lesion Segmentation / Segmentation
 # Data: from Unit "Full Dataset"
 
 import matplotlib.pyplot as plt
 from ct_slicing.config.data_path import DATA_FOLDER
 from ct_slicing.vis_lib.nifty_io import read_nifty
-from scipy.ndimage import filters
-from skimage import morphology as Morpho
+from scipy.ndimage import gaussian_filter, median_filter
+from skimage import morphology
 from skimage.filters import threshold_otsu
 
 from ct_slicing.vis_lib.volume_cut_browser import (
@@ -46,10 +46,10 @@ VolumeCutBrowser(nii_roi, CutDirection.ShortAxis)
 ### 1. PRE-PROCESSING
 # 1.1 Gaussian Filtering
 sigma = 1
-nii_roi_gauss = filters.gaussian_filter(nii_roi, sigma=sigma)
+nii_roi_gauss = gaussian_filter(nii_roi, sigma=sigma)
 # 1.2 MedFilter
 size = 3
-nii_roi_median = filters.median_filter(nii_roi, size)
+nii_roi_median = median_filter(nii_roi, size)
 
 ### 2. BINARIZATION / THRESHOLDING / PROCESSING
 
@@ -74,10 +74,10 @@ VolumeCutBrowser(nii_roi, CutDirection.ShortAxis, contour_stack=nii_roi_median)
 
 # 3.1  Opening
 size_open = 3
-se = Morpho.cube(size_open)
-nii_roi_seg_open = Morpho.binary_opening(nii_roi_otsu, se)
+se = morphology.cube(size_open)
+nii_roi_seg_open = morphology.binary_opening(nii_roi_otsu, se)
 
 # 3.2  Closing
 size_close = 3
-se = Morpho.cube(size_close)
-nii_roi_seg_close = Morpho.binary_closing(nii_roi_otsu, se)
+se = morphology.cube(size_close)
+nii_roi_seg_close = morphology.binary_closing(nii_roi_otsu, se)

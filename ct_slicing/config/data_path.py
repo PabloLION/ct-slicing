@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ct_slicing.logger import logger
+from ct_slicing.ct_logger import logger
 
 
 REPO_ROOT = Path(__file__).parent.parent.parent

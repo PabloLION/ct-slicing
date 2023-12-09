@@ -8,10 +8,10 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-# Unit: Feature Extraction / PyRadiomics
 # Unit: Feature Extraction / PreTrained Networks
 
 
+import logging
 from pathlib import Path
 from typing import Literal
 import numpy as np
@@ -21,10 +21,14 @@ from radiomics import featureextractor, setVerbosity
 
 from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
+from ct_slicing.ct_logger import logger
 
-
-setVerbosity(60)  # #TODO: how to quietly run? (verbosity level 60 is showing info)
+# this is to fix wrong implementation of radiomics.setVerbosity(60)
+logging.getLogger("radiomics").setLevel(logging.CRITICAL)  # run radiomics quietly
+logging.getLogger("pykwalify").setLevel(logging.CRITICAL)  # pykwalify from radiomics
 # #TODO: fix Shape features are only available 3D input (for 2D input, use shape2D). Found 2D input
+
+logger.setLevel(logging.INFO)
 
 RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
 DEFAULT_MASK_MIN_PIXELS = 15  # was 200, too large to see `diagnosis==0` samples
@@ -55,7 +59,7 @@ def shift_values(image: np.ndarray, value: int) -> np.ndarray:
     """Was called ShiftValues"""
 
     image = image + value
-    print("Range after Shift: {:.2f} - {:.2f}".format(image.min(), image.max()))
+    logger.debug(f"Range after Shift: {image.min()} - {image.max()}")
     return image
 
 
@@ -65,7 +69,7 @@ def set_range(image: np.ndarray, in_min: int, in_max: int) -> np.ndarray:
 
     image[image < 0] = 0
     image[image > image.max()] = image.max()
-    print("Range after SetRange: {:.2f} - {:.2f}".format(image.min(), image.max()))
+    logger.debug(f"Range after SetRange: {image.min():.2f} - {image.max():.2f}")
     return image
 
 
@@ -77,7 +81,9 @@ def set_gray_level(image: np.ndarray, levels: int) -> np.ndarray:
         levels (int): the number of gray levels to use
     """
     image = (image * levels).astype(np.uint8)  # get into integer values
-    print("Range after SetGrayLevel: {:.2f} - {:.2f}".format(image.min(), image.max()))
+    logger.debug(
+        f"Range after SetGrayLevel: {image.min():.2f} - {image.max():.2f} levels={levels}"
+    )
     return image
 
 
@@ -124,26 +130,26 @@ def get_features(
 
 def get_record(
     patient_id: str,
-    patient_nodule_index: int,
+    nodule_index: int,
     diagnosis: int,
     image: np.ndarray,
     mask: np.ndarray,
     img_meta: NiiMetadata,
     mask_meta: NiiMetadata,
     extractor: featureextractor.RadiomicsFeatureExtractor,
-    mask_min_pixels: int,
+    mask_pixel_min_threshold: int,
 ):
     record = []
 
-    for i in range(image.shape[2]):  # X, Y, Z
+    for slice_index in range(image.shape[2]):  # X, Y, Z
         # Get the axial cut
-        mask_slice = mask[:, :, i]
-        if mask_slice.sum() < mask_min_pixels:
-            print(  # TODO: log
-                f"Skipping slice {i} of {patient_id} nodule {patient_nodule_index} because it has less than {mask_min_pixels} pixels"
+        mask_slice = mask[:, :, slice_index]
+        if mask_slice.sum() < mask_pixel_min_threshold:
+            logger.debug(
+                f"Skipping {slice_index=} of {patient_id=} {nodule_index=} because it has less than {mask_pixel_min_threshold=} pixels"
             )
             continue
-        img_slice = image[:, :, i]
+        img_slice = image[:, :, slice_index]
 
         # Get back to the format sitk
         img_slice_sitk = sitk.GetImageFromArray(img_slice)
@@ -160,13 +166,13 @@ def get_record(
             img_slice_sitk, mask_slice_sitk, voxelBased=False
         )
         feat_dict = get_features(
-            feature_vector, i, patient_id, patient_nodule_index, diagnosis
+            feature_vector, slice_index, patient_id, nodule_index, diagnosis
         )
         record.append(feat_dict)
 
     if len(record) == 0:
-        print(  # TODO: log
-            f"!!!!!! Skipping patient {patient_id} nodule {patient_nodule_index} because it has no slices with more than {mask_min_pixels} pixels"
+        logger.info(
+            f"Skipping patient {patient_id} nodule {nodule_index} because it has no slices with more than {mask_pixel_min_threshold} pixels"
         )
 
     return record
@@ -221,6 +227,9 @@ def extract_feature_record(
         extractor,
         mask_min_pixels,
     )
+    logger.info(
+        f"Extracted {len(record):2} slices from {patient_id=} {patient_nodule_index=}"
+    )
     return record
 
 
@@ -243,6 +252,7 @@ if __name__ == "__main__":
     records = []
 
     # TODO: extract this part to data loading module
+    # FIX: extract features from VOIs dataset
     patient_nodule_diagnosis = [
         # (patient_id, patient_nodule_index, diagnosis)
         ("LIDC-IDRI-0001", 1, 1),

@@ -8,6 +8,9 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
+# Unit: Visual Feature extraction exploration and selection / PyRadiomics
+
+from enum import Enum
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -18,7 +21,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import classification_report
 
-# from NiftyIO import readNifty
+from ct_slicing.ct_logger import logger
+
+
+class ModelName(Enum):
+    VGG16 = "vgg16"
+    VGG19 = "vgg19"
+
+
+MODEL_NAME: ModelName = ModelName.VGG16  # property to be configured
 
 
 # Create a transformation for processing the image
@@ -36,8 +47,12 @@ transform = transforms.Compose(
 )
 
 # Load a pre-trained VGG16 or VGG19 model
-model = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
-# model = models.vgg19(pretrained=True)
+if MODEL_NAME == ModelName.VGG16:
+    model = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
+elif MODEL_NAME == ModelName.VGG19:
+    model = models.vgg19(pretrained=True)
+else:
+    raise ValueError(f"Unknown model name: {MODEL_NAME}")
 
 ##############################################
 
@@ -50,7 +65,7 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
 ################################
 
 ########################
-## Insert here your code ...
+## Insert your code here...
 ## "ONE SLICE" and "ANOTHER SLICE" must be replaced by your code.
 ## Add a loop to read the nodules and pass a slice at a time through the VGG network
 ## to make the features extraction from the first ReLU of the classifier sequence.
@@ -77,7 +92,7 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
 # Create a random numpy array
 X = np.random.rand(224, 224)  # IT SHOULD BE REPLACED BY THE SLICE OF THE NODULE
 
-# Replicate the arry in three channels
+# Replicate the array in three channels
 X = np.stack([X] * 3, axis=2)  # (224, 224, 3)
 
 # Transpose the axis: (3, 224, 224)
@@ -165,12 +180,11 @@ train_report_dict = classification_report(
     zero_division=0,
 )
 
-print(train_report_dict)
+logger.info(train_report_dict)
 
 
 # Show the probabilities of the prediction
-print(clf2.predict_proba(X_train))
-
+logger.info(f"Probabilities of the prediction:\n{clf2.predict_proba(X_train)}")
 
 # Use the probabilities to calibrate a new model
 calibrated_classifier = CalibratedClassifierCV(clf2, n_jobs=-1, cv=2)

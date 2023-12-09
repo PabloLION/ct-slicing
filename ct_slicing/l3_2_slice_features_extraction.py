@@ -10,16 +10,19 @@ Universitat Autonoma de Barcelona
 
 # TODO: a lot of warnings
 
+import logging
 import pandas as pd
 from collections import OrderedDict
 import SimpleITK as sitk
-from radiomics import featureextractor
-from radiomics import setVerbosity
+from radiomics import featureextractor as feature_extractor
+from ct_slicing.ct_logger import logger as _logger
 from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
 
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty
 
-setVerbosity(60)
+# this is to fix wrong implementation of radiomics.setVerbosity(60)
+logging.getLogger("radiomics").setLevel(logging.CRITICAL)  # run radiomics quietly
+logging.getLogger("pykwalify").setLevel(logging.CRITICAL)  # pykwalify from radiomics
 
 XLSX_PATH = OUTPUT_FOLDER / "slice_features.xlsx"
 
@@ -89,7 +92,8 @@ def SliceMode(
                 myList.append(od)
             # else:
             #     print("features extraction skipped in slice-i: {}".format(i))
-        except:
+        except Exception as e:
+            _logger.error(e)
             print("Exception: skipped in slice-i: {}".format(i))
         i = i + 1
 
@@ -115,7 +119,7 @@ radiomics_params = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
 # which features should be extracted.
 
 # Initializing the feature extractor
-extractor = featureextractor.RadiomicsFeatureExtractor(radiomics_params)
+extractor = feature_extractor.RadiomicsFeatureExtractor(radiomics_params)
 
 
 # Reading image and mask

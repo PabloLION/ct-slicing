@@ -16,7 +16,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.utils import Bunch
 
-from ct_slicing.logger import logger
+from ct_slicing.ct_logger import logger
 
 
 # Load dataset
@@ -50,4 +50,5 @@ train_report_dict = metrics.classification_report(
     zero_division=0,
 )
 
-print(train_report_dict)
+logger.info("Training Report:")
+logger.info(train_report_dict)

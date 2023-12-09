@@ -11,7 +11,7 @@ Universitat Autonoma de Barcelona
 # Unit: Data Exploration / Volume Visualization
 # Data: from "LUNA Dataset / Full Dataset"
 
-from ct_slicing.logger import logger
+from ct_slicing.ct_logger import logger
 from ct_slicing.vis_lib.volume_cut_browser import (
     VolumeCutBrowser,
     CutDirection,
@@ -37,9 +37,9 @@ assert (
 ), f"Volume shape {nii_vol.shape} != Mask shape {nii_mask.shape}"
 
 # VOLUME METADATA
-print("Voxel Resolution (mm): ", nii_metadata.spacing)
-print("Volume origin (mm): ", nii_metadata.origin)
-print("Axes direction: ", nii_metadata.direction)
+logger.info(f"Voxel Resolution (mm): {nii_metadata.spacing}")
+logger.info(f"Volume origin (mm): {nii_metadata.origin}")
+logger.info(f"Axes direction: {nii_metadata.direction}")
 
 # Interactive Volume Visualization
 # Short Axis View

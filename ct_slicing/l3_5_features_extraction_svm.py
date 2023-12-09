@@ -17,6 +17,10 @@ from sklearn.utils import shuffle
 from sklearn import svm
 
 from ct_slicing.config.data_path import OUTPUT_FOLDER
+from ct_slicing.ct_logger import logger
+
+FEATURES_EXCEL_PATH = OUTPUT_FOLDER / "features.xlsx"
+# Parameters to be configured #
 
 
 def as_df(v: pd.Series | pd.DataFrame | list) -> pd.DataFrame:
@@ -29,25 +33,19 @@ def make_positive_negative_lists(filename: Path):
     # Positive = 1 and Negative = 0.
 
     df = pd.read_excel(filename, sheet_name="Sheet1", engine="openpyxl")
-    print(f"Reading the filename: {filename}")
+    logger.info(f"Reading {filename=}")
     df.head()
 
     # meaning form l3_3: Positive (malign) = 1, Negative (benign) = 0.
     positive_samples = df.loc[df["diagnosis"] == 1]
     negative_samples = df.loc[df["diagnosis"] == 0]
 
-    print("Positive samples: {}".format(len(positive_samples)))
-    print("Negative samples: {}".format(len(negative_samples)))
+    logger.info(f"Positive samples: {len(positive_samples)}")
+    logger.info(f"Negative samples: {len(negative_samples)}")
 
     return positive_samples, negative_samples
 
 
-############ MAIN PROGRAM ########################
-
-print("Begining ...")
-
-################### Parameters to be configured ###################################
-FEATURES_EXCEL_PATH = OUTPUT_FOLDER / "features.xlsx"
 proportion = 0.5  # define the training samples proportion
 
 
@@ -105,8 +103,8 @@ y_training_positive_samples = as_df(y_positive_samples.iloc[training_positive_in
 testing_positive_samples = as_df(positive_samples.iloc[testing_positive_indexes, :])
 y_testing_positive_samples = as_df(y_positive_samples.iloc[testing_positive_indexes])
 
-print("Training positive samples: {}.".format(len(training_positive_samples)))
-print("Testing positive samples: {}.".format(len(testing_positive_samples)))
+logger.info("Training positive samples: {}.".format(len(training_positive_samples)))
+logger.info("Testing positive samples: {}.".format(len(testing_positive_samples)))
 
 
 # Random selection of the train and test set from NEGATIVE samples
@@ -136,10 +134,6 @@ y_training_samples = pd.concat(
 X_test_samples = pd.concat([testing_positive_samples, testing_negative_samples])
 y_test_samples = pd.concat([y_testing_positive_samples, y_testing_negative_samples])
 
-
-###############################################################################
-
-
 # from dataFrame to numpy array
 X_training_samples_array = X_training_samples.values
 y_training_samples_array = y_training_samples.values
@@ -162,10 +156,7 @@ model.fit(X_training_samples_array, y_training_samples_array)
 
 # Predict all the test samples
 prediction = model.predict(X_test_samples_array)
-print("Prediction:     {}.".format(prediction))
-print("y_test_samples: {}.".format(y_test_samples_array))
-accuracy = (
-    np.sum(prediction == y_test_samples_array) / y_test_samples_array.size
-) * 100
-print("")
-print("Accuracy: {}.".format(accuracy))
+logger.info(f"Prediction:     {prediction}")
+logger.info(f"y_test_samples: {y_test_samples_array}")
+accuracy = np.sum(prediction == y_test_samples_array) / y_test_samples_array.size
+logger.info(f"Accuracy: {accuracy*100}%")

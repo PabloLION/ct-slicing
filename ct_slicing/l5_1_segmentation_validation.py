@@ -7,6 +7,7 @@ __doc__ = """Source code for volume visualization
 Computer Vision Center
 Universitat Autonoma de Barcelona
 """
+
 # Unit: Segmentation Validation / Basic Validation (Segmentation)
 
 """
