@@ -57,10 +57,12 @@ python __main__.py
 
 ## Contribute
 
+### Development Mode
+
 Run the code in dev mode.
 
 ```bash
-# On Unix-like systems
+# On Unix-like systems, including macOS and Linux
 export DEV_MODE=1
 # On Windows
 set DEV_MODE=1

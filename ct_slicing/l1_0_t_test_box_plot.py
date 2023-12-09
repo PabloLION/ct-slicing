@@ -22,7 +22,7 @@ from matplotlib import pyplot as plt
 from scipy import stats
 
 from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER
-from ct_slicing.log import logger
+from ct_slicing.logger import logger
 
 SAVE_PATH = DATA_FOLDER / "py-radiomics" / "slice_glcm1d.npz"
 OUTPUT_DIR = OUTPUT_FOLDER / "t_test_box_plots"

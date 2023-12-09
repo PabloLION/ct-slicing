@@ -11,7 +11,7 @@ Universitat Autonoma de Barcelona
 # Unit: Data Exploration / Volume Visualization
 # Data: from "LUNA Dataset / Full Dataset"
 
-from ct_slicing.log import logger
+from ct_slicing.logger import logger
 from ct_slicing.vis_lib.volume_cut_browser import (
     VolumeCutBrowser,
     CutDirection,

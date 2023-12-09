@@ -16,7 +16,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.utils import Bunch
 
-from ct_slicing.log import logger
+from ct_slicing.logger import logger
 
 
 # Load dataset
