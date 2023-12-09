@@ -20,7 +20,7 @@ import SimpleITK as sitk
 from radiomics import featureextractor, setVerbosity
 
 from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
-from ct_slicing.vis_lib.NiftyIO import CoordinateOrder, read_nifty, NiiMetadata
+from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
 
 
 setVerbosity(60)  # #TODO: how to quietly run? (verbosity level 60 is showing info)

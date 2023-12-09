@@ -12,8 +12,11 @@ Universitat Autonoma de Barcelona
 # Data: from "LUNA Dataset / Full Dataset"
 
 from ct_slicing.log import logger
-from vis_lib.VolumeCutBrowser import VolumeCutBrowser, CutDirection  # local
-from vis_lib.NiftyIO import read_nifty  # local
+from ct_slicing.vis_lib.volume_cut_browser import (
+    VolumeCutBrowser,
+    CutDirection,
+)  # local
+from ct_slicing.vis_lib.nifty_io import read_nifty  # local
 from ct_slicing.config.data_path import DATA_FOLDER  # local
 
 #### Data Folders (change to your path)
