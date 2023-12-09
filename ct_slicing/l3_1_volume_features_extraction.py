@@ -8,8 +8,8 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-import SimpleITK as sitk
-from radiomics import featureextractor, setVerbosity
+import SimpleITK as itk
+from radiomics import featureextractor as feature_extractor, setVerbosity
 
 from ct_slicing.config.data_path import DATA_FOLDER, REPO_ROOT
 
@@ -24,22 +24,22 @@ IMG = IMG_FOLDER / "LIDC-IDRI-0001.nii.gz"
 MASK = MASK_FOLDER / "LIDC-IDRI-0001_R_1.nii.gz"
 
 radiomics_params = str(
-    REPO_ROOT / "ct_slicing" / "pr_config" / "FeaturesExtraction_Params.yaml"
+    REPO_ROOT / "ct_slicing" / "config" / "FeaturesExtraction_Params.yaml"
 )
 
 ####
 
 
 # Reading image and mask
-imageITK = sitk.ReadImage(IMG)
-maskITK = sitk.ReadImage(MASK)
+imageITK = itk.ReadImage(IMG)
+maskITK = itk.ReadImage(MASK)
 
 # Use a parameter file, this customizes the extraction settings and
 # also specifies the input image types to use and
 # which features should be extracted.
 
 # Initializing the feature extractor
-extractor = featureextractor.RadiomicsFeatureExtractor(radiomics_params)
+extractor = feature_extractor.RadiomicsFeatureExtractor(radiomics_params)
 
 # Calculating features
 featureVector = extractor.execute(imageITK, maskITK)

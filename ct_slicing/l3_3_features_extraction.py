@@ -26,7 +26,7 @@ from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
 setVerbosity(60)  # #TODO: how to quietly run? (verbosity level 60 is showing info)
 # #TODO: fix Shape features are only available 3D input (for 2D input, use shape2D). Found 2D input
 
-RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
+RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
 DEFAULT_MASK_MIN_PIXELS = 15  # was 200, too large to see `diagnosis==0` samples
 
 

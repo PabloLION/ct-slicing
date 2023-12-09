@@ -105,7 +105,7 @@ MASK_FOLDER = DATA_FOLDER / "CT" / "nodule_mask"
 IMG = IMG_FOLDER / "LIDC-IDRI-0003.nii.gz"
 MASK = MASK_FOLDER / "LIDC-IDRI-0003_R_2.nii.gz"
 
-radiomics_params = str(REPO_ROOT / "ct_slicing" / "pr_config" / "Params.yaml")
+radiomics_params = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
 # #TODO: extract params
 ####
 
