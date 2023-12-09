@@ -67,7 +67,6 @@ in one slice. This might cause the threshold to be inaccurate.
 """
 
 from typing import Callable, cast
-from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -78,12 +77,15 @@ from vis_lib.NiftyIO import read_nifty
 
 from ct_slicing.config.data_path import DATA_FOLDER
 from ct_slicing.vis_lib.segmentation_quality_scores import (
-    DICE,
-    VOE,
-    DistScores,
-    RelVolDiff,
+    dice_index,
+    volume_overlap_error,
+    distance_scores,
+    relative_volume_difference,
 )
 
+SUPPRESS_PLOT = True  # set to True to suppress plot, False to show plot
+
+plot_pause = not SUPPRESS_PLOT  # True to pause after each plot, False to not pause
 """ 1. Load Intensity Volume """
 IMG_PATH = DATA_FOLDER / "CT" / "image" / "LIDC-IDRI-0001.nii.gz"
 MASK_PATH = DATA_FOLDER / "CT" / "nodule_mask" / "LIDC-IDRI-0001_R_1.nii.gz"
@@ -119,27 +121,24 @@ assert (  # make sure the truth is not all 0
 plt.figure()
 plt.imshow(slice_cut, cmap="gray")
 plt.contour(slice_truth, [0.5], colors="r")
-# will do plt.show() in 3.3.2
+# will do plt.show in 3.3.2
 
 # 3.2 Volumetric Measures
 # measures for the whole volume
-whole_voe = VOE(whole_otsu, whole_truth)
-volume_dice = DICE(whole_otsu, whole_truth)
-volume_rel_diff = RelVolDiff(whole_otsu, whole_truth)
+whole_voe = volume_overlap_error(whole_otsu, whole_truth)
+volume_dice = dice_index(whole_otsu, whole_truth)
+volume_rel_diff = relative_volume_difference(whole_otsu, whole_truth)
 
 # measures for the slice_cuts cut
-slice_voe = VOE(slice_otsu, slice_truth)
-slice_dice = DICE(slice_otsu, slice_truth)
-slice_rel_diff = RelVolDiff(slice_otsu, slice_truth)  # #PR3: typo?
+slice_voe = volume_overlap_error(slice_otsu, slice_truth)
+slice_dice = dice_index(slice_otsu, slice_truth)
+slice_rel_diff = relative_volume_difference(slice_otsu, slice_truth)  # #PR3: typo?
 
 # 3.3 Distance Measures
 # 3.3.1 Distance Map to Otsu Segmentation slice_cuts cut
 # Distance Map inside and outside Segmentation for dist map at all points
 interior_slice_dist = cast(np.ndarray, backward_dist(slice_otsu))
 exterior_slice_dist = cast(np.ndarray, backward_dist(1 - slice_otsu))
-print(f"interior_slice_dist.shape: {interior_slice_dist.shape}")
-print(f"exterior_slice_dist.shape: {exterior_slice_dist.shape}")
-
 otsu_slice_dist = np.maximum(interior_slice_dist, exterior_slice_dist)
 
 # 3.3.2 Distance from Ground Truth to Otsu Segmentation
@@ -150,17 +149,18 @@ assert len(borders_truth) == 2, f"len(borders_truth) = {len(borders_truth)}"
 border_truth, border_another, *_ = borders_truth
 plt.plot(border_truth[:, 1], border_truth[:, 0], linestyle="dotted", color="y")
 plt.plot(border_another[:, 1], border_another[:, 0], linewidth=2, color="b")
-plt.show()  # showing the plot from 3.1, use plt.show() to flush the plot
+plt.show(block=plot_pause)  # showing the plot from 3.1
 border_ys = border_truth[:, 0].astype(int)
 border_xs = border_truth[:, 1].astype(int)
 
 # Show histogram
+plt.show(block=False)  # flush the plot
 plt.figure()
 plt.hist(otsu_slice_dist[border_ys, border_xs], bins=50, edgecolor="k")
-plt.show()
+plt.show(block=plot_pause)
 
 # 3.3.3 Distance Scores
-average_dist, max_dist = DistScores(slice_otsu, slice_truth)
+average_dist, max_dist = distance_scores(slice_otsu, slice_truth)
 print(f"Average Distance: {average_dist}")
 print(f"Max Distance: {max_dist}")
 
@@ -184,16 +184,16 @@ def vis_compare(
     plt.figure()
     plt.imshow(truth_mask, cmap="Reds")
     plt.title("Truth Mask")
-    plt.show()
+    plt.show(block=plot_pause)
     plt.imshow(prediction_mask, cmap="Greens")
     plt.title("Prediction Mask")
-    plt.show()
+    plt.show(block=plot_pause)
     plt.title("Truth in Red, Prediction in Green, Comparison in Blue Contour")
     comparison_mask = comparator(truth_mask, prediction_mask)
     plt.imshow(truth_mask, cmap="Reds", alpha=0.5)
     plt.imshow(prediction_mask, cmap="Greens", alpha=0.5)
     plt.contour(comparison_mask, [0.5], colors="b")
-    plt.show()
+    plt.show(block=plot_pause)
 
 
 vis_compare(slice_truth, slice_otsu, intersection)
@@ -220,14 +220,14 @@ plt.title("Intensity Image")
 plt.subplot(1, 2, 2)
 plt.imshow(slice_otsu, cmap="gray")
 plt.title("Otsu Segmentation")
-plt.show()
+plt.show(block=plot_pause)
 
 # 4.3.2  Distance map to red contours (boundary of segmentation), the brighter
 # the distance image is, the further a pixel is from red curves.
 plt.imshow(otsu_slice_dist, cmap="gray")
 plt.contour(slice_otsu, [0.5], colors="r")
 plt.title("Distance Map with Red Contours")
-plt.show()
+plt.show(block=plot_pause)
 """
 ## Exercises
 
