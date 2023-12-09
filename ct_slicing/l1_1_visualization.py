@@ -32,7 +32,9 @@ logger.debug(f"INTENSITY_VOLUME_PATH: {INTENSITY_VOLUME_PATH}")
 # Load Intensity Volume and Nodule Mask
 nii_vol, nii_metadata = read_nifty(INTENSITY_VOLUME_PATH)
 nii_mask, nii_mask_metadata = read_nifty(NODULE_MASK_PATH)
-assert nii_vol.shape == nii_mask.shape, "Volume and mask must have the same shape"
+assert (
+    nii_vol.shape == nii_mask.shape
+), f"Volume shape {nii_vol.shape} != Mask shape {nii_mask.shape}"
 
 # VOLUME METADATA
 print("Voxel Resolution (mm): ", nii_metadata.spacing)
