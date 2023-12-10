@@ -37,7 +37,7 @@ from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
 from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 from ct_slicing.vis_lib.volume_cut_browser import CutDirection, VolumeCutBrowser
-from ct_slicing.filter_lib.gabor_filters import GaborFilterBank2D
+from ct_slicing.filter_lib.gabor_filters import gabor_2d_bank
 from ct_slicing.filter_lib.browse_gabor_filt_bank import BrowseGaborFilterBank
 from ct_slicing.ct_logger import logger
 
@@ -211,26 +211,24 @@ plt.close()
 
 # Filter Bank
 if gabor_params == "default":
-    GaborBank2D_1, GaborBank2D_2, params = GaborFilterBank2D()
+    gabor_bank_re, gabor_2d_im, params = gabor_2d_bank()
 elif gabor_params == "non_default":
-    sigGab = [2, 4]
-    freqGab = [0.25, 0.5]
-    GaborBank2D_1, GaborBank2D_2, params = GaborFilterBank2D(
-        sigma=sigGab, frequency=freqGab
+    gabor_bank_re, gabor_2d_im, params = gabor_2d_bank(
+        sigma=[2, 4], frequency=[0.25, 0.5]
     )
 else:
     raise ValueError("Incorrect gabor_params name.")
 
 # Show Filters
-BrowseGaborFilterBank(GaborBank2D_1, params)
-BrowseGaborFilterBank(GaborBank2D_2, params)
+BrowseGaborFilterBank(gabor_bank_re, params, block=True)
+BrowseGaborFilterBank(gabor_2d_im, params)
 
 Gab2Show = 1
 fig1 = mlab.figure()
-mlab.surf(GaborBank2D_1[Gab2Show], warp_scale="auto")
+mlab.surf(gabor_bank_re[Gab2Show], warp_scale="auto")
 
 # Apply Filters
-NFilt = len(GaborBank2D_1)
+NFilt = len(gabor_bank_re)
 logger.info(f"Number of Filters: {NFilt}")
 
 
@@ -238,14 +236,14 @@ Ressze = np.concatenate((im.shape, np.array([NFilt])))
 imGab1 = np.empty(Ressze)
 imGab2 = np.empty(Ressze)
 for k in range(NFilt):
-    imGab1[:, :, k] = ndi.convolve(im, GaborBank2D_1[k], mode="wrap")
-    imGab2[:, :, k] = ndi.convolve(im, GaborBank2D_2[k], mode="wrap")
+    imGab1[:, :, k] = ndi.convolve(im, gabor_bank_re[k], mode="wrap")
+    imGab2[:, :, k] = ndi.convolve(im, gabor_2d_im[k], mode="wrap")
 
 VolumeCutBrowser(imGab1, cut_dir=CutDirection.Sagittal)
-BrowseGaborFilterBank(GaborBank2D_1, params)
+BrowseGaborFilterBank(gabor_bank_re, params)
 
 VolumeCutBrowser(imGab2, cut_dir=CutDirection.Sagittal)
-BrowseGaborFilterBank(GaborBank2D_2, params)
+BrowseGaborFilterBank(gabor_2d_im, params)
 
 
 # 4. FEATURE SPACES
