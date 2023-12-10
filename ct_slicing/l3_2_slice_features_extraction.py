@@ -239,12 +239,4 @@ and SliceFeatureExtraction.py.
     Also, the name of the features is different: in VolumeFeatureExtraction,
     the features mostly start with "diagnostics_", and only 3 with "original_",
     while in SliceFeatureExtraction, the features all start with "original_",
-
-Exercise 3. Features extraction for all images and masks in the database.
-a) Observing the python code featuresExtraction.py, which files are used as input and
-output? What features are extracted? Where is the diagnosis included? Notice that this
-code applies pre-processing, can you explain what it does?
-
-b) Make the necessary modification to only extract all the GLCM features.
-c) Modify the featureExtraction.py file to extract features from all nodules in the database.
 """

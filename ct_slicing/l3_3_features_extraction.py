@@ -256,3 +256,128 @@ if __name__ == "__main__":
     ]
 
     extract_feature(patient_nodule_diagnosis)
+
+"""
+Exercise 3. Features extraction for all images and masks in the database.
+a) Observing the python code featuresExtraction.py, which files are used as input and
+output? What features are extracted? Where is the diagnosis included? Notice that this
+code applies pre-processing, can you explain what it does?
+    Input: 
+        py-radiomics params: ct_slicing/config/Params.yaml
+        data: 
+            full image: REPO_ROOT/data/CT/image/LIDC-IDRI-0003/1.nii.gz
+            nodule mask: REPO_ROOT/data/CT/nodule_mask/LIDC-IDRI-0003_R_2.nii.gz
+        metadata: ROOT/data/MetadatabyNoduleMaxVoting.xlsx
+    Output:
+        ROOT/output/features.xlsx
+        
+    What features are extracted? Very verbose output, but the features extracted are:
+        slice_number
+        diagnosis
+        original_firstorder_10Percentile
+        original_firstorder_90Percentile
+        original_firstorder_Energy
+        original_firstorder_Entropy
+        original_firstorder_InterquartileRange
+        original_firstorder_Kurtosis
+        original_firstorder_Maximum
+        original_firstorder_Mean
+        original_firstorder_MeanAbsoluteDeviation
+        original_firstorder_Median
+        original_firstorder_Minimum
+        original_firstorder_Range
+        original_firstorder_RobustMeanAbsoluteDeviation
+        original_firstorder_RootMeanSquared
+        original_firstorder_Skewness
+        original_firstorder_TotalEnergy
+        original_firstorder_Uniformity
+        original_firstorder_Variance
+        original_glcm_Autocorrelation
+        original_glcm_ClusterProminence
+        original_glcm_ClusterShade
+        original_glcm_ClusterTendency
+        original_glcm_Contrast
+        original_glcm_Correlation
+        original_glcm_DifferenceAverage
+        original_glcm_DifferenceEntropy
+        original_glcm_DifferenceVariance
+        original_glcm_Id
+        original_glcm_Idm
+        original_glcm_Idmn
+        original_glcm_Idn
+        original_glcm_Imc1
+        original_glcm_Imc2
+        original_glcm_InverseVariance
+        original_glcm_JointAverage
+        original_glcm_JointEnergy
+        original_glcm_JointEntropy
+        original_glcm_MCC
+        original_glcm_MaximumProbability
+        original_glcm_SumAverage
+        original_glcm_SumEntropy
+        original_glcm_SumSquares
+        original_gldm_DependenceEntropy
+        original_gldm_DependenceNonUniformity
+        original_gldm_DependenceNonUniformityNormalized
+        original_gldm_DependenceVariance
+        original_gldm_GrayLevelNonUniformity
+        original_gldm_GrayLevelVariance
+        original_gldm_HighGrayLevelEmphasis
+        original_gldm_LargeDependenceEmphasis
+        original_gldm_LargeDependenceHighGrayLevelEmphasis
+        original_gldm_LargeDependenceLowGrayLevelEmphasis
+        original_gldm_LowGrayLevelEmphasis
+        original_gldm_SmallDependenceEmphasis
+        original_gldm_SmallDependenceHighGrayLevelEmphasis
+        original_gldm_SmallDependenceLowGrayLevelEmphasis
+        original_glrlm_GrayLevelNonUniformity
+        original_glrlm_GrayLevelNonUniformityNormalized
+        original_glrlm_GrayLevelVariance
+        original_glrlm_HighGrayLevelRunEmphasis
+        original_glrlm_LongRunEmphasis
+        original_glrlm_LongRunHighGrayLevelEmphasis
+        original_glrlm_LongRunLowGrayLevelEmphasis
+        original_glrlm_LowGrayLevelRunEmphasis
+        original_glrlm_RunEntropy
+        original_glrlm_RunLengthNonUniformity
+        original_glrlm_RunLengthNonUniformityNormalized
+        original_glrlm_RunPercentage
+        original_glrlm_RunVariance
+        original_glrlm_ShortRunEmphasis
+        original_glrlm_ShortRunHighGrayLevelEmphasis
+        original_glrlm_ShortRunLowGrayLevelEmphasis
+        original_glszm_GrayLevelNonUniformity
+        original_glszm_GrayLevelNonUniformityNormalized
+        original_glszm_GrayLevelVariance
+        original_glszm_HighGrayLevelZoneEmphasis
+        original_glszm_LargeAreaEmphasis
+        original_glszm_LargeAreaHighGrayLevelEmphasis
+        original_glszm_LargeAreaLowGrayLevelEmphasis
+        original_glszm_LowGrayLevelZoneEmphasis
+        original_glszm_SizeZoneNonUniformity
+        original_glszm_SizeZoneNonUniformityNormalized
+        original_glszm_SmallAreaEmphasis
+        original_glszm_SmallAreaHighGrayLevelEmphasis
+        original_glszm_SmallAreaLowGrayLevelEmphasis
+        original_glszm_ZoneEntropy
+        original_glszm_ZonePercentage
+        original_glszm_ZoneVariance
+    Where is the diagnosis included?
+        in the metadata and in the output excel file
+    Notice that this code applies pre-processing, can you explain what it does?
+        There are three steps:
+        1. shift_values: add 1024 to all values
+        2. set_range: scale the range to 0-4000
+        3. set_gray_level: quantize the gray intensity to 24 discrete levels
+
+b) Make the necessary modification to only extract all the GLCM features.
+    In the the code, change condition `... or ("glcm" in feature_name) ...`
+    to `"glcm" in feature_name` to only extract GLCM features.
+
+c) Modify the featureExtraction.py file to extract features from all nodules in the database.
+    Done for CT dataset. See `extract_feature` function.
+    But we can easily improve it to extract features from VOIs dataset as well,
+    since we now have the `ct_iter` and `voi_iter`.
+    I've not done it because it's not required by the exercise, and we might
+    need more data later on.
+"""
