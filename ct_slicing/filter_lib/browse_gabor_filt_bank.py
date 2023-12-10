@@ -15,11 +15,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
+
 
 class BrowseGaborFilterBank:
     NFilt: int
 
-    def __init__(self, GaborBank2D, params):
+    def __init__(self, GaborBank2D, params, *, block: bool = DEFAULT_PLOT_BLOCK):
         self.GaborBank2D = GaborBank2D
         self.NFilt = (
             len(GaborBank2D)

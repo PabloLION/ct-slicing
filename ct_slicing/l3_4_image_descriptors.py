@@ -12,15 +12,27 @@ Universitat Autonoma de Barcelona
 ### REFERENCES
 # www.scipy-lectures.org/advanced/image_processing/#edge-detection
 
+"""
+# Renaming
+
+Old Name | New Name
+--- | ---
+sig | gaussian_sigma
+Medsze | median_size
+
+"""
+
+if __name__ != "__main__":
+    raise ImportError(f"Cannot import a script file. {__file__} is not a module.")
 
 import numpy as np
 from mayavi import mlab
 import matplotlib.pyplot as plt
 from scipy import ndimage as ndi
-from scipy.ndimage import filters as filt
-from scipy.ndimage import sobel, gaussian_filter
+from scipy.ndimage import sobel, gaussian_filter, median_filter
 from skimage.filters import threshold_otsu
 from sklearn.cluster import KMeans
+from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
 
 from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
@@ -35,8 +47,8 @@ IMAGE_PATH, MASK_PATH = nii_file("CT", 1, 1)
 ROI_PATH, _ = nii_file("VOI", 1, 1)
 
 image_name = "filled_square"  # filled_square, square, SA, SA_Mask, SAROI
-sig = 10  # sigma of gaussian filter
-Medsze = 3  # size of median filter
+gaussian_sigma = 10  # sigma of gaussian filter
+median_size = 3  # size of median filter
 filter_image = "gaussian"  # none, gaussian, median
 gabor_params = "default"  # default, non_default
 
@@ -81,11 +93,31 @@ else:
 
 # Image Filtering
 if filter_image == "gaussian":
-    img = gaussian_filter(im, sigma=sig)
+    img = gaussian_filter(im, sigma=gaussian_sigma)
 elif filter_image == "median":
-    img = filt.median_filter(im, Medsze)
+    img = median_filter(im, median_size)
 else:
     img = im
+
+# Exercise 1
+for plt_idx, ex1_sig in enumerate([2, 4, 8]):
+    img = gaussian_filter(im, sigma=ex1_sig)
+    plt.subplot(1, 3, plt_idx + 1)
+    plt.imshow(img, cmap="gray")
+    plt.title(f"sigma={ex1_sig}")
+plt.suptitle("Exercise 1. Gaussian filter with different sigmas")
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
+
+for plt_idx, ex1_med in enumerate([3, 5, 7, 1500]):
+    img = median_filter(im, median_size)
+    plt.subplot(1, 4, plt_idx + 1)
+    plt.imshow(img, cmap="gray")
+    plt.title(f"median_size={ex1_med}")
+plt.suptitle("Exercise 1. Median filter with different sizes")
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
+
 
 ######## IMAGE DESCRIPTORS
 
@@ -114,6 +146,8 @@ ax.set_title("horizontal edges")
 ax = fig1.add_subplot(144)
 ax.imshow(EdgeSob, cmap="gray")
 ax.set_title("Gradient Magnitude (EdgeDetector)")
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
 
 ## 1.2 3D Volumes
 # EX2. Compute the gradient of a 3D volume
@@ -146,7 +180,8 @@ ax.set_title("horizontal ridges/valleys")
 ax = fig1.add_subplot(144)
 ax.imshow(Lap, cmap="gray")
 ax.set_title("Laplacian")
-
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
 
 fig1 = plt.figure()
 ax = fig1.add_subplot(131)
@@ -157,7 +192,8 @@ ax.set_title("valleys (Positive Laplacian)")
 ax = fig1.add_subplot(133)
 ax.imshow(abs(Lap) * (Lap < 0), cmap="gray")
 ax.set_title("ridges (Negative Laplacian)")
-
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
 
 ### 3. GABOR FILTERS
 ## 3.1 2D Images
@@ -231,6 +267,8 @@ imSeg = im > Th
 plt.figure()
 plt.imshow(im, cmap="gray")
 plt.contour(im, [Th], colors="red")
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
 
 # Show Intensity histogram and Otsu Threshold
 plt.figure()
@@ -245,6 +283,8 @@ plt.hist(
 )
 plt.plot([Th, Th], [0, 4000], "k", lw=2, label="Otsu Threshold")
 plt.legend()
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
 
 ### 4.2 Feature Space Partition
 # Pixel Representation in a 2D space. In the plot
@@ -263,6 +303,8 @@ plt.xlabel("Intensity")
 plt.ylabel("Laplacian")
 plt.title("Pixel Distribution in the Space of Values given by (Intensity,Laplacian).")
 plt.legend()
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
 
 ### 4.3 Kmeans Clustering
 # EX7: Run k-means with and without normalization of the feature space
@@ -283,3 +325,47 @@ x = X[0, np.nonzero(labels == 1)]
 y = X[1, np.nonzero(labels == 1)]
 plt.plot(x.flatten(), y.flatten(), "k.", label="k-means Clustering")
 plt.legend()
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
+
+"""
+# Exercise
+
+Exercise 1. Edges. Compute the gradient of the use images labelled 'filled_square',
+'SAROI' without any filtering (filter_image =‘none’) and compare the results to the
+gradient obtained using a gaussian of sig=2, 4, 8 and a median filter of Medsze=3,5,7.
+    The code for gaussian_filter of different sigmas is shown under the 
+    commented line `# Exercise 1`. We can see that the edges are more blurred
+    with higher sigmas.
+    The code for median_filter of different sizes is shown under the
+    commented line `# Exercise 1`. For all median sizes, the edges in the image
+    are not changed. This is because the median filter is a non-linear filter.
+    
+    
+
+Exercise 2. Ridges and Valleys. Compute the Laplacian, Ridges (negative
+Laplacian) and Valleys (positive Laplacian) of the use images labelled 'filled_square',
+its opposite (1-'filled_square') and ‘square’. Compare results across use cases.
+Exercise 3. Gabor Filters. Compute the default Gabor filter bank and:
+a) Visualize the two banks of filters.
+b) Apply the two filter banks to Compute the Laplacian, Ridges (negative
+Laplacian) and Valleys (positive Laplacian) of the use images labelled
+'filled_square', its opposite (1-'filled_square') and ‘square’.
+c) Visualize responses to each filter for the two Gabor filter banks and compare
+results to the ones obtained in Ex1 and Ex2. Would you use any of the Gabor
+filters to detect edges, valleys or ridges.
+d) Repeat a)-c) using the alternative Gabor filter bank. What is the difference with
+the default Gabor filter bank? Would you use any of the Gabor filters to detect
+edges, valleys or ridges.
+Exercise 4. Feature Spaces. Compute Otsu thresholding for the use image
+‘SAROI’ and visualize the binarization. Analyse the histogram of SAROI intensity
+showing the lesion values in red and discuss if there exists a threshold (vertical line)
+able to perfectly separate lesion from other structures.
+Consider for each pixel the pair of values given by SAROI intensity (im) and its
+Laplacian (Lap). Visualize the point cloud defined by assigning for each pixel a x-
+coordinate given by its intensity and a y-coordinate given by its Laplacian. Try to divide
+the plane with a line splitting (discriminating/classifying) the red (lesion) and blue points
+(background). Do you think you could achieve a more accurate separation than using
+only one feature (intensity)?
+
+"""

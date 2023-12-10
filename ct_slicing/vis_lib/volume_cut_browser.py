@@ -12,6 +12,8 @@ from enum import Enum
 from typing import Callable, cast
 from sys import setrecursionlimit, stdout
 
+from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
+
 setrecursionlimit(100000)  # canvas.draw() in draw_scene() is recursive
 
 import matplotlib.axes as axes
@@ -96,6 +98,8 @@ class VolumeCutBrowser:
         img_stack: np.ndarray,
         cut_dir: CutDirection,
         contour_stack: np.ndarray | None = None,
+        *,
+        plot_block: bool = DEFAULT_PLOT_BLOCK,
     ):
         self.img_stack = img_stack
         self.cut = cut_dir
@@ -107,7 +111,12 @@ class VolumeCutBrowser:
             "key_press_event", cast(Callable[[Event], None], self.press)
         )
         self.draw_scene()
+        plt.show(block=plot_block)
+        plt.close()
 
+    # #TODO: show bindings here in the class, not outside
+    # #TODO: use better bindings like arrows
+    # #TODO: add more bindings, also for navigation bar
     def press(self, event: KeyEvent):
         stdout.flush()
         if event.key == "x":
@@ -133,7 +142,6 @@ class VolumeCutBrowser:
             self.ax.contour(image, [0.5], colors="r")
 
         self.fig.canvas.draw()
-        plt.show()
 
 
 def show_mosaic(images: np.ndarray, NRow=4, NCol=4) -> None:

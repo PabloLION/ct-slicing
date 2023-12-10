@@ -6,6 +6,7 @@ import SimpleITK as sitk
 from matplotlib import pyplot as plt
 
 from ct_slicing.config.data_path import REPO_ROOT
+from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
 from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.ct_logger import logger
 
@@ -83,7 +84,8 @@ plt.title("Both in blue and orange")
 plt.subplot(1, 3, 3)
 plt.imshow(segmented_lesion_np, cmap="Oranges")
 plt.title("Segmented Lesion in orange")
-plt.show()
+plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.close()
 
 
 extractor = feature_extractor.RadiomicsFeatureExtractor(radiomics_params)
