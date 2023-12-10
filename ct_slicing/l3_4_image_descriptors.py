@@ -27,6 +27,7 @@ from ct_slicing.vis_lib.nifty_io import read_nifty
 from ct_slicing.vis_lib.volume_cut_browser import CutDirection, VolumeCutBrowser
 from ct_slicing.filter_lib.gabor_filters import GaborFilterBank2D
 from ct_slicing.filter_lib.browse_gabor_filt_bank import BrowseGaborFilterBank
+from ct_slicing.ct_logger import logger
 
 LESION_LABEL = "Lesion Values"
 # choose the case id and nodule id to get the path of the nodule image and mask
@@ -186,7 +187,8 @@ mlab.surf(GaborBank2D_1[Gab2Show], warp_scale="auto")
 
 # Apply Filters
 NFilt = len(GaborBank2D_1)
-print("Number of Filters: " + str(NFilt))
+logger.info(f"Number of Filters: {NFilt}")
+
 
 Ressze = np.concatenate((im.shape, np.array([NFilt])))
 imGab1 = np.empty(Ressze)

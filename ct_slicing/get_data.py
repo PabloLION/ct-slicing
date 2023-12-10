@@ -23,7 +23,7 @@ class NoduleMaskPair(NamedTuple):
 
 def nii_path(
     section: Literal["CT", "VOI"], case_id: int, mask_id: int
-) -> tuple[Path, Path]:
+) -> NoduleMaskPair:
     """Return a pair of (image path, mask path) of a given case id and
     nodule index.
     If the file does not exist, raise FileNotFoundError.
@@ -77,14 +77,16 @@ def nii_exist(sections: Literal["CT", "VOI"], case_id: int, mask_id: int) -> boo
     return nodule.exists() and mask.exists()
 
 
-def nii_file(sections: Literal["CT", "VOI"], case_id: int, mask_id: int):
+def nii_file(
+    sections: Literal["CT", "VOI"], case_id: int, mask_id: int
+) -> NoduleMaskPair:
     """
     Return the nii file pair.
     """
     nodule, mask = nii_path(sections, case_id, mask_id)
     if not nii_exist(sections, case_id, mask_id):
         raise FileNotFoundError(f"File not found: {nodule} or {mask}")
-    return nodule, mask
+    return NoduleMaskPair(nodule, mask)
 
 
 def expect_nii_file_not_found_error(
