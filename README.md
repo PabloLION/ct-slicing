@@ -67,3 +67,7 @@ export DEV_MODE=1
 # On Windows
 set DEV_MODE=1
 ```
+
+### Known issues
+
+- [ ] Universal name across all codes. IMG_PATH, MASK_PATH in lower case; img for ITK image, img_np for numpy array, etc.
