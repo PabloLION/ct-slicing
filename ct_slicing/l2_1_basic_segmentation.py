@@ -12,7 +12,7 @@ Universitat Autonoma de Barcelona
 # Data: from Unit "Full Dataset"
 
 import matplotlib.pyplot as plt
-from ct_slicing.config.data_path import DATA_FOLDER
+from ct_slicing.get_data import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 from scipy.ndimage import gaussian_filter, median_filter
 from skimage import morphology
@@ -23,13 +23,8 @@ from ct_slicing.vis_lib.volume_cut_browser import (
     VolumeCutBrowser,
 )  # local
 
-
-CASE_FOLDER = "CT"
-INTENSITY_VOLUME_NAME = "LIDC-IDRI-0001.nii.gz"
-NODULE_MASK = "LIDC-IDRI-0001_R_1.nii.gz"
-INTENSITY_VOLUME_PATH = DATA_FOLDER / CASE_FOLDER / "image" / INTENSITY_VOLUME_NAME
-NODULE_MASK_PATH = DATA_FOLDER / CASE_FOLDER / "nodule_mask" / NODULE_MASK
-
+# choose the case id and nodule id to get the path of the nodule image and mask
+INTENSITY_VOLUME_PATH, NODULE_MASK_PATH = nii_file("CT", 1, 1)
 # Load Intensity Volume and Nodule Mask
 nii_roi, nii_metadata = read_nifty(INTENSITY_VOLUME_PATH)
 

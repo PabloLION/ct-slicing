@@ -20,35 +20,27 @@ import SimpleITK as sitk
 from radiomics import featureextractor, setVerbosity
 
 from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
+from ct_slicing.get_data import nii_file
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
 from ct_slicing.ct_logger import logger
 
-# this is to fix wrong implementation of radiomics.setVerbosity(60)
+RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
+DEFAULT_MASK_MIN_PIXELS = 15  # was 200, too large to see `diagnosis==0` samples
+
+# to fix wrong implementation of radiomics.setVerbosity(60)
 logging.getLogger("radiomics").setLevel(logging.CRITICAL)  # run radiomics quietly
 logging.getLogger("pykwalify").setLevel(logging.CRITICAL)  # pykwalify from radiomics
 # #TODO: fix Shape features are only available 3D input (for 2D input, use shape2D). Found 2D input
 
 logger.setLevel(logging.INFO)
 
-RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
-DEFAULT_MASK_MIN_PIXELS = 15  # was 200, too large to see `diagnosis==0` samples
 
-
-# #TODO: extract this part to data loading module
 def get_img_mask_pair_paths(
     data_set: Literal["CT", "VOIs"], patient_id: str, nodule_index: int
 ):
-    img_folder = DATA_FOLDER / data_set / "image"
-    mask_folder = DATA_FOLDER / data_set / "nodule_mask"
-    if data_set == "CT":
-        img_path = img_folder / f"{patient_id}.nii.gz"
-    elif data_set == "VOIs":
-        img_path = img_folder / f"{patient_id}_R_{nodule_index}.nii.gz"
-    else:
-        raise ValueError(f'data_set can only be "CT" or "VOIs", not {data_set}')
-
-    mask_path = mask_folder / f"{patient_id}_R_{nodule_index}.nii.gz"
-    return img_path, mask_path
+    section = "VOI" if data_set == "VOIs" else data_set
+    case_id = int(patient_id.replace("LIDC-IDRI-", ""))
+    return nii_file(section, case_id, nodule_index)
 
 
 DEFAULT_EXPORT_XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"

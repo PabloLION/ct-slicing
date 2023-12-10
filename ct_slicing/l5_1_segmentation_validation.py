@@ -74,9 +74,9 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt as backward_dist
 from skimage.filters import threshold_otsu
 from skimage.measure import find_contours
+from ct_slicing.get_data import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 
-from ct_slicing.config.data_path import DATA_FOLDER
 from ct_slicing.vis_lib.segmentation_quality_scores import (
     dice_index,
     volume_overlap_error,
@@ -84,12 +84,11 @@ from ct_slicing.vis_lib.segmentation_quality_scores import (
     relative_volume_difference,
 )
 
+# choose the case id and nodule id to get the path of the nodule image and mask
+IMG_PATH, MASK_PATH = nii_file("CT", 1, 1)
 SUPPRESS_PLOT = True  # set to True to suppress plot, False to show plot
 
 plot_pause = not SUPPRESS_PLOT  # True to pause after each plot, False to not pause
-""" 1. Load Intensity Volume """
-IMG_PATH = DATA_FOLDER / "CT" / "image" / "LIDC-IDRI-0001.nii.gz"
-MASK_PATH = DATA_FOLDER / "CT" / "nodule_mask" / "LIDC-IDRI-0001_R_1.nii.gz"
 
 nii_roi, _ = read_nifty(IMG_PATH)  # ROI(region of interest) from nii file
 whole_truth, _ = read_nifty(MASK_PATH)  # ground truth of ROI for the whole volume

@@ -16,15 +16,18 @@ from collections import OrderedDict
 import SimpleITK as sitk
 from radiomics import featureextractor as feature_extractor
 from ct_slicing.ct_logger import logger as _logger
-from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
+from ct_slicing.config.data_path import OUTPUT_FOLDER, REPO_ROOT
+from ct_slicing.get_data import nii_file
 
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty
 
-# this is to fix wrong implementation of radiomics.setVerbosity(60)
+# choose the case id and nodule id to get the path of the nodule image and mask
+IMG, MASK = nii_file("CT", 1, 1)
+XLSX_PATH = OUTPUT_FOLDER / "slice_features.xlsx"
+
+# to fix wrong implementation of radiomics.setVerbosity(60)
 logging.getLogger("radiomics").setLevel(logging.CRITICAL)  # run radiomics quietly
 logging.getLogger("pykwalify").setLevel(logging.CRITICAL)  # pykwalify from radiomics
-
-XLSX_PATH = OUTPUT_FOLDER / "slice_features.xlsx"
 
 
 def saveXLSX(filename, df):
@@ -101,13 +104,6 @@ def SliceMode(
     df = pd.DataFrame.from_records(myList)
     return df
 
-
-#### Parameters to be configured
-
-IMG_FOLDER = DATA_FOLDER / "CT" / "image"
-MASK_FOLDER = DATA_FOLDER / "CT" / "nodule_mask"
-IMG = IMG_FOLDER / "LIDC-IDRI-0003.nii.gz"
-MASK = MASK_FOLDER / "LIDC-IDRI-0003_R_2.nii.gz"
 
 radiomics_params = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
 # #TODO: extract params

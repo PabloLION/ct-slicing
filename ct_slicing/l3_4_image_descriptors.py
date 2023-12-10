@@ -22,22 +22,16 @@ from scipy.ndimage import sobel, gaussian_filter
 from skimage.filters import threshold_otsu
 from sklearn.cluster import KMeans
 
-from ct_slicing.config.data_path import DATA_FOLDER
+from ct_slicing.get_data import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 from ct_slicing.vis_lib.volume_cut_browser import CutDirection, VolumeCutBrowser
 from ct_slicing.filter_lib.gabor_filters import GaborFilterBank2D
 from ct_slicing.filter_lib.browse_gabor_filt_bank import BrowseGaborFilterBank
 
 LESION_LABEL = "Lesion Values"
-
-######## PARAMETERS
-CASE_NAME = "LIDC-IDRI-0001"
-
-ROI_PATH = DATA_FOLDER / "VOIs" / "image" / (CASE_NAME + "_R_1.nii.gz")
-MASK_PATH = DATA_FOLDER / "CT" / "nodule_mask" / (CASE_NAME + "_R_1.nii.gz")
-IMAGE_PATH = DATA_FOLDER / "CT" / "image" / (CASE_NAME + ".nii.gz")
-
-#### Processing Parameters
+# choose the case id and nodule id to get the path of the nodule image and mask
+IMAGE_PATH, MASK_PATH = nii_file("CT", 1, 1)
+ROI_PATH, _ = nii_file("VOI", 1, 1)
 
 image_name = "filled_square"  # filled_square, square, SA, SA_Mask, SAROI
 sig = 10  # sigma of gaussian filter
@@ -45,16 +39,14 @@ Medsze = 3  # size of median filter
 filter_image = "gaussian"  # none, gaussian, median
 gabor_params = "default"  # default, non_default
 
-######## LOAD DATA
-
-#### Load ROI Volumes
-niiROI, _ = read_nifty(ROI_PATH)
-niiMask, _ = read_nifty(MASK_PATH)
-niivol, _ = read_nifty(IMAGE_PATH)
+# Process Parameters
+nii_roi, _ = read_nifty(ROI_PATH)
+nii_mask, _ = read_nifty(MASK_PATH)
+nii_vol, _ = read_nifty(IMAGE_PATH)
 
 
 ### Define Use Case Image
-
+# #TODO: wrap this into a function
 if image_name == "filled_square":
     # Synthetic Filled Square
     im = np.zeros((256, 256))
@@ -73,16 +65,16 @@ elif image_name == "square":
 
 
 elif image_name == "SA":
-    k = int(niivol.shape[2] / 2)  # Cut at the middle of the volume
-    im = niivol[:, :, k]
+    k = int(nii_vol.shape[2] / 2)  # Cut at the middle of the volume
+    im = nii_vol[:, :, k]
 
 elif image_name == "SAROI":
-    k = int(niiROI.shape[2] / 2)  # Cut at the middle of the volume
-    im = niiROI[:, :, k]
+    k = int(nii_roi.shape[2] / 2)  # Cut at the middle of the volume
+    im = nii_roi[:, :, k]
 
 elif image_name == "SA_Mask":
-    k = int(niiMask.shape[2] / 2)  # Cut at the middle of the volume
-    im = niiMask[:, :, k]
+    k = int(nii_mask.shape[2] / 2)  # Cut at the middle of the volume
+    im = nii_mask[:, :, k]
 else:
     raise ValueError("Incorrect image_name name.")
 
@@ -217,10 +209,10 @@ BrowseGaborFilterBank(GaborBank2D_2, params)
 
 ### 4.0 Data
 # SA Cut
-k = int(niiROI.shape[2] / 2)  # Cut at the middle of the volume
-im = niiROI[:, :, k]
+k = int(nii_roi.shape[2] / 2)  # Cut at the middle of the volume
+im = nii_roi[:, :, k]
 im = (im - im.min()) / (im.max() - im.min())
-imMask = niiMask[:, :, k]
+imMask = nii_mask[:, :, k]
 
 # SA cut Laplacian
 sx = sobel(im, axis=1, mode="constant")
