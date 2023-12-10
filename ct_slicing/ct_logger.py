@@ -2,6 +2,8 @@ import os
 from rich.logging import RichHandler
 import logging
 
+from ct_slicing.config.dev_config import DEV_MODE
+
 logging.basicConfig(
     level="INFO",
     format="%(message)s",
@@ -14,7 +16,6 @@ logger = logging.getLogger("rich")
 
 
 # change logger level based on environment variable
-DEV_MODE = os.environ.get("DEV_MODE")
 if DEV_MODE:
     logger.setLevel(logging.DEBUG)
 

@@ -67,6 +67,9 @@ in one slice. This might cause the threshold to be inaccurate.
 | max_dist            | MxDist        | MaxDist                                    |
 """
 
+if __name__ != "__main__":
+    raise ImportError(f"Cannot import a script file. {__file__} is not a module.")
+
 from typing import Callable, cast
 import matplotlib.pyplot as plt
 import numpy as np
@@ -74,6 +77,7 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt as backward_dist
 from skimage.filters import threshold_otsu
 from skimage.measure import find_contours
+from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
 from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 
@@ -86,9 +90,6 @@ from ct_slicing.vis_lib.segmentation_quality_scores import (
 
 # choose the case id and nodule id to get the path of the nodule image and mask
 IMG_PATH, MASK_PATH = nii_file("CT", 1, 1)
-SUPPRESS_PLOT = True  # set to True to suppress plot, False to show plot
-
-plot_pause = not SUPPRESS_PLOT  # True to pause after each plot, False to not pause
 
 nii_roi, _ = read_nifty(IMG_PATH)  # ROI(region of interest) from nii file
 whole_truth, _ = read_nifty(MASK_PATH)  # ground truth of ROI for the whole volume
@@ -149,7 +150,7 @@ assert len(borders_truth) == 2, f"len(borders_truth) = {len(borders_truth)}"
 border_truth, border_another, *_ = borders_truth
 plt.plot(border_truth[:, 1], border_truth[:, 0], linestyle="dotted", color="y")
 plt.plot(border_another[:, 1], border_another[:, 0], linewidth=2, color="b")
-plt.show(block=plot_pause)  # showing the plot from 3.1
+plt.show(block=DEFAULT_PLOT_BLOCK)  # showing the plot from 3.1
 border_ys = border_truth[:, 0].astype(int)
 border_xs = border_truth[:, 1].astype(int)
 
@@ -157,7 +158,7 @@ border_xs = border_truth[:, 1].astype(int)
 plt.show(block=False)  # flush the plot
 plt.figure()
 plt.hist(otsu_slice_dist[border_ys, border_xs], bins=50, edgecolor="k")
-plt.show(block=plot_pause)
+plt.show(block=DEFAULT_PLOT_BLOCK)
 
 # 3.3.3 Distance Scores
 average_dist, max_dist = distance_scores(slice_otsu, slice_truth)
@@ -184,16 +185,16 @@ def vis_compare(
     plt.figure()
     plt.imshow(truth_mask, cmap="Reds")
     plt.title("Truth Mask")
-    plt.show(block=plot_pause)
+    plt.show(block=DEFAULT_PLOT_BLOCK)
     plt.imshow(prediction_mask, cmap="Greens")
     plt.title("Prediction Mask")
-    plt.show(block=plot_pause)
+    plt.show(block=DEFAULT_PLOT_BLOCK)
     plt.title("Truth in Red, Prediction in Green, Comparison in Blue Contour")
     comparison_mask = comparator(truth_mask, prediction_mask)
     plt.imshow(truth_mask, cmap="Reds", alpha=0.5)
     plt.imshow(prediction_mask, cmap="Greens", alpha=0.5)
     plt.contour(comparison_mask, [0.5], colors="b")
-    plt.show(block=plot_pause)
+    plt.show(block=DEFAULT_PLOT_BLOCK)
 
 
 vis_compare(slice_truth, slice_otsu, intersection)
@@ -220,14 +221,14 @@ plt.title("Intensity Image")
 plt.subplot(1, 2, 2)
 plt.imshow(slice_otsu, cmap="gray")
 plt.title("Otsu Segmentation")
-plt.show(block=plot_pause)
+plt.show(block=DEFAULT_PLOT_BLOCK)
 
 # 4.3.2  Distance map to red contours (boundary of segmentation), the brighter
 # the distance image is, the further a pixel is from red curves.
 plt.imshow(otsu_slice_dist, cmap="gray")
 plt.contour(slice_otsu, [0.5], colors="r")
 plt.title("Distance Map with Red Contours")
-plt.show(block=plot_pause)
+plt.show(block=DEFAULT_PLOT_BLOCK)
 """
 ## Exercises
 

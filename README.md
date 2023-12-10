@@ -61,13 +61,11 @@ python __main__.py
 
 Run the code in dev mode.
 
-```bash
-# On Unix-like systems, including macOS and Linux
-export DEV_MODE=1
-# On Windows
-set DEV_MODE=1
-```
+- In `ct_slicing/config/dev_config.py`, set `DEV_MODE = True`
+- Do not forget to change it back to `False` before PR / publish.
+- Need a better way to do this.
 
 ### Known issues
 
 - [ ] Universal name across all codes. IMG_PATH, MASK_PATH in lower case; img for ITK image, img_np for numpy array, etc.
+- [ ] Add "Cannot import a script file." to all scripts. Example in `l5_1_segmentation_validation.py`
