@@ -89,6 +89,7 @@ def nii_file(
     return NoduleMaskPair(nodule, mask)
 
 
+# Test if the file path is correct. Assume we won't rename the data files.
 def expect_nii_file_not_found_error(
     sections: Literal["CT", "VOI"], case_id: int, mask_id: int
 ):

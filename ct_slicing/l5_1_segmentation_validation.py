@@ -74,7 +74,7 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt as backward_dist
 from skimage.filters import threshold_otsu
 from skimage.measure import find_contours
-from ct_slicing.get_data import nii_file
+from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 
 from ct_slicing.vis_lib.segmentation_quality_scores import (

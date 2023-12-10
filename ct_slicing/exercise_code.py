@@ -6,7 +6,7 @@ import SimpleITK as sitk
 from matplotlib import pyplot as plt
 
 from ct_slicing.config.data_path import REPO_ROOT
-from ct_slicing.get_data import nii_file
+from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.ct_logger import logger
 
 # to fix wrong implementation of radiomics.setVerbosity(60)

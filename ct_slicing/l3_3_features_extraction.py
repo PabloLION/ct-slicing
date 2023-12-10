@@ -20,7 +20,7 @@ import SimpleITK as sitk
 from radiomics import featureextractor, setVerbosity
 
 from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
-from ct_slicing.get_data import nii_file
+from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
 from ct_slicing.ct_logger import logger
 

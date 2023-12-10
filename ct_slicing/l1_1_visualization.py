@@ -12,7 +12,7 @@ Universitat Autonoma de Barcelona
 # Data: from "LUNA Dataset / Full Dataset"
 
 from ct_slicing.ct_logger import logger
-from ct_slicing.get_data import nii_file
+from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.vis_lib.volume_cut_browser import (
     VolumeCutBrowser,
     CutDirection,
