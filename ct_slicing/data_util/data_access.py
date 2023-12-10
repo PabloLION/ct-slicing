@@ -68,7 +68,7 @@ def nii_path(
     return NoduleMaskPair(image, mask)
 
 
-with open(REPO_ROOT / "ct_slicing" / "data_util" / "data_access.py", "rb") as f:
+with open(REPO_ROOT / "ct_slicing" / "data_util" / "nodule_id.pkl", "rb") as f:
     data = pickle.load(f)
     CT_NODULES = data["CT"]
     VOI_NODULES = data["VOI"]
@@ -174,7 +174,7 @@ def dump_available_nodules():
 
     # dump to file
 
-    with open(REPO_ROOT / "ct_slicing" / "data_util" / "data_access.py", "wb") as f:
+    with open(REPO_ROOT / "ct_slicing" / "data_util" / "nodule_id.pkl", "wb") as f:
         pickle.dump({"CT": ct_nodules, "VOI": voi_nodules}, f)
 
 
