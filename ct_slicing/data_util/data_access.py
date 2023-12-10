@@ -12,8 +12,10 @@ Here I use a simpler way to get the file path.
 
 from pathlib import Path
 from typing import Literal, NamedTuple
+import pickle
 
-from ct_slicing.config.data_path import DATA_FOLDER
+from ct_slicing.config.data_path import DATA_FOLDER, REPO_ROOT
+from ct_slicing.data_util.compare_ct_voi import CT_FOLDER, VOI_FOLDER, iter_files
 
 
 class NoduleMaskPair(NamedTuple):
@@ -66,6 +68,12 @@ def nii_path(
     return NoduleMaskPair(image, mask)
 
 
+with open(REPO_ROOT / "ct_slicing" / "data_util" / "data_access.py", "rb") as f:
+    data = pickle.load(f)
+    CT_NODULES = data["CT"]
+    VOI_NODULES = data["VOI"]
+
+
 def nii_exist(sections: Literal["CT", "VOI"], case_id: int, mask_id: int) -> bool:
     """
     Check if the nii file exists.
@@ -73,8 +81,12 @@ def nii_exist(sections: Literal["CT", "VOI"], case_id: int, mask_id: int) -> boo
     And also for indexing and iterator.
     Maybe I'll include the full LUNA16 dataset later.
     """
-    nodule, mask = nii_path(sections, case_id, mask_id)
-    return nodule.exists() and mask.exists()
+    if sections == "CT":
+        return (case_id, mask_id) in CT_NODULES
+    elif sections == "VOI":
+        return (case_id, mask_id) in VOI_NODULES
+    else:
+        raise ValueError(f"sections must be CT or VOI, but got {sections}")
 
 
 def nii_file(
@@ -87,6 +99,16 @@ def nii_file(
     if not nii_exist(sections, case_id, mask_id):
         raise FileNotFoundError(f"File not found: {nodule} or {mask}")
     return NoduleMaskPair(nodule, mask)
+
+
+ct_iter = (nii_file("CT", case, mask) for case, mask in CT_NODULES)
+voi_iter = (nii_file("VOI", case, mask) for case, mask in VOI_NODULES)
+
+
+def nii_path_to_case_id_mask_id(nii_path: Path) -> tuple[int, int]:
+    stem = str(nii_path.name).rstrip(".nii.gz").lstrip("LIDC-IDRI-")
+    case_id, mask_id = stem.split("_R_")
+    return int(case_id), int(mask_id)
 
 
 # Test if the file path is correct. Assume we won't rename the data files.
@@ -138,5 +160,24 @@ def test_nii_file():
     print("test_nii_file passed")
 
 
+def dump_available_nodules():
+    """
+    Dump all available nodule ids to a file.
+    """
+    ct_nodules: set[tuple[int, int]] = set()
+    voi_nodules: set[tuple[int, int]] = set()
+    for file in iter_files(CT_FOLDER / "nodule_mask"):
+        ct_nodules.add(nii_path_to_case_id_mask_id(file))
+    for file in iter_files(VOI_FOLDER / "image"):
+        # Know from `compare_ct_voi.py`, image is subset of nodule_mask.
+        voi_nodules.add(nii_path_to_case_id_mask_id(file))
+
+    # dump to file
+
+    with open(REPO_ROOT / "ct_slicing" / "data_util" / "data_access.py", "wb") as f:
+        pickle.dump({"CT": ct_nodules, "VOI": voi_nodules}, f)
+
+
 if __name__ == "__main__":
     test_nii_file()
+    # dump_available_nodules() # use when new data is added

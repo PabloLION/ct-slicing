@@ -39,7 +39,7 @@ def get_img_mask_pair_paths(
     data_set: Literal["CT", "VOIs"], patient_id: str, nodule_index: int
 ):
     section = "VOI" if data_set == "VOIs" else data_set
-    case_id = int(patient_id.replace("LIDC-IDRI-", ""))
+    case_id = int(patient_id.lstrip("LIDC-IDRI-"))
     return nii_file(section, case_id, nodule_index)
 
 
