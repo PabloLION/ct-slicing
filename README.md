@@ -69,3 +69,7 @@ Run the code in dev mode.
 
 - [ ] Universal name across all codes. IMG_PATH, MASK_PATH in lower case; img for ITK image, img_np for numpy array, etc.
 - [ ] Add "Cannot import a script file." to all scripts. Example in `l5_1_segmentation_validation.py`
+
+## Resources
+
+- Convert LUNA16 data to NIfTI format, [code](https://gitlab.cvc.uab.es/esmitt.cvc/LUNA16_matlab/blob/master/python/luna16.py) from UAB CVC.

@@ -38,15 +38,18 @@ from ct_slicing.data_util.data_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 from ct_slicing.vis_lib.volume_cut_browser import CutDirection, VolumeCutBrowser
 from ct_slicing.filter_lib.gabor_filters import gabor_2d_bank
-from ct_slicing.filter_lib.browse_gabor_filt_bank import BrowseGaborFilterBank
+from ct_slicing.filter_lib.browse_gabor_filt_bank import VisualizeGaborFilterBank
 from ct_slicing.ct_logger import logger
 
 # Parameters
 # choose the case id and nodule id to get the path of the nodule image and mask
-IMAGE_PATH, MASK_PATH = nii_file("CT", 1, 1)
+IMAGE_PATH, MASK_PATH = nii_file("CT", 1, 1)  # also tried with 5,2 (malignant)
 ROI_PATH, _ = nii_file("VOI", 1, 1)
+gabor_filter_index_for_3d_vis = 1
+
 
 image_name = "filled_square"  # filled_square, square, SA, SA_Mask, SAROI
+image_name = "SAROI"  # filled_square, square, SA, SA_Mask, SAROI
 gaussian_sigma = 10  # sigma of gaussian filter
 median_size = 3  # size of median filter
 filter_image = "gaussian"  # none, gaussian, median
@@ -173,7 +176,7 @@ syy: np.ndarray = sobel(sy, axis=0, mode="constant")
 # Laplacian (Ridge/Valley Detector)
 laplace = sxx + syy
 
-# Show Results
+# Show Results of Ridge/Valley Detector
 fig1 = plt.figure()
 ax = fig1.add_subplot(141)
 ax.imshow(img, cmap="gray")
@@ -187,7 +190,7 @@ ax = fig1.add_subplot(144)
 ax.imshow(laplace, cmap="gray")
 ax.set_title("Laplacian")
 plt.suptitle("Vertical and horizontal Laplacian (Ridge/Valley Detector)")
-plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.show(block=True)
 plt.close()
 
 fig1 = plt.figure()
@@ -200,7 +203,7 @@ ax = fig1.add_subplot(133)
 ax.imshow(abs(laplace) * (laplace < 0), cmap="gray")
 ax.set_title("ridges (Negative Laplacian)")
 plt.suptitle("Abs of Laplacian (Ridge/Valley Detector)")
-plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.show(block=True)
 plt.close()
 
 # 3. GABOR FILTERS
@@ -209,41 +212,64 @@ plt.close()
 #      to the edge detector and Laplacian (ridge/valley detector)
 #      of EX1 and EX3
 
-# Filter Bank
+# 3.2 Filter Bank
 if gabor_params == "default":
-    gabor_bank_re, gabor_2d_im, params = gabor_2d_bank()
+    gabor_2d_re, gabor_2d_im, gabor_2d_params = gabor_2d_bank()
 elif gabor_params == "non_default":
-    gabor_bank_re, gabor_2d_im, params = gabor_2d_bank(
+    gabor_2d_re, gabor_2d_im, gabor_2d_params = gabor_2d_bank(
         sigma=[2, 4], frequency=[0.25, 0.5]
     )
 else:
     raise ValueError("Incorrect gabor_params name.")
-
-# Show Filters
-BrowseGaborFilterBank(gabor_bank_re, params, block=True)
-BrowseGaborFilterBank(gabor_2d_im, params)
-
-Gab2Show = 1
-fig1 = mlab.figure()
-mlab.surf(gabor_bank_re[Gab2Show], warp_scale="auto")
-
-# Apply Filters
-NFilt = len(gabor_bank_re)
-logger.info(f"Number of Filters: {NFilt}")
+# gabor_2d_re, gabor_2d_im, params has the same length, where
+# _re is the real part of the filter, and _im is the imaginary part.
 
 
-Ressze = np.concatenate((im.shape, np.array([NFilt])))
-imGab1 = np.empty(Ressze)
-imGab2 = np.empty(Ressze)
-for k in range(NFilt):
-    imGab1[:, :, k] = ndi.convolve(im, gabor_bank_re[k], mode="wrap")
-    imGab2[:, :, k] = ndi.convolve(im, gabor_2d_im[k], mode="wrap")
+# 3.3 Visualize Filters
+# visualize the two banks of filters in a set of 2D images
+# use z and x to navigate through the filters #TODO: change this
+VisualizeGaborFilterBank(
+    gabor_2d_re,
+    gabor_2d_params,
+    title="2D Gabor Filter Bank (Real Part)",
+)
+VisualizeGaborFilterBank(
+    gabor_2d_im,
+    gabor_2d_params,
+    title="2D Gabor Filter Bank (Imaginary Part)",
+)
 
-VolumeCutBrowser(imGab1, cut_dir=CutDirection.Sagittal)
-BrowseGaborFilterBank(gabor_bank_re, params)
+mlab.figure()
+mlab.surf(gabor_2d_re[gabor_filter_index_for_3d_vis], warp_scale="auto")
+mlab.title("3D Gabor Filter (Real Part)")
+if not DEFAULT_PLOT_BLOCK:
+    mlab.show()  # cannot make this non-block. calling it optionally.
 
-VolumeCutBrowser(imGab2, cut_dir=CutDirection.Sagittal)
-BrowseGaborFilterBank(gabor_2d_im, params)
+# 3.4 Apply Filters
+n_filter = len(gabor_2d_re)  # count of the filters
+logger.info(f"Number of Filters: {n_filter}")
+
+# apply the filters to the image by convolution
+# TODO: not sure why split the real/imaginary part the Gabor filter
+result_size = im.shape + (n_filter,)  # one more dimension for the result
+gabor_2d_re_img, gabor_2d_im_img = np.empty(result_size), np.empty(result_size)
+# gabor_2d_PART_img is the image after applying the filter of PART part.
+for k in range(n_filter):
+    gabor_2d_re_img[:, :, k] = ndi.convolve(im, gabor_2d_re[k], mode="wrap")
+    gabor_2d_im_img[:, :, k] = ndi.convolve(im, gabor_2d_im[k], mode="wrap")
+
+# show the result after applying the filters
+# #TODO: not sure how to interpret the result. maybe I did something wrong?
+VolumeCutBrowser(
+    gabor_2d_re_img,
+    cut_dir=CutDirection.Sagittal,
+    title="2D Gabor Filter Bank (Real Part)",
+)
+VolumeCutBrowser(
+    gabor_2d_im_img,
+    cut_dir=CutDirection.Sagittal,
+    title="2D Gabor Filter Bank (Imaginary Part)",
+)
 
 
 # 4. FEATURE SPACES
@@ -312,9 +338,9 @@ plt.plot(
 )
 plt.xlabel("Intensity")
 plt.ylabel("Laplacian")
-plt.title("Pixel Distribution in the Space of Values given by (Intensity,Laplacian).")
+plt.title("Pixel Distribution in the Space of Values given by Intensity-Laplacian")
 plt.legend()
-plt.show(block=DEFAULT_PLOT_BLOCK)
+plt.show(block=True)
 plt.close()
 
 # 4.3 Kmeans Clustering
@@ -366,30 +392,38 @@ its opposite (1-'filled_square') and ‘square’. Compare results across use ca
 
 Exercise 3. Gabor Filters. Compute the default Gabor filter bank and:
 a) Visualize the two banks of filters.
-
+    See code under `# 3.3 Visualize Filters`. The plots are with titles.
 
 b) Apply the two filter banks to Compute the Laplacian, Ridges (negative
 Laplacian) and Valleys (positive Laplacian) of the use images labelled
 'filled_square', its opposite (1-'filled_square') and ‘square’.
+    Not sure how to interpret the results after applying two filter banks.
+    See code under `# 3.4 Apply Filters`. The plots are with titles.
 
 c) Visualize responses to each filter for the two Gabor filter banks and compare
 results to the ones obtained in Ex1 and Ex2. Would you use any of the Gabor
 filters to detect edges, valleys or ridges.
+    I cannot do it because I don't know how to interpret the results.
 
 d) Repeat a)-c) using the alternative Gabor filter bank. What is the difference with
 the default Gabor filter bank? Would you use any of the Gabor filters to detect
 edges, valleys or ridges.
-
+    I cannot do it because I don't know how to interpret the results.
 
 Exercise 4. Feature Spaces. Compute Otsu thresholding for the use image
 ‘SAROI’ and visualize the binarization. Analyse the histogram of SAROI intensity
 showing the lesion values in red and discuss if there exists a threshold (vertical line)
 able to perfectly separate lesion from other structures.
+    There's none threshold that can perfectly separate lesion from other 
+    structures. See the code under `# 4.1 Intensity thresholding`.
+
 Consider for each pixel the pair of values given by SAROI intensity (im) and its
 Laplacian (Lap). Visualize the point cloud defined by assigning for each pixel a x-
 coordinate given by its intensity and a y-coordinate given by its Laplacian. Try to divide
 the plane with a line splitting (discriminating/classifying) the red (lesion) and blue points
 (background). Do you think you could achieve a more accurate separation than using
 only one feature (intensity)?
-
+    No it there shouldn't be. There's no lesion in the image. 
+    Even if we change some blue points to red, there's no separating line.
+    See the code under `# 4.2 Feature Space Partition`.
 """

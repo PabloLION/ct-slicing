@@ -18,46 +18,52 @@ import sys
 from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
 
 
-class BrowseGaborFilterBank:
-    NFilt: int
+# #TODO: ref: move to vis_lib
+# #LONG: I don't feel the "show on init" is a good idea. Maybe we should split
+# #LONG+ the show from the init, and change the init to only create an instance
+class VisualizeGaborFilterBank:
+    n_filter: int
 
-    def __init__(self, GaborBank2D, params, *, block: bool = DEFAULT_PLOT_BLOCK):
-        self.GaborBank2D = GaborBank2D
-        self.NFilt = (
-            len(GaborBank2D)
-            if isinstance(GaborBank2D, list)
-            else np.shape(GaborBank2D)[0]
+    def __init__(
+        self,
+        gabor_2d_bank,
+        params,
+        *,
+        plot_block: bool = DEFAULT_PLOT_BLOCK,
+        title: str = "Visualize Gabor Filter Bank",
+    ):
+        self.gabor_2d_bank = gabor_2d_bank
+        self.n_filter = (
+            len(gabor_2d_bank)
+            if isinstance(gabor_2d_bank, list)
+            else np.shape(gabor_2d_bank)[0]
         )
         self.params = params
         self.idx = 0
-        self.fig, self.ax1 = plt.subplots(1, 1)
+        self.fig, self.ax = plt.subplots(1, 1)
         self.fig.canvas.mpl_connect("key_press_event", self.press)
-        self.DrawScene()
+        self.draw_scene()
+        plt.suptitle(title)
+        plt.show(block=plot_block)
+        plt.close()
 
     def press(self, event):
         sys.stdout.flush()
         if event.key == "x":
             self.idx -= 1
             self.idx = max(0, self.idx)
-            self.DrawScene()
+            self.draw_scene()
         if event.key == "z":
             self.idx += 1
-            self.idx = min(self.NFilt - 1, self.idx)
-            self.DrawScene()
+            self.idx = min(self.n_filter - 1, self.idx)
+            self.draw_scene()
 
-    def DrawScene(self):
+    def draw_scene(self):
         theta0, sigma0, frequency0 = self.params[self.idx]
         theta0 = theta0 * 180 / np.pi
-        GaborFilt = self.GaborBank2D[self.idx]
-        self.ax1.imshow(GaborFilt, cmap="gray")
-        self.ax1.set_title(
-            "FilterNumber: "
-            + str(self.idx)
-            + " Theta: "
-            + str(theta0)
-            + " Sig: "
-            + str(sigma0)
-            + " Freq: "
-            + str(frequency0)
+        GaborFilt = self.gabor_2d_bank[self.idx]
+        self.ax.imshow(GaborFilt, cmap="gray")
+        self.ax.set_title(
+            f"FilterNumber: {self.idx} Theta: {theta0} Sig: {sigma0} Freq: {frequency0}"
         )
         self.fig.canvas.draw()

@@ -92,6 +92,7 @@ class VolumeCutBrowser:
     ax: axes.Axes
     img_stack: np.ndarray  # Image Stack
     contour_stack: np.ndarray | None  # Segmentation Stack
+    title: str
 
     def __init__(
         self,
@@ -100,18 +101,23 @@ class VolumeCutBrowser:
         contour_stack: np.ndarray | None = None,
         *,
         plot_block: bool = DEFAULT_PLOT_BLOCK,
+        title: str = "Volume Cut Browser",
     ):
         self.img_stack = img_stack
         self.cut = cut_dir
         self.contour_stack = contour_stack
-        self.idx = CutDirection.get_median_index(img_stack, cut_dir)
+        self.title = title
 
+        self.idx = CutDirection.get_median_index(img_stack, cut_dir)
         self.fig, self.ax = plt.subplots()
         self.fig.canvas.mpl_connect(
             "key_press_event", cast(Callable[[Event], None], self.press)
         )
+
         self.draw_scene()
         plt.show(block=plot_block)
+
+        plt.suptitle(title)  # this is not functional
         plt.close()
 
     # #TODO: show bindings here in the class, not outside
@@ -135,7 +141,8 @@ class VolumeCutBrowser:
         self.ax.cla()
         image = CutDirection.get_cut_img(self.img_stack, self.cut, self.idx)
         self.ax.imshow(image, cmap="gray")
-        self.ax.set_title(f"cut: {self.idx}. Press 'x' to decrease; 'z' to increase")
+        title = f"cut: {self.idx}. Press 'x' to decrease; 'z' to increase"
+        self.ax.set_title(self.title + "\n" + title)
 
         if self.contour_stack is not None:  # Draw segmentation contour
             image = CutDirection.get_cut_img(self.contour_stack, self.cut, self.idx)
