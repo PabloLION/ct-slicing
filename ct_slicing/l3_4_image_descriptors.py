@@ -43,7 +43,7 @@ from ct_slicing.ct_logger import logger
 
 # Parameters
 # choose the case id and nodule id to get the path of the nodule image and mask
-IMAGE_PATH, MASK_PATH = nii_file("CT", 1, 1)  # also tried with 5,2 (malignant)
+IMAGE_PATH, MASK_PATH = nii_file("CT", 1, 1)  # also tried with 5,2 (benign)
 ROI_PATH, _ = nii_file("VOI", 1, 1)
 gabor_filter_index_for_3d_vis = 1
 

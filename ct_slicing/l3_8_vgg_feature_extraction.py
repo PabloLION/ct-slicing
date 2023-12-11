@@ -205,3 +205,19 @@ calibrated_classifier = CalibratedClassifierCV(clf2, n_jobs=-1, cv=2)
 # )
 
 # print(train_report_dict)
+"""
+# Exercise
+
+## Exercise 3. Extract features with a pre-trained network and make the
+classification of the slices.
+a) The code in vgg_features_extraction1.py simulates the extraction of features for two
+slices. Modify the vgg_features_extraction1.py to read each (intensity) nodule and
+passing each of its slices through the VGG model. Extract the features from the first
+ReLU layer of the classification sequence.
+    This is not done in the code.
+
+b) After extracting the features, split the data into a train set (70%) and a test set (30%) set
+and train a SVM classifier (using the train set). Later calibrate the classifier using the
+output probabilities.
+    This is not done in the code.
+"""

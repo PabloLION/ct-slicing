@@ -160,3 +160,28 @@ logger.info(f"Prediction:     {prediction}")
 logger.info(f"y_test_samples: {y_test_samples_array}")
 accuracy = np.sum(prediction == y_test_samples_array) / y_test_samples_array.size
 logger.info(f"Accuracy: {accuracy*100}%")
+
+"""
+# Exercise
+## Exercise 1. Using PyRadiomics, make a manual feature selection and
+classification.
+
+a) Using PyRadiomics, extract only GLCM features from all slices (of the nodules) in the
+database and save them in an EXCEL file. For this purpose modify the
+featureExtraction.py file as needed.
+
+    This is done in `l3_3_feature_extraction.py`
+
+b) Why would we make a feature selection?
+    Because we want to reduce the number of features to reduce the complexity
+    of the model and to avoid overfitting.
+    The selection is done with the variable `selection` in this file.
+
+c) Split the already extracted features obtained in a) in a training (70%) and test (30%) set.
+In the code featuresExtractionSVM.py, then run the code.
+    This is done with the variables `proportion` in this file. We can easily
+    change the value of `proportion` to change the proportion of training and
+    test set.
+    The code for splitting is under the comment 
+    `## RANDOM SELECTION OF THE TRAIN AND TEST SET ##`
+"""

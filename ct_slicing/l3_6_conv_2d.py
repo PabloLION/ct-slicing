@@ -25,18 +25,39 @@ x = torch.randn(16, 3, 6, 6)
 print(x.shape)
 print(x)
 
+# Exercise 2.a - Add a fully connected layer and show its weights.
+# Define a fully connected layer with input features 16*3*6*6
+# (output of previous layers) and output features 64
+fc_layer = nn.Linear(3, 3)
+
 # Pass the input through the convolution 2D, ReLU and MaxPool2d layers
 out = conv_layer(x)
-print(out)
-
 out = relu_layer(out)
-print(out)
-
 out = maxpool_layer(out)
-print(out)
 
 # Show the shape of the output tensor.
+print(out)
 print(out.shape)
 
 # Print the wights of the convolution layer.
 print(conv_layer.weight)
+
+# Exercise 2.a - Add a fully connected layer and show its weights.
+out = fc_layer(out)
+print("Weights of the fully connected layer:")
+print(fc_layer.weight)
+
+"""
+# Exercise
+
+## Exercise 2. Understanding a pre-trained network.
+
+a) To understand how a random input tensor goes through a convolutional layer, activation
+function, and max pooling layer examine the Conv2D.py code. In the provided code, add
+a fully connected layer and show its weights.
+    The input tensor is a 16x3x6x6 tensor, where 16 is the batch size, 3 is the
+    number of channels. So we define a layer with 3 input channels and 3 output
+    channels. The kernel size is 3x3. The weights of the new channel changes
+    randomly after each execution.
+See for the next part, Exercise 2.b in `l3_7_vgg_architecture.py`.
+"""
