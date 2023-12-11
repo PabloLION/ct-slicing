@@ -190,7 +190,7 @@ ax = fig1.add_subplot(144)
 ax.imshow(laplace, cmap="gray")
 ax.set_title("Laplacian")
 plt.suptitle("Vertical and horizontal Laplacian (Ridge/Valley Detector)")
-plt.show(block=True)
+plt.show(block=DEFAULT_PLOT_BLOCK)
 plt.close()
 
 fig1 = plt.figure()
@@ -203,7 +203,7 @@ ax = fig1.add_subplot(133)
 ax.imshow(abs(laplace) * (laplace < 0), cmap="gray")
 ax.set_title("ridges (Negative Laplacian)")
 plt.suptitle("Abs of Laplacian (Ridge/Valley Detector)")
-plt.show(block=True)
+plt.show(block=DEFAULT_PLOT_BLOCK)
 plt.close()
 
 # 3. GABOR FILTERS
@@ -340,7 +340,7 @@ plt.xlabel("Intensity")
 plt.ylabel("Laplacian")
 plt.title("Pixel Distribution in the Space of Values given by Intensity-Laplacian")
 plt.legend()
-plt.show(block=True)
+plt.show(block=DEFAULT_PLOT_BLOCK)
 plt.close()
 
 # 4.3 Kmeans Clustering
