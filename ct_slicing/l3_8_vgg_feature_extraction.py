@@ -10,6 +10,39 @@ Universitat Autonoma de Barcelona
 
 # Unit: Visual Feature extraction exploration and selection / PyRadiomics
 
+"""
+Renaming:
+| Old name | New name |
+|----------|----------|
+| X | one_slice |
+| tensor | tensor_one_slice |
+|array1 | feature_one_slice |
+| X | another_slice |
+| tensor | tensor_another_slice |
+|array2 | feature_another_slice |
+
+Improvements:
+- Copying an 224x224 image three times along the new first axis:
+    - Old version:
+        X = np.stack([X] * 3, axis=2)  # (224, 224, 3)
+        X = X.transpose((2, 0, 1))
+    - New version:
+        X = np.tile(X, (3, 1, 1))  # (3, 224, 224)
+- Removing the tensor to PIL image conversion:
+    # ...
+    X = X.transpose((2, 0, 1)) # now X is a (3, 224, 224) np.ndarray
+    tensor = torch.from_numpy(X) # this is not needed anymore
+    tensor = transform(tensor) # because here we are converting to PIL.Image
+                            #  from either a np.ndarray or tensor
+"""
+
+if __name__ != "__main__":
+    raise ImportError(
+        "This file is not meant to be imported. "
+        "Please run it directly with python3 -m ct_slicing.l3_8_vgg_feature_extraction"
+    )
+
+
 from enum import Enum
 import torch
 import torch.nn as nn
@@ -29,24 +62,10 @@ class ModelName(Enum):
     VGG19 = "vgg19"
 
 
+## Choose parameters for this script
 MODEL_NAME: ModelName = ModelName.VGG16  # property to be configured
 
-
-# Create a transformation for processing the image
-transform = transforms.Compose(
-    [
-        transforms.ToPILImage(),  # Convert the tensor to a PIL image
-        transforms.Resize(
-            (224, 224)
-        ),  # Change dimension of the image to 224x224 pixels
-        transforms.ToTensor(),  # Convert the image to a PyTorch tensor
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-        ),  # Normalize el tensor
-    ]
-)
-
-# Load a pre-trained VGG16 or VGG19 model
+# Load a pre-trained VGG16 or VGG19 model. NOT using dict for performance
 if MODEL_NAME == ModelName.VGG16:
     model = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
 elif MODEL_NAME == ModelName.VGG19:
@@ -54,14 +73,55 @@ elif MODEL_NAME == ModelName.VGG19:
 else:
     raise ValueError(f"Unknown model name: {MODEL_NAME}")
 
-##############################################
+
+def tensor_from_2d_array(array_2d: np.ndarray) -> torch.Tensor:
+    """Create a 1x3x224x224 tensor for vgg16 from an 2d intensity array
+    of any size.
+
+    Args:
+        image (np.ndarray): Image to be converted.
+
+    Returns:
+        torch.Tensor: Tensor created from the image.
+
+    Refactored from:
+        It was constructed with ``transform = transforms.Compose()`` but
+        here it is done in a typed function.
+        This change is tested with ``assert torch.all(torch.eq(old, new))``
+    """
+    # Convert the image to a PIL image
+
+    array_2d_uint8 = (array_2d * 255).astype(np.uint8)
+    array_3d_uint8 = np.stack([array_2d_uint8] * 3, axis=2)  # shape: (H,W,3)
+    pil_img = transforms.ToPILImage()(array_3d_uint8)
+
+    ## old version of these 3 lines:
+    # array_3d = np.tile(array_2d, (3, 1, 1))
+    # array_3d = torch.from_numpy(array_3d)
+    # pil_img = transforms.ToPILImage()(array_3d)
+
+    ## reason for the change:
+    # transforms.ToPILImage parses float to int8 by `pic = pic.mul(255).byte()`
+    # then transposes the array of (3,H,W) to (H,W,3) with dtype = int8.
+    # this is a lot of overhead for a simple parse.
+
+    # Resize the image to 224x224 pixels
+    pil_img_224x224 = transforms.Resize((224, 224))(pil_img)
+    # Convert the image to a PyTorch tensor then normalize it
+
+    tensor: torch.Tensor = transforms.ToTensor()(pil_img_224x224)
+    tensor = transforms.Normalize(
+        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+    )(tensor)
+    # Expand one dimension from 3x224x224 to 1x3x224x224
+    tensor = tensor.unsqueeze(0)
+    return tensor
 
 
 #### Parts of the VGG model ####
-vgg_features = model.features
-vgg_avgpool = model.avgpool
 # ":-2" includes the classifier layers of the VGG up to the penultimate layer
 vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
+# #TODO: why should we use "-2"?
 ################################
 
 ########################
@@ -79,7 +139,7 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
 
 # image, meta1 = readNifty(imageName, CoordinateOrder='xyz')
 
-## Apply the same preprocesing used in featuresExtraction.py
+## Apply the same preprocessing used in featuresExtraction.py
 ### PREPROCESSING
 # image = ShiftValues(image, value=1024)
 # image = SetRange(image, in_min=0, in_max=4000)
@@ -90,67 +150,45 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
 
 ####### ONE SLICE ########
 # Create a random numpy array
-X = np.random.rand(224, 224)  # IT SHOULD BE REPLACED BY THE SLICE OF THE NODULE
+one_slice = np.random.rand(224, 224)  # #TODO: replace with a real slice (any size)
+tensor_one_slice = tensor_from_2d_array(one_slice)
 
-# Replicate the array in three channels
-X = np.stack([X] * 3, axis=2)  # (224, 224, 3)
-
-# Transpose the axis: (3, 224, 224)
-X = X.transpose((2, 0, 1))
-# print(X.shape)
-
-# Convert from numpy array to a tensor of PyTorch
-tensor = torch.from_numpy(X)
-# print(type(tensor))
-
-# Apply the transform to the tensor
-tensor = transform(tensor)
-# print(tensor.shape)  # torch.Size([3, 224, 224])
-
-# Expand one dimension
-tensor = tensor.unsqueeze(0)
-# print(tensor.shape)   # torch.Size([1, 3, 224, 224])
 
 # List with the ground truth of each slice
 y = []
 
 # Extract features using the VGG model
 with torch.no_grad():
-    out = model.features(tensor)
+    out = model.features(tensor_one_slice)
     out = model.avgpool(out)
     out = out.view(1, -1)
     out = vgg_classifier(out)
 
 # Convert the tensor to numpy array
-array1 = out.numpy()
+feature_one_slice = out.numpy()
 y.append(0)
 
 #####################################
 
 ####### ANOTHER SLICE ########
-X = np.random.rand(224, 224)  # IT SHOULD BE REPLACED BY THE SLICE OF THE NODULE
-X = np.stack([X] * 3, axis=2)  # (224, 224, 3)
-X = X.transpose((2, 0, 1))
-tensor = torch.from_numpy(X)
-tensor = transform(tensor)
-tensor = tensor.unsqueeze(0)
-print(tensor.shape)
+another_slice = np.random.rand(224, 224)  # #TODO: replace with a real slice (any size)
+tensor_another_slice = tensor_from_2d_array(another_slice)
 
 # Extract features using the VGG model
 with torch.no_grad():
-    out = model.features(tensor)
+    out = model.features(tensor_another_slice)
     out = model.avgpool(out)
     out = out.view(1, -1)
     out = vgg_classifier(out)
 
 # Convert the tensor to numpy array
-array2 = out.numpy()
+feature_another_slice = out.numpy()
 y.append(1)
 
 #####################################
 
-# Stack the extracted featues
-all_features = np.vstack((array1, array2))  # extracted features
+# Stack the extracted features
+extracted_features = np.vstack((feature_one_slice, feature_another_slice))
 y = np.array(y)  # convert the ground truth list to a numpy array.
 
 #####################################
@@ -159,7 +197,7 @@ y = np.array(y)  # convert the ground truth list to a numpy array.
 # X_train, X_test, y_train, y_test = train_test_split(
 #     all_features, y, test_size=0.3, random_state=42
 # )
-X_train, X_test, y_train, y_test = all_features, all_features, y, y
+X_train, X_test, y_train, y_test = extracted_features, extracted_features, y, y
 
 #####################################
 
@@ -205,6 +243,11 @@ calibrated_classifier = CalibratedClassifierCV(clf2, n_jobs=-1, cv=2)
 # )
 
 # print(train_report_dict)
+
+## Unused code
+vgg_features = model.features
+vgg_avgpool = model.avgpool
+
 """
 # Exercise
 
