@@ -146,11 +146,14 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
 # image = SetGrayLevel(image, levels=24)
 
 ########################
+rng = np.random.Generator(np.random.PCG64(123))  # better practice of random.seed
 
 
 ####### ONE SLICE ########
 # Create a random numpy array
-one_slice = np.random.rand(224, 224)  # #TODO: replace with a real slice (any size)
+
+one_slice = rng.uniform(size=(224, 224))
+# #TODO: replace with a real slice (any size)
 tensor_one_slice = tensor_from_2d_array(one_slice)
 
 
@@ -171,7 +174,8 @@ y.append(0)
 #####################################
 
 ####### ANOTHER SLICE ########
-another_slice = np.random.rand(224, 224)  # #TODO: replace with a real slice (any size)
+another_slice = rng.uniform(size=(224, 224))
+# #TODO: replace with a real slice (any size)
 tensor_another_slice = tensor_from_2d_array(another_slice)
 
 # Extract features using the VGG model
