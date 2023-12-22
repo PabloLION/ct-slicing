@@ -118,9 +118,24 @@ def tensor_from_2d_array(array_2d: np.ndarray) -> torch.Tensor:
     return tensor
 
 
+def vgg_extract_features(slice_tensor: torch.Tensor) -> np.ndarray:
+    """
+    Extract features as a numpy array from a single slice tensor using the
+    VGG model.
+    """
+    with torch.no_grad():
+        features_tensor: torch.Tensor = model.features(slice_tensor)
+        features_tensor = model.avgpool(features_tensor)
+        features_tensor = features_tensor.view(1, -1)
+        features_tensor = vgg_classifier(features_tensor)
+        features = features_tensor.numpy()  # Convert tensor to numpy array
+    return features
+
+
 #### Parts of the VGG model ####
-# ":-2" includes the classifier layers of the VGG up to the penultimate layer
+# print(c for c in model.classifier.children())
 vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
+# ":-2" removes the last 2 layers of the classifier
 # #TODO: why should we use "-2"?
 ################################
 
@@ -148,45 +163,20 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
 ########################
 rng = np.random.Generator(np.random.PCG64(123))  # better practice of random.seed
 
+y = []  # List with the ground truth of each slice
 
 ####### ONE SLICE ########
-# Create a random numpy array
-
 one_slice = rng.uniform(size=(224, 224))
 # #TODO: replace with a real slice (any size)
 tensor_one_slice = tensor_from_2d_array(one_slice)
-
-
-# List with the ground truth of each slice
-y = []
-
-# Extract features using the VGG model
-with torch.no_grad():
-    out = model.features(tensor_one_slice)
-    out = model.avgpool(out)
-    out = out.view(1, -1)
-    out = vgg_classifier(out)
-
-# Convert the tensor to numpy array
-feature_one_slice = out.numpy()
+feature_one_slice = vgg_extract_features(tensor_one_slice)
 y.append(0)
-
-#####################################
 
 ####### ANOTHER SLICE ########
 another_slice = rng.uniform(size=(224, 224))
 # #TODO: replace with a real slice (any size)
 tensor_another_slice = tensor_from_2d_array(another_slice)
-
-# Extract features using the VGG model
-with torch.no_grad():
-    out = model.features(tensor_another_slice)
-    out = model.avgpool(out)
-    out = out.view(1, -1)
-    out = vgg_classifier(out)
-
-# Convert the tensor to numpy array
-feature_another_slice = out.numpy()
+feature_another_slice = vgg_extract_features(tensor_another_slice)
 y.append(1)
 
 #####################################
