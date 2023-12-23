@@ -24,7 +24,7 @@ class NoduleMaskPair(NamedTuple):
 
 
 def nii_path(
-    section: Literal["CT", "VOI"], case_id: int, mask_id: int
+    section: Literal["CT", "VOI"], case_id: int, nodule_id: int
 ) -> NoduleMaskPair:
     """Return a pair of (image path, mask path) of a given case id and
     nodule index.
@@ -46,7 +46,7 @@ def nii_path(
             DATA_FOLDER
             / section
             / "nodule_mask"
-            / f"LIDC-IDRI-{case_id:04d}_R_{mask_id}.nii.gz"
+            / f"LIDC-IDRI-{case_id:04d}_R_{nodule_id}.nii.gz"
         )
     elif section == "VOI":
         # data/VOIs/image/LIDC-IDRI-0003_R_2.nii.gz
@@ -54,14 +54,14 @@ def nii_path(
             DATA_FOLDER
             / "VOIs"
             / "image"
-            / f"LIDC-IDRI-{case_id:04d}_R_{mask_id}.nii.gz"
+            / f"LIDC-IDRI-{case_id:04d}_R_{nodule_id}.nii.gz"
         )
         # data/VOIs/nodule_mask/LIDC-IDRI-0001_R_1.nii.gz
         mask = (
             DATA_FOLDER
             / "VOIs"
             / "nodule_mask"
-            / f"LIDC-IDRI-{case_id:04d}_R_{mask_id}.nii.gz"
+            / f"LIDC-IDRI-{case_id:04d}_R_{nodule_id}.nii.gz"
         )
     else:
         raise ValueError(f"section must be CT or VOI, but got {section}")
@@ -97,12 +97,28 @@ def nii_file(
     """
     nodule, mask = nii_path(sections, case_id, mask_id)
     if not nii_exist(sections, case_id, mask_id):
-        raise FileNotFoundError(f"File not found: {nodule} or {mask}")
+        raise FileNotFoundError(f"File not found for {nodule=} {mask=}")
     return NoduleMaskPair(nodule, mask)
 
 
 ct_iter = (nii_file("CT", case, mask) for case, mask in CT_NODULES)
 voi_iter = (nii_file("VOI", case, mask) for case, mask in VOI_NODULES)
+
+
+def patient_id_to_case_id(patient_id: str) -> int:
+    """
+    Convert patient id to case id.
+
+    Args:
+        patient_id (str): patient id, e.g. LIDC-IDRI-0001, LIDC-IDRI-0105
+
+    Returns:
+        int: case id, e.g. 1 for LIDC-IDRI-0001, 105 for LIDC-IDRI-0105
+    """
+    stem = str(patient_id).rstrip(".nii.gz").lstrip("LIDC-IDRI-")
+    if not stem.isnumeric():
+        raise ValueError(f"Invalid patient id: {patient_id}")
+    return int(stem)
 
 
 def nii_path_to_case_id_mask_id(nii_path: Path) -> tuple[int, int]:
@@ -112,11 +128,11 @@ def nii_path_to_case_id_mask_id(nii_path: Path) -> tuple[int, int]:
 
 
 # Test if the file path is correct. Assume we won't rename the data files.
-def expect_nii_file_not_found_error(
+def test_nii_file_with_expected_not_found_error(
     sections: Literal["CT", "VOI"], case_id: int, mask_id: int
 ):
     """
-    Expect a FileNotFoundError from fn(*args, **kwargs).
+    Expect a FileNotFoundError from nii_file.
     """
     try:
         nii_file(sections, case_id, mask_id)
@@ -147,16 +163,16 @@ def test_nii_file():
     nii_file("VOI", 235, 2)
     nii_file("VOI", 1011, 2)
     # not existing
-    expect_nii_file_not_found_error("CT", 3, 1)
-    expect_nii_file_not_found_error("CT", 2, 1)
-    expect_nii_file_not_found_error("CT", 5, 5)
-    expect_nii_file_not_found_error("VOI", 2, 1)
-    expect_nii_file_not_found_error("VOI", 3, 1)
-    expect_nii_file_not_found_error("VOI", 70, 1)
-    expect_nii_file_not_found_error("VOI", 224, 1)
-    expect_nii_file_not_found_error("VOI", 234, 2)
-    expect_nii_file_not_found_error("VOI", 235, 1)
-    expect_nii_file_not_found_error("VOI", 1011, 4)
+    test_nii_file_with_expected_not_found_error("CT", 3, 1)
+    test_nii_file_with_expected_not_found_error("CT", 2, 1)
+    test_nii_file_with_expected_not_found_error("CT", 5, 5)
+    test_nii_file_with_expected_not_found_error("VOI", 2, 1)
+    test_nii_file_with_expected_not_found_error("VOI", 3, 1)
+    test_nii_file_with_expected_not_found_error("VOI", 70, 1)
+    test_nii_file_with_expected_not_found_error("VOI", 224, 1)
+    test_nii_file_with_expected_not_found_error("VOI", 234, 2)
+    test_nii_file_with_expected_not_found_error("VOI", 235, 1)
+    test_nii_file_with_expected_not_found_error("VOI", 1011, 4)
     print("test_nii_file passed")
 
 
@@ -173,11 +189,11 @@ def dump_available_nodules():
         voi_nodules.add(nii_path_to_case_id_mask_id(file))
 
     # dump to file
-
     with open(REPO_ROOT / "ct_slicing" / "data_util" / "nodule_id.pkl", "wb") as f:
         pickle.dump({"CT": ct_nodules, "VOI": voi_nodules}, f)
 
 
 if __name__ == "__main__":
     test_nii_file()
+    print(f"{len(CT_NODULES)=}, {len(VOI_NODULES)=}")
     # dump_available_nodules() # use when new data is added
