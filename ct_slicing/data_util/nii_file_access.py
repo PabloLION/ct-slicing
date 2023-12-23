@@ -1,4 +1,6 @@
 """
+This module is used to access the nii files (CT images and masks, AKA NIfTI files).
+
 Reading file and adjusting the paths is mentally too heavy for me.
 Here I use a simpler way to get the file path.
 """

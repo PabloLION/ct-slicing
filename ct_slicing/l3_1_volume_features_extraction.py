@@ -13,7 +13,7 @@ from radiomics import featureextractor as feature_extractor, setVerbosity
 from ct_slicing.ct_logger import logger
 
 from ct_slicing.config.data_path import REPO_ROOT
-from ct_slicing.data_util.data_access import nii_file
+from ct_slicing.data_util.nii_file_access import nii_file
 
 setVerbosity(60)
 

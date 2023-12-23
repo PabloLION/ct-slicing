@@ -34,7 +34,7 @@ from skimage.filters import threshold_otsu
 from sklearn.cluster import KMeans
 from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
 
-from ct_slicing.data_util.data_access import nii_file
+from ct_slicing.data_util.nii_file_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 from ct_slicing.vis_lib.volume_cut_browser import CutDirection, VolumeCutBrowser
 from ct_slicing.filter_lib.gabor_filters import gabor_2d_bank

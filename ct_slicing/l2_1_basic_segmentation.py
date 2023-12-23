@@ -12,7 +12,7 @@ Universitat Autonoma de Barcelona
 # Data: from Unit "Full Dataset"
 
 import matplotlib.pyplot as plt
-from ct_slicing.data_util.data_access import nii_file
+from ct_slicing.data_util.nii_file_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
 from scipy.ndimage import gaussian_filter, median_filter
 from skimage import morphology

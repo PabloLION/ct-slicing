@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 
 from ct_slicing.config.data_path import DATA_FOLDER, REPO_ROOT
-from ct_slicing.data_util.data_access import patient_id_to_case_id
+from ct_slicing.data_util.nii_file_access import patient_id_to_case_id
 from ct_slicing.ct_logger import logger
 
 META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
