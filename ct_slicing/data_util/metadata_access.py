@@ -1,11 +1,9 @@
-from pathlib import Path
-from typing import Literal, NamedTuple
 import pickle
-from ct_slicing.config.data_path import DATA_FOLDER, REPO_ROOT
-from ct_slicing.data_util.compare_ct_voi import CT_FOLDER, VOI_FOLDER, iter_files
 import pandas as pd
 
+from ct_slicing.config.data_path import DATA_FOLDER, REPO_ROOT
 from ct_slicing.data_util.data_access import patient_id_to_case_id
+from ct_slicing.ct_logger import logger
 
 META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
 
@@ -76,6 +74,16 @@ def load_data_to_dataclass(df: pd.DataFrame) -> dict[tuple[int, int], NoduleMeta
     return records
 
 
+META_DATA_PICKLE = REPO_ROOT / "data" / "metadata.pickle"
+
+
+def dump_available_metadata():
+    records = load_data_to_dataclass(df_metadata)
+    with open(META_DATA_PICKLE, "wb") as f:
+        pickle.dump(records, f)
+    logger.warning(f"Dumped {len(records)} records to {META_DATA_PICKLE}")
+
+
 def test_load_data_to_dataclass():
     records = load_data_to_dataclass(df_metadata)
     assert len(records) == 996, f"expected 996 records, got {len(records)}"
@@ -84,3 +92,4 @@ def test_load_data_to_dataclass():
 
 if __name__ == "__main__":
     test_load_data_to_dataclass()
+    dump_available_metadata()

@@ -195,7 +195,7 @@ X_train, X_test, y_train, y_test = extracted_features, extracted_features, y, y
 
 #####################################
 
-# Create and training a SVM classifier
+# Create and train a SVM classifier
 clf2 = svm.SVC(probability=True, class_weight="balanced")
 clf2.fit(X_train, y_train)
 
