@@ -46,8 +46,38 @@ def get_img_mask_pair_paths(
     return nii_file(section, case_id, nodule_index)
 
 
+def process_image(
+    image: np.ndarray,
+    shift_value: int = 1024,
+    scaled_range: tuple[int, int] = (0, 4000),
+    gray_levels: int = 24,
+) -> np.ndarray:
+    """
+    Process the image before feature extraction with three steps:
+    1. shift_values: add shift_value to all values
+    2. set_range: scale the range to scaled_range
+    3. set_gray_level: quantize the gray intensity to gray_levels discrete levels
+
+    Args:
+        image (np.ndarray): an image with values between 0 and 1
+        shift_value (int): the value to shift the image by
+        scaled_range (tuple[int, int]): the range to scale the image to
+        gray_levels (int): the number of gray levels to use
+
+    Returns:
+        np.ndarray: the preprocessed image
+    """
+    image = shift_values(image, shift_value)
+    image = set_range(image, scaled_range[0], scaled_range[1])
+    image = set_gray_level(image, gray_levels)
+    return image
+
+
 def shift_values(image: np.ndarray, value: int) -> np.ndarray:
-    """Was called ShiftValues"""
+    """
+    Move the values of the image to the right by a value.
+    Was called ShiftValues
+    """
 
     image = image + value
     logger.debug(f"Range after Shift: {image.min()} - {image.max()}")
@@ -55,6 +85,10 @@ def shift_values(image: np.ndarray, value: int) -> np.ndarray:
 
 
 def set_range(image: np.ndarray, in_min: int, in_max: int) -> np.ndarray:
+    """
+    Set the range of the image to the specified values.
+    Was called SetRange.
+    """
     image = (image - image.min()) / (image.max() - image.min())
     image = image * (in_max - in_min) + in_min
 
@@ -65,7 +99,9 @@ def set_range(image: np.ndarray, in_min: int, in_max: int) -> np.ndarray:
 
 
 def set_gray_level(image: np.ndarray, levels: int) -> np.ndarray:
-    """Was called SetGrayLevel
+    """
+    Set the number of gray levels of the image to the specified value.
+    Was called SetGrayLevel
 
     Args:
         image (np.ndarray): an image with values between 0 and 1
@@ -78,6 +114,7 @@ def set_gray_level(image: np.ndarray, levels: int) -> np.ndarray:
     return image
 
 
+# #TODO: refactor move, or maybe use pandas.DataFrame.to_excel
 def write_excel(df: pd.DataFrame, path: Path):
     # (over)write DataFrame to excel file
 
@@ -196,9 +233,7 @@ def extract_feature_record(
     diagnosis: int = nodule_identity.Diagnosis_value.values[0]
 
     # pre-processing
-    image = shift_values(image, value=1024)
-    image = set_range(image, in_min=0, in_max=4000)
-    image = set_gray_level(image, levels=24)
+    image = process_image(image)
 
     extractor = featureextractor.RadiomicsFeatureExtractor(
         str(RADIOMICS_DEFAULT_PARAMS_PATH)

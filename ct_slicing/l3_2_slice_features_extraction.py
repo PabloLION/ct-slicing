@@ -98,7 +98,7 @@ def SliceMode(
                 od = GetFeatures(featureVector, i, patient_id, nodule_id)
                 myList.append(od)
             # else:
-            #     print("features extraction skipped in slice-i: {}".format(i))
+            #     print("feature extraction skipped in slice-i: {}".format(i))
         except Exception as e:
             _logger.error(e)
             print("Exception: skipped in slice-i: {}".format(i))
