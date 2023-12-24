@@ -6,7 +6,11 @@ from pathlib import Path
 import pickle
 import pandas as pd
 
-from ct_slicing.config.data_path import DATA_FOLDER, REPO_ROOT
+from ct_slicing.config.data_path import (
+    DATA_FOLDER,
+    META_DATA_PICKLE,
+    NODULE_METADATA_PICKLE,
+)
 from ct_slicing.data_util.nii_file_access import nii_file, patient_id_to_case_id
 from ct_slicing.ct_logger import logger
 
@@ -81,9 +85,6 @@ def load_metadata_to_dataclass(
     return records
 
 
-META_DATA_PICKLE = REPO_ROOT / "data" / "metadata.pickle"
-
-
 def dump_available_metadata():
     records = load_metadata_to_dataclass(df_metadata)
     with open(META_DATA_PICKLE, "wb") as f:
@@ -137,9 +138,6 @@ def load_nodule_metadata_to_dataclass(
         )
 
     return records
-
-
-NODULE_METADATA_PICKLE = REPO_ROOT / "data" / "nodule_metadata.pickle"
 
 
 def dump_nodule_metadata():
