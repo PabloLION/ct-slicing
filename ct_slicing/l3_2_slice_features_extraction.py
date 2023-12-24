@@ -8,7 +8,9 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-# TODO: a lot of warnings
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 
 import logging
 import pandas as pd

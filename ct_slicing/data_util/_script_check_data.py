@@ -2,7 +2,9 @@
 The result shows that no VOI file is same as the corresponding CT file.
 So we cannot remove the CT folder.
 """
-from pathlib import Path
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 from ct_slicing.config.data_path import CT_FOLDER, VOI_FOLDER
 import filecmp
 
