@@ -16,12 +16,19 @@ from ct_slicing.ct_logger import logger
 
 META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
 
-df_metadata = pd.read_excel(
-    META_DATA_PATH,
-    sheet_name="ML4PM_MetadatabyNoduleMaxVoting",
-    engine="openpyxl",
-)
 
+def load_metadata_excel_to_data_frame(
+    metadata_path: Path = META_DATA_PATH,
+) -> pd.DataFrame:
+    df_metadata = pd.read_excel(
+        metadata_path,
+        sheet_name="ML4PM_MetadatabyNoduleMaxVoting",
+        engine="openpyxl",
+    )
+    return df_metadata
+
+
+df_metadata = load_metadata_excel_to_data_frame()
 
 from dataclasses import dataclass
 
