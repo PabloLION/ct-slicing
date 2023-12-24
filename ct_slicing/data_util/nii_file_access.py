@@ -25,6 +25,19 @@ class NoduleMaskPair(NamedTuple):
     mask: Path
 
 
+def case_id_to_patient_id(case_id: int) -> str:
+    """
+    Convert case id to patient id.
+
+    Args:
+        case_id (int): case id, e.g. 1 for LIDC-IDRI-0001, 105 for LIDC-IDRI-0105
+
+    Returns:
+        str: patient id, e.g. LIDC-IDRI-0001, LIDC-IDRI-0105
+    """
+    return f"LIDC-IDRI-{case_id:04d}"
+
+
 def nii_path(
     section: Literal["CT", "VOI"], case_id: int, nodule_id: int
 ) -> NoduleMaskPair:
@@ -42,13 +55,15 @@ def nii_path(
     """
     if section == "CT":
         # data/CT/image/LIDC-IDRI-0001.nii.gz
-        image = DATA_FOLDER / section / "image" / f"LIDC-IDRI-{case_id:04d}.nii.gz"
+        image = (
+            DATA_FOLDER / section / "image" / f"{case_id_to_patient_id(case_id)}.nii.gz"
+        )
         # data/CT/nodule_mask/LIDC-IDRI-0003_R_2.nii.gz
         mask = (
             DATA_FOLDER
             / section
             / "nodule_mask"
-            / f"LIDC-IDRI-{case_id:04d}_R_{nodule_id}.nii.gz"
+            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
         )
     elif section == "VOI":
         # data/VOIs/image/LIDC-IDRI-0003_R_2.nii.gz
@@ -56,14 +71,14 @@ def nii_path(
             DATA_FOLDER
             / "VOIs"
             / "image"
-            / f"LIDC-IDRI-{case_id:04d}_R_{nodule_id}.nii.gz"
+            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
         )
         # data/VOIs/nodule_mask/LIDC-IDRI-0001_R_1.nii.gz
         mask = (
             DATA_FOLDER
             / "VOIs"
             / "nodule_mask"
-            / f"LIDC-IDRI-{case_id:04d}_R_{nodule_id}.nii.gz"
+            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
         )
     else:
         raise ValueError(f"section must be CT or VOI, but got {section}")

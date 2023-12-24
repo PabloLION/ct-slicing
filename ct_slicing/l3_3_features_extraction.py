@@ -24,7 +24,10 @@ from ct_slicing.config.data_path import (
     RADIOMICS_DEFAULT_PARAMS_PATH,
 )
 from ct_slicing.data_util.metadata_access import load_metadata_excel_to_data_frame
-from ct_slicing.data_util.nii_file_access import nii_file
+from ct_slicing.data_util.nii_file_access import (
+    case_id_to_patient_id,
+    nii_file,
+)
 from ct_slicing.image_process import process_image
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
 from ct_slicing.ct_logger import logger
@@ -37,14 +40,6 @@ logging.getLogger("pykwalify").setLevel(logging.CRITICAL)  # pykwalify from radi
 # #TODO: fix Shape features are only available 3D input (for 2D input, use shape2D). Found 2D input
 
 logger.setLevel(logging.INFO)
-
-
-def get_img_mask_pair_paths(
-    data_set: Literal["CT", "VOIs"], patient_id: str, nodule_index: int
-):
-    section = "VOI" if data_set == "VOIs" else data_set
-    case_id = int(patient_id.lstrip("LIDC-IDRI-"))
-    return nii_file(section, case_id, nodule_index)
 
 
 # #TODO: refactor move, or maybe use pandas.DataFrame.to_excel
@@ -85,7 +80,8 @@ def get_features(
     items.insert(0, ("slice_number", i))
     items.insert(0, ("nodule_id", patient_nodule_index))
     items.insert(0, ("patient_id", patient_id))
-    # In Python 3.7 and later, the built-in dict type maintains insertion order by default.
+    # In Python 3.7 and later, the built-in dict type maintains insertion order
+    # by default. So OrderedDict(items) is no longer needed.
     return dict(items)
 
 
@@ -139,18 +135,17 @@ def get_record(
     return record
 
 
-def extract_feature_record(
-    data_set: Literal["CT", "VOIs"],
-    patient_id: str,
-    patient_nodule_index: int,
+def extract_features_of_one_record(
+    section: Literal["CT", "VOI"],
+    case_id: int,
+    nodule_id: int,
 ) -> list[dict[str, float]]:
     """
     extract features from a single patient and return a DataFrame
     """
 
-    img_path, mask_path = get_img_mask_pair_paths(
-        data_set, patient_id, patient_nodule_index
-    )
+    img_path, mask_path = nii_file(section, case_id, nodule_id)
+    patient_id = case_id_to_patient_id(case_id)
 
     # Reading image and mask
     image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
@@ -159,8 +154,7 @@ def extract_feature_record(
     df_metadata = load_metadata_excel_to_data_frame()
 
     nodule_identity = df_metadata[
-        (df_metadata.patient_id == patient_id)
-        & (df_metadata.nodule_id == patient_nodule_index)
+        (df_metadata.patient_id == patient_id) & (df_metadata.nodule_id == nodule_id)
     ]
     assert len(nodule_identity) == 1, f"Error: Found {len(nodule_identity)} rows"
     diagnosis: int = nodule_identity.Diagnosis_value.values[0]
@@ -175,7 +169,7 @@ def extract_feature_record(
     # Extract features slice by slice.
     record = get_record(
         patient_id,
-        patient_nodule_index,
+        nodule_id,
         diagnosis,
         image,
         mask,
@@ -185,22 +179,19 @@ def extract_feature_record(
         mask_min_pixels,
     )
     logger.info(
-        f"Extracted {len(record):2} slices from {patient_id=} {patient_nodule_index=}"
+        f"Extracted features from {len(record):2} slices in {patient_id=} {nodule_id=} {diagnosis=}"
     )
     return record
 
 
-def extract_feature(patient_nodule_diagnosis: list[tuple[str, int, int]]):
+def extract_features_of_all_records(
+    case_nodule_id_to_extract: list[tuple[Literal["CT", "VOI"], int, int]]
+):
     """Was the script body"""
 
     records = []
-    for patient_id, patient_nodule_index, _diagnosis in patient_nodule_diagnosis:
-        record = extract_feature_record(
-            data_set="CT",
-            patient_id=patient_id,
-            patient_nodule_index=patient_nodule_index,
-        )
-        records.extend(record)
+    for section, case_id, nodule_id in case_nodule_id_to_extract:
+        records.extend(extract_features_of_one_record(section, case_id, nodule_id))
     df = pd.DataFrame.from_records(records)
     write_excel(df, DEFAULT_EXPORT_XLSX_PATH)
 
@@ -208,19 +199,18 @@ def extract_feature(patient_nodule_diagnosis: list[tuple[str, int, int]]):
 if __name__ == "__main__":
     records = []
 
-    # TODO: extract this part to data loading module
-    # FIX: extract features from VOIs dataset
-    patient_nodule_diagnosis = [
-        # (patient_id, patient_nodule_index, diagnosis)
-        ("LIDC-IDRI-0001", 1, 1),
-        ("LIDC-IDRI-0003", 2, 1),  # originally only this case was processed
-        ("LIDC-IDRI-0003", 3, 1),
-        ("LIDC-IDRI-0003", 4, 1),
-        ("LIDC-IDRI-0005", 1, 0),
-        ("LIDC-IDRI-0005", 2, 0),
+    # #TODO long-term: extract more features from VOIs dataset
+    case_nodule_id_to_extract = [
+        # (section, case_id, nodule_id)
+        ("CT", 1, 1),  # diagnosis:1
+        ("CT", 3, 2),  # diagnosis:1 # in original code, only this case was processed
+        ("CT", 3, 3),  # diagnosis:1
+        ("CT", 3, 4),  # diagnosis:1
+        ("CT", 5, 1),  # diagnosis:0
+        ("CT", 5, 2),  # diagnosis:0
     ]
 
-    extract_feature(patient_nodule_diagnosis)
+    extract_features_of_all_records(case_nodule_id_to_extract)
 
 """
 Exercise 3. Features extraction for all images and masks in the database.
