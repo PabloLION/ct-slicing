@@ -148,6 +148,16 @@ def dump_nodule_file_path():
     logger.warning(f"Dumped nodule id to {NODULE_ID_PICKLE}")
 
 
+def get_case_id_mask_id_iter() -> (
+    tuple[Iterator[tuple[int, int]], Iterator[tuple[int, int]]]
+):
+    """
+    Get the case id and mask id iterator.
+    """
+    ct_nodules, voi_nodules = load_nodule_id_pickle()
+    return iter(ct_nodules), iter(voi_nodules)
+
+
 def get_nii_path_iter() -> tuple[Iterator[NoduleMaskPair], Iterator[NoduleMaskPair]]:
     """
     Get the nii file path iterator.
