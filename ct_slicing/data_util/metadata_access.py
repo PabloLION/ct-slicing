@@ -2,13 +2,16 @@
 This module provides functions to load metadata from excel file to dataclass
 """
 
-from pathlib import Path
+import gzip
+import json
 import pickle
 import pandas as pd
+from dataclasses import asdict
+from pathlib import Path
 
 from ct_slicing.config.data_path import (
     META_DATA_PATH,
-    METADATA_PICKLE,
+    METADATA_JSON_GZIP,
 )
 from ct_slicing.data_util.nii_file_access import patient_id_to_case_id
 from ct_slicing.ct_logger import logger
@@ -87,12 +90,28 @@ def load_all_metadata_as_dataclass(
     return records
 
 
+def serialize_tuple(key: tuple[int, ...]) -> str:
+    return "|".join(map(str, key))
+
+
+# never used
+# def deserialize_tuple(key: str) -> tuple[int, ...]:
+#     return tuple(map(int, key.split("|")))
+
+
 def dump_all_metadata():
     df_metadata = load_metadata_excel_to_data_frame()
     records = load_all_metadata_as_dataclass(df_metadata)
-    with open(METADATA_PICKLE, "wb") as f:
-        pickle.dump(records, f)
-    logger.warning(f"Dumped {len(records)} records to {METADATA_PICKLE}")
+
+    # Convert data class instances to dictionaries
+    records_dict = {
+        serialize_tuple(key): asdict(value) for key, value in records.items()
+    }
+
+    # Use gzip to compress and write the JSON data
+    with gzip.open(METADATA_JSON_GZIP, "wt") as f:
+        json.dump(records_dict, f)
+    logger.warning(f"Dumped {len(records)} records to {METADATA_JSON_GZIP}")
 
 
 def test_load_all_metadata_as_dataclass():
@@ -103,12 +122,23 @@ def test_load_all_metadata_as_dataclass():
 
 
 def load_metadata(case_id: int, nodule_id: int) -> NoduleMetadata:
-    if not METADATA_PICKLE.exists():
-        logger.warning(f"Metadata pickle {METADATA_PICKLE} does not exist. Dumping...")
+    if not METADATA_JSON_GZIP.exists():
+        logger.warning(f"Metadata JSON {METADATA_JSON_GZIP} does not exist. Dumping...")
         dump_all_metadata()
-    with open(METADATA_PICKLE, "rb") as f:
-        records = pickle.load(f)
-    return records[case_id, nodule_id]
+
+    with gzip.open(METADATA_JSON_GZIP, "rt") as f:
+        records_dict = json.load(f)
+
+    # Deserialize the key
+    key = serialize_tuple((case_id, nodule_id))
+
+    # Convert the dictionary back to a NoduleMetadata instance
+    if key in records_dict:
+        return NoduleMetadata(**records_dict[key])
+    else:
+        raise KeyError(
+            f"Nodule metadata for case_id {case_id}, nodule_id {nodule_id} not found."
+        )
 
 
 def test_dump_all_metadata():
@@ -116,9 +146,11 @@ def test_dump_all_metadata():
     expected_records = load_all_metadata_as_dataclass(
         load_metadata_excel_to_data_frame()
     )
-    with open(METADATA_PICKLE, "rb") as f:
-        records = pickle.load(f)
-    assert records == expected_records, "records not equal"
+    with gzip.open(METADATA_JSON_GZIP, "rt") as f:
+        records_dict = json.load(f)
+    assert records_dict == {
+        serialize_tuple(key): asdict(value) for key, value in expected_records.items()
+    }, "Expected records not found in metadata JSON"
     print("test_dump_all_metadata passed")
 
 

@@ -4,6 +4,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 import pickle
+from typing_extensions import deprecated
 import pandas as pd
 
 from ct_slicing.data_util.metadata_access import (
@@ -22,6 +23,8 @@ class NoduleData(NoduleMetadata):
 
 
 # #TODO: repetition of code
+# #FIX: this is wrong because the path is not the same on different machines
+@deprecated("Use load_metadata instead")
 def load_nodule_data_as_dataclass(
     df: pd.DataFrame,
 ) -> dict[tuple[int, int], NoduleData]:
