@@ -195,7 +195,7 @@ def test_nii_file():
     print("test_nii_file passed")
 
 
-def dump_available_nodules():
+def dump_nodule_file_path():
     """
     Dump (overwrite) all available nodule id to a file.
     """

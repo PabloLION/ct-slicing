@@ -21,6 +21,7 @@ class NoduleData(NoduleMetadata):
     mask_path: Path
 
 
+# #TODO: repetition of code
 def load_nodule_data_as_dataclass(
     df: pd.DataFrame,
 ) -> dict[tuple[int, int], NoduleData]:

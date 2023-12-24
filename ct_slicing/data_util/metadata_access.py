@@ -102,5 +102,38 @@ def test_load_all_metadata_as_dataclass():
     print("test_load_data_to_dataclass passed")
 
 
+def load_metadata(case_id: int, nodule_id: int) -> NoduleMetadata:
+    if not METADATA_PICKLE.exists():
+        logger.warning(f"Metadata pickle {METADATA_PICKLE} does not exist. Dumping...")
+        dump_all_metadata()
+    with open(METADATA_PICKLE, "rb") as f:
+        records = pickle.load(f)
+    return records[case_id, nodule_id]
+
+
+def test_dump_all_metadata():
+    dump_all_metadata()
+    expected_records = load_all_metadata_as_dataclass(
+        load_metadata_excel_to_data_frame()
+    )
+    with open(METADATA_PICKLE, "rb") as f:
+        records = pickle.load(f)
+    assert records == expected_records, "records not equal"
+    print("test_dump_all_metadata passed")
+
+
+def test_load_metadata():
+    metadata = load_metadata(1, 1)
+    assert metadata.patient_id == "LIDC-IDRI-0001"
+    assert metadata.nodule_id == 1
+    assert (
+        metadata.series_uid
+        == "1.3.6.1.4.1.14519.5.2.1.6279.6001.179049373636438705059720603192"
+    ), f"expected 1.3.6.1.4.1.14519.5.2.1.6279.6001.179049373636438705059720603192, but got {metadata.series_uid}"
+    print("test_load_metadata passed")
+
+
 if __name__ == "__main__":
     test_load_all_metadata_as_dataclass()
+    test_dump_all_metadata()
+    test_load_metadata()
