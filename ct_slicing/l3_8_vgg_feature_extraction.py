@@ -34,6 +34,23 @@ Improvements:
     tensor = torch.from_numpy(X) # this is not needed anymore
     tensor = transform(tensor) # because here we are converting to PIL.Image
                             #  from either a np.ndarray or tensor
+- Correct VGG classifier:
+    - old: vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
+    - new: vgg_classifier = nn.Sequential(*list(model.classifier.children())[:2])
+    - reason: 
+        - it is said in the comment "Add a loop to read the nodules and pass
+            a slice at a time through the VGG network to make the feature 
+            extraction from the first ReLU of the classifier sequence."
+        - The layers are:
+            (0): Linear(in_features=25088, out_features=4096, bias=True)
+            (1): ReLU(inplace=True)
+            (2): Dropout(p=0.5, inplace=False)
+            (3): Linear(in_features=4096, out_features=4096, bias=True)
+            (4): ReLU(inplace=True)
+            (5): Dropout(p=0.5, inplace=False)
+            (6): Linear(in_features=4096, out_features=1000, bias=True)
+        - The old version removes the last 2 layers, but we want to the result
+            of the first ReLU layer.
 """
 
 if __name__ != "__main__":
@@ -133,24 +150,28 @@ def vgg_extract_features(slice_tensor: torch.Tensor) -> np.ndarray:
 
 
 #### Parts of the VGG model ####
-# print(c for c in model.classifier.children())
-vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
-# ":-2" removes the last 2 layers of the classifier
-# #TODO: why should we use "-2"?
-################################
 
-########################
-## Insert your code here...
-## "ONE SLICE" and "ANOTHER SLICE" must be replaced by your code.
-## Add a loop to read the nodules and pass a slice at a time through the VGG network
-## to make the features extraction from the first ReLU of the classifier sequence.
-##
+# Old: vgg_classifier = nn.Sequential(*list(model.classifier.children())[:-2])
+# ":-2" removes the last 2 layers of the classifier, they are:
+# (5): Dropout(p=0.5, inplace=False)
+# (6): Linear(in_features=4096, out_features=1000, bias=True)
+# Dropout randomly drops some neurons to prevent overfitting.
+# Linear is the last layer of the classifier, it maps the 4096 features to
+# 1000 classes. Here we want to extract the 4096 features without classifying.
+
+# Add a loop to read the nodules and pass a slice at a time through the VGG network
+# to make the features extraction from the first ReLU of the classifier sequence.
 ## print(model)
 ## ...
 ## (classifier): Sequential(
 ##  (0): Linear(in_features=25088, out_features=4096, bias=True)
 ##  (1): ReLU(inplace=True)  <------- extract features from this layer
-##
+# according to this comment, we want to extract features from the first ReLU
+vgg_classifier = nn.Sequential(*list(model.classifier.children())[:2])
+
+########################
+## Insert your code here...
+## "ONE SLICE" and "ANOTHER SLICE" must be replaced by your code.
 
 # image, meta1 = readNifty(imageName, CoordinateOrder='xyz')
 
