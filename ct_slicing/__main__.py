@@ -11,3 +11,7 @@ def update_intermediate_results():
     dump_nodule_file_path()  # updates `nodule_id.pkl` (NODULE_ID_PICKLE)
 
     logger.info("Done updating intermediate results.")
+
+
+if __name__ == "__main__":
+    update_intermediate_results()
