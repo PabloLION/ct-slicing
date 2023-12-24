@@ -182,7 +182,7 @@ def test_nii_file():
 
 def dump_available_nodules():
     """
-    Dump all available nodule ids to a file.
+    Dump (overwrite) all available nodule id to a file.
     """
     ct_nodules: set[tuple[int, int]] = set()
     voi_nodules: set[tuple[int, int]] = set()
@@ -200,4 +200,3 @@ def dump_available_nodules():
 if __name__ == "__main__":
     test_nii_file()
     print(f"{len(CT_NODULES)=}, {len(VOI_NODULES)=}")
-    # dump_available_nodules() # use when new data is added

@@ -8,7 +8,7 @@ import pandas as pd
 
 from ct_slicing.config.data_path import (
     META_DATA_PATH,
-    META_DATA_PICKLE,
+    METADATA_PICKLE,
     NODULE_METADATA_PICKLE,
 )
 from ct_slicing.data_util.nii_file_access import nii_file, patient_id_to_case_id
@@ -25,8 +25,6 @@ def load_metadata_excel_to_data_frame(
     )
     return df_metadata
 
-
-df_metadata = load_metadata_excel_to_data_frame()
 
 from dataclasses import dataclass
 
@@ -91,13 +89,15 @@ def load_metadata_to_dataclass(
 
 
 def dump_available_metadata():
+    df_metadata = load_metadata_excel_to_data_frame()
     records = load_metadata_to_dataclass(df_metadata)
-    with open(META_DATA_PICKLE, "wb") as f:
+    with open(METADATA_PICKLE, "wb") as f:
         pickle.dump(records, f)
-    logger.warning(f"Dumped {len(records)} records to {META_DATA_PICKLE}")
+    logger.warning(f"Dumped {len(records)} records to {METADATA_PICKLE}")
 
 
 def test_load_metadata_to_dataclass():
+    df_metadata = load_metadata_excel_to_data_frame()
     records = load_metadata_to_dataclass(df_metadata)
     assert len(records) == 996, f"expected 996 records, got {len(records)}"
     print("test_load_data_to_dataclass passed")
@@ -146,8 +146,12 @@ def load_nodule_metadata_to_dataclass(
 
 
 def dump_nodule_metadata():
+    """
+    Dump (overwrite) all available VOI nodule metadata with path info to a file.
+    """
     # when running this function, we there are two known missing files for
     # case_id=1002, nodule_id=1 and case_id=1002, nodule_id=2
+    df_metadata = load_metadata_excel_to_data_frame()
     records = load_nodule_metadata_to_dataclass(df_metadata)
     with open(NODULE_METADATA_PICKLE, "wb") as f:
         pickle.dump(records, f)
@@ -156,5 +160,3 @@ def dump_nodule_metadata():
 
 if __name__ == "__main__":
     test_load_metadata_to_dataclass()
-    # dump_available_metadata() # this is kind of outdated
-    # dump_nodule_data() # this is more useful

@@ -65,6 +65,10 @@ Run the code in dev mode.
 - Do not forget to change it back to `False` before PR / publish.
 - Need a better way to do this.
 
+### Update intermediate results
+
+- To update intermediate results, run the function `__main__.update_intermediate_results()`.
+
 ### Known issues
 
 - [ ] Universal name across all codes. IMG_PATH, MASK_PATH in lower case; img for ITK image, img_np for numpy array, etc.
