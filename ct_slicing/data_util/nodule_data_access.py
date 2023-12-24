@@ -67,3 +67,13 @@ def dump_nodule_data():
     with open(NODULE_METADATA_PICKLE, "wb") as f:
         pickle.dump(records, f)
     logger.warning(f"Dumped {len(records)} records to {NODULE_METADATA_PICKLE}")
+
+
+def test_load_nodule_data_as_dataclass():
+    df_metadata = load_metadata_excel_to_data_frame()
+    records = load_nodule_data_as_dataclass(df_metadata)
+    assert len(records) == 1186
+
+
+if __name__ == "__main__":
+    test_load_nodule_data_as_dataclass()

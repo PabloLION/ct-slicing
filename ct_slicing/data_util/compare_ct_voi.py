@@ -3,22 +3,12 @@ The result shows that no VOI file is same as the corresponding CT file.
 So we cannot remove the CT folder.
 """
 from pathlib import Path
-from ct_slicing.config.data_path import DATA_FOLDER
+from ct_slicing.config.data_path import CT_FOLDER, VOI_FOLDER
 import filecmp
 
-CT_FOLDER = DATA_FOLDER / "CT"
-VOI_FOLDER = DATA_FOLDER / "VOIs"
+from ct_slicing.data_util.nii_file_access import iter_files
 
 EXCLUDED_FILENAMES = (".DS_Store",)
-
-
-def iter_files(base_path: Path):
-    """Iterate over all files in the given directory recursively.
-    Return the relative path to each file.
-    """
-    for file_path in base_path.glob("**/*"):
-        if file_path.is_file():
-            yield file_path.relative_to(base_path)
 
 
 def check_voi_contains_ct():

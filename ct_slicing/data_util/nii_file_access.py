@@ -13,11 +13,16 @@ Here I use a simpler way to get the file path.
 
 
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Iterator, Literal, NamedTuple
 import pickle
 
-from ct_slicing.config.data_path import DATA_FOLDER, NODULE_ID_PICKLE
-from ct_slicing.data_util.compare_ct_voi import CT_FOLDER, VOI_FOLDER, iter_files
+from ct_slicing.config.data_path import (
+    DATA_FOLDER,
+    NODULE_ID_PICKLE,
+    CT_FOLDER,
+    VOI_FOLDER,
+)
+from ct_slicing.ct_logger import logger
 
 
 class NoduleMaskPair(NamedTuple):
@@ -36,92 +41,6 @@ def case_id_to_patient_id(case_id: int) -> str:
         str: patient id, e.g. LIDC-IDRI-0001, LIDC-IDRI-0105
     """
     return f"LIDC-IDRI-{case_id:04d}"
-
-
-def nii_path(
-    section: Literal["CT", "VOI"], case_id: int, nodule_id: int
-) -> NoduleMaskPair:
-    """Return a pair of (image path, mask path) of a given case id and
-    nodule index.
-    If the file does not exist, raise FileNotFoundError.
-
-    Args:
-        section (Literal["CT", "VOI"]): CT or VOI
-        case_id (int): case id
-        mask_id (int): mask id
-
-    Returns:
-        Path: the file path
-    """
-    if section == "CT":
-        # data/CT/image/LIDC-IDRI-0001.nii.gz
-        image = (
-            DATA_FOLDER / section / "image" / f"{case_id_to_patient_id(case_id)}.nii.gz"
-        )
-        # data/CT/nodule_mask/LIDC-IDRI-0003_R_2.nii.gz
-        mask = (
-            DATA_FOLDER
-            / section
-            / "nodule_mask"
-            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
-        )
-    elif section == "VOI":
-        # data/VOIs/image/LIDC-IDRI-0003_R_2.nii.gz
-        image = (
-            DATA_FOLDER
-            / "VOIs"
-            / "image"
-            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
-        )
-        # data/VOIs/nodule_mask/LIDC-IDRI-0001_R_1.nii.gz
-        mask = (
-            DATA_FOLDER
-            / "VOIs"
-            / "nodule_mask"
-            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
-        )
-    else:
-        raise ValueError(f"section must be CT or VOI, but got {section}")
-    return NoduleMaskPair(image, mask)
-
-
-with open(NODULE_ID_PICKLE, "rb") as f:
-    data = pickle.load(f)
-    CT_NODULES = data["CT"]
-    VOI_NODULES = data["VOI"]
-
-
-def nii_exist(sections: Literal["CT", "VOI"], case_id: int, mask_id: int) -> bool:
-    """
-    Check if the nii file exists.
-    Created to future proof against more data from other sections.
-    And also for indexing and iterator.
-    Maybe I'll include the full LUNA16 dataset later.
-    """
-    if sections == "CT":
-        return (case_id, mask_id) in CT_NODULES
-    elif sections == "VOI":
-        return (case_id, mask_id) in VOI_NODULES
-    else:
-        raise ValueError(f"sections must be CT or VOI, but got {sections}")
-
-
-def nii_file(
-    sections: Literal["CT", "VOI"], case_id: int, nodule_id: int
-) -> NoduleMaskPair:
-    """
-    Return the nii file pair.
-    """
-    nodule, mask = nii_path(sections, case_id, nodule_id)
-    if not nii_exist(sections, case_id, nodule_id):
-        raise FileNotFoundError(
-            f"File not found for {sections}, {case_id}, {nodule_id}"
-        )
-    return NoduleMaskPair(nodule, mask)
-
-
-ct_iter = (nii_file("CT", case, mask) for case, mask in CT_NODULES)
-voi_iter = (nii_file("VOI", case, mask) for case, mask in VOI_NODULES)
 
 
 def patient_id_to_case_id(patient_id: str) -> int:
@@ -146,8 +65,131 @@ def nii_path_to_case_id_mask_id(nii_path: Path) -> tuple[int, int]:
     return int(case_id), int(mask_id)
 
 
+def _parse_nii_path(
+    section: Literal["CT", "VOI"], case_id: int, nodule_id: int
+) -> NoduleMaskPair:
+    """Return a pair of (image path, mask path) of a given case id and
+    nodule index.
+    If the file does not exist, raise FileNotFoundError.
+
+    Args:
+        section (Literal["CT", "VOI"]): CT or VOI
+        case_id (int): case id
+        mask_id (int): mask id
+
+    Returns:
+        Path: the file path
+    """
+    if section == "CT":
+        # data/CT/image/LIDC-IDRI-0001.nii.gz
+        image = CT_FOLDER / "image" / f"{case_id_to_patient_id(case_id)}.nii.gz"
+        # data/CT/nodule_mask/LIDC-IDRI-0003_R_2.nii.gz
+        mask = (
+            CT_FOLDER
+            / "nodule_mask"
+            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
+        )
+    elif section == "VOI":
+        # data/VOIs/image/LIDC-IDRI-0003_R_2.nii.gz
+        image = (
+            VOI_FOLDER
+            / "image"
+            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
+        )
+        # data/VOIs/nodule_mask/LIDC-IDRI-0001_R_1.nii.gz
+        mask = (
+            VOI_FOLDER
+            / "nodule_mask"
+            / f"{case_id_to_patient_id(case_id)}_R_{nodule_id}.nii.gz"
+        )
+    else:
+        raise ValueError(f"section must be CT or VOI, but got {section}")
+    return NoduleMaskPair(image, mask)
+
+
+def load_nodule_id_pickle() -> tuple[set[tuple[int, int]], set[tuple[int, int]]]:
+    """
+    Load the nodule id pickle file.
+    """
+    if not NODULE_ID_PICKLE.exists():
+        logger.warning(
+            f"Nodule id pickle {NODULE_ID_PICKLE} does not exist. Dumping..."
+        )
+    with open(NODULE_ID_PICKLE, "rb") as f:
+        data = pickle.load(f)
+        ct_nodules = data["CT"]
+        voi_nodules = data["VOI"]
+    return ct_nodules, voi_nodules
+
+
+def iter_files(base_path: Path):
+    """Iterate over all files in the given directory recursively.
+    Return the relative path to each file.
+    """
+    for file_path in base_path.glob("**/*"):
+        if file_path.is_file():
+            yield file_path.relative_to(base_path)
+
+
+def dump_nodule_file_path():
+    """
+    Dump (overwrite) all available nodule id to a file.
+    """
+    ct_nodules: set[tuple[int, int]] = set()
+    voi_nodules: set[tuple[int, int]] = set()
+    for file in iter_files(CT_FOLDER / "nodule_mask"):
+        ct_nodules.add(nii_path_to_case_id_mask_id(file))
+    for file in iter_files(VOI_FOLDER / "image"):
+        # Know from `compare_ct_voi.py`, image is subset of nodule_mask.
+        voi_nodules.add(nii_path_to_case_id_mask_id(file))
+    # dump to file
+    with open(NODULE_ID_PICKLE, "wb") as f:
+        pickle.dump({"CT": ct_nodules, "VOI": voi_nodules}, f)
+    logger.warning(f"Dumped nodule id to {NODULE_ID_PICKLE}")
+
+
+def get_nii_path_iter() -> tuple[Iterator[NoduleMaskPair], Iterator[NoduleMaskPair]]:
+    """
+    Get the nii file path iterator.
+    """
+    ct_nodules, voi_nodules = load_nodule_id_pickle()
+    return (nii_file("CT", case, mask) for case, mask in ct_nodules), (
+        nii_file("VOI", case, mask) for case, mask in voi_nodules
+    )
+
+
+def nii_exist(sections: Literal["CT", "VOI"], case_id: int, mask_id: int) -> bool:
+    """
+    Check if the nii file exists.
+    Created to future proof against more data from other sections.
+    And also for indexing and iterator.
+    Maybe I'll include the full LUNA16 dataset later.
+    """
+    ct_nodules, voi_nodules = load_nodule_id_pickle()
+    if sections == "CT":
+        return (case_id, mask_id) in ct_nodules
+    elif sections == "VOI":
+        return (case_id, mask_id) in voi_nodules
+    else:
+        raise ValueError(f"sections must be CT or VOI, but got {sections}")
+
+
+def nii_file(
+    sections: Literal["CT", "VOI"], case_id: int, nodule_id: int
+) -> NoduleMaskPair:
+    """
+    Return the nii file pair.
+    """
+    nodule, mask = _parse_nii_path(sections, case_id, nodule_id)
+    if not nii_exist(sections, case_id, nodule_id):
+        raise FileNotFoundError(
+            f"File not found for {sections}, {case_id}, {nodule_id}"
+        )
+    return NoduleMaskPair(nodule, mask)
+
+
 # Test if the file path is correct. Assume we won't rename the data files.
-def test_nii_file_with_expected_not_found_error(
+def _test_nii_file_with_expected_not_found_error(
     sections: Literal["CT", "VOI"], case_id: int, mask_id: int
 ):
     """
@@ -182,36 +224,18 @@ def test_nii_file():
     nii_file("VOI", 235, 2)
     nii_file("VOI", 1011, 2)
     # not existing
-    test_nii_file_with_expected_not_found_error("CT", 3, 1)
-    test_nii_file_with_expected_not_found_error("CT", 2, 1)
-    test_nii_file_with_expected_not_found_error("CT", 5, 5)
-    test_nii_file_with_expected_not_found_error("VOI", 2, 1)
-    test_nii_file_with_expected_not_found_error("VOI", 3, 1)
-    test_nii_file_with_expected_not_found_error("VOI", 70, 1)
-    test_nii_file_with_expected_not_found_error("VOI", 224, 1)
-    test_nii_file_with_expected_not_found_error("VOI", 234, 2)
-    test_nii_file_with_expected_not_found_error("VOI", 235, 1)
-    test_nii_file_with_expected_not_found_error("VOI", 1011, 4)
+    _test_nii_file_with_expected_not_found_error("CT", 3, 1)
+    _test_nii_file_with_expected_not_found_error("CT", 2, 1)
+    _test_nii_file_with_expected_not_found_error("CT", 5, 5)
+    _test_nii_file_with_expected_not_found_error("VOI", 2, 1)
+    _test_nii_file_with_expected_not_found_error("VOI", 3, 1)
+    _test_nii_file_with_expected_not_found_error("VOI", 70, 1)
+    _test_nii_file_with_expected_not_found_error("VOI", 224, 1)
+    _test_nii_file_with_expected_not_found_error("VOI", 234, 2)
+    _test_nii_file_with_expected_not_found_error("VOI", 235, 1)
+    _test_nii_file_with_expected_not_found_error("VOI", 1011, 4)
     print("test_nii_file passed")
-
-
-def dump_nodule_file_path():
-    """
-    Dump (overwrite) all available nodule id to a file.
-    """
-    ct_nodules: set[tuple[int, int]] = set()
-    voi_nodules: set[tuple[int, int]] = set()
-    for file in iter_files(CT_FOLDER / "nodule_mask"):
-        ct_nodules.add(nii_path_to_case_id_mask_id(file))
-    for file in iter_files(VOI_FOLDER / "image"):
-        # Know from `compare_ct_voi.py`, image is subset of nodule_mask.
-        voi_nodules.add(nii_path_to_case_id_mask_id(file))
-
-    # dump to file
-    with open(NODULE_ID_PICKLE, "wb") as f:
-        pickle.dump({"CT": ct_nodules, "VOI": voi_nodules}, f)
 
 
 if __name__ == "__main__":
     test_nii_file()
-    print(f"{len(CT_NODULES)=}, {len(VOI_NODULES)=}")
