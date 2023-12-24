@@ -45,18 +45,29 @@ logger.setLevel(logging.INFO)
 extractor = RadiomicsFeatureExtractor(str(RADIOMICS_DEFAULT_PARAMS_PATH))
 
 
-def get_features(
+def format_feature_dict(
     feature_vector: dict,
     slice_index: int,
     patient_id: str,
-    patient_nodule_index: int,
+    nodule_id: int,
     diagnosis: int,
 ) -> dict[str, float]:
-    """Was called getFeatures"""
+    """
+    filter and sort the feature vector
+    Was called getFeatures
+    """
 
-    new_row = {}
-    for feature_name, feature_value in feature_vector.items():
-        if (
+    # In Python 3.7 and later, the built-in dict type maintains insertion order
+    # by default. So OrderedDict(items) is no longer needed.
+    feature_entry = {
+        "patient_id": patient_id,
+        "nodule_id": nodule_id,
+        "slice_index": slice_index,
+        "diagnosis": diagnosis,
+    }
+
+    for feature_name, feature_value in sorted(feature_vector.items()):
+        if not (
             ("firstorder" in feature_name)
             or ("glszm" in feature_name)
             or ("glcm" in feature_name)
@@ -64,16 +75,12 @@ def get_features(
             or ("gldm" in feature_name)
             or ("shape" in feature_name)
         ):
-            new_row.update({feature_name: feature_value})
-    items = sorted(new_row.items())  # Ordering the new_row dictionary
-    # Adding some columns
-    items.insert(0, ("diagnosis", diagnosis))
-    items.insert(0, ("slice_index", slice_index))
-    items.insert(0, ("nodule_id", patient_nodule_index))
-    items.insert(0, ("patient_id", patient_id))
-    # In Python 3.7 and later, the built-in dict type maintains insertion order
-    # by default. So OrderedDict(items) is no longer needed.
-    return dict(items)
+            continue
+        if feature_name not in feature_entry:
+            feature_entry[feature_name] = feature_value
+        else:
+            logger.error(f"Overwriting {feature_name=} of {patient_id=}, {nodule_id=}")
+    return feature_entry
 
 
 def get_record(
@@ -113,7 +120,7 @@ def get_record(
         feature_vector = extractor.execute(
             img_slice_sitk, mask_slice_sitk, voxelBased=False
         )
-        feat_dict = get_features(
+        feat_dict = format_feature_dict(
             feature_vector, slice_index, patient_id, nodule_index, diagnosis
         )
         records.append(feat_dict)
