@@ -99,7 +99,7 @@ def extract_features_of_one_nodule(
     image = process_image(image)  # pre-processing
     records = []
 
-    for slice_index in range(image.shape[2]):  # X, Y, Z
+    for slice_index in range(image.shape[2]):
         # Get the axial cut
         mask_slice = mask[:, :, slice_index]
         if mask_slice.sum() < mask_pixel_min_threshold:
@@ -114,7 +114,7 @@ def extract_features_of_one_nodule(
         img_slice_sitk.SetSpacing(img_meta.spacing[:2])  # [x,y,_z]
         mask_slice_sitk.SetSpacing(mask_meta.spacing[:2])  # [x,y,_z]
 
-        # Extract features
+        # Extract features and append to records
         feature_vector = extractor.execute(
             img_slice_sitk, mask_slice_sitk, voxelBased=False
         )
@@ -122,14 +122,12 @@ def extract_features_of_one_nodule(
             format_feature_dict(feature_vector, case_id, nodule_id, slice_index)
         )
 
-    if len(records) == 0:
-        logger.info(
-            f"Skipping patient {case_id} nodule {nodule_id}: no slices with more than {mask_pixel_min_threshold} pixels"
-        )
-    else:
-        logger.info(
-            f"Extracted feature from {len(records):2} slices of {case_id=} {nodule_id=}"
-        )
+    logger.info(
+        f"Skipping patient {case_id} nodule {nodule_id}: no slices with more than {mask_pixel_min_threshold} pixels"
+        if len == 0
+        else f"Extracted feature from {len(records):2} slices of {case_id=} {nodule_id=}"
+    )
+
     return records
 
 
