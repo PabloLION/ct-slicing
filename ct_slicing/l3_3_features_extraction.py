@@ -42,11 +42,12 @@ logging.getLogger("pykwalify").setLevel(logging.CRITICAL)  # pykwalify from radi
 # #TODO: fix Shape features are only available 3D input (for 2D input, use shape2D). Found 2D input
 
 logger.setLevel(logging.INFO)
+extractor = RadiomicsFeatureExtractor(str(RADIOMICS_DEFAULT_PARAMS_PATH))
 
 
 def get_features(
     feature_vector: dict,
-    i: int,
+    slice_index: int,
     patient_id: str,
     patient_nodule_index: int,
     diagnosis: int,
@@ -54,9 +55,7 @@ def get_features(
     """Was called getFeatures"""
 
     new_row = {}
-    # Showing the features and its calculated values
-    for feature_name in feature_vector.keys():
-        # print("Computed {}: {}".format(featureName, featureVector[featureName]))
+    for feature_name, feature_value in feature_vector.items():
         if (
             ("firstorder" in feature_name)
             or ("glszm" in feature_name)
@@ -65,11 +64,11 @@ def get_features(
             or ("gldm" in feature_name)
             or ("shape" in feature_name)
         ):
-            new_row.update({feature_name: feature_vector[feature_name]})
+            new_row.update({feature_name: feature_value})
     items = sorted(new_row.items())  # Ordering the new_row dictionary
     # Adding some columns
     items.insert(0, ("diagnosis", diagnosis))
-    items.insert(0, ("slice_number", i))
+    items.insert(0, ("slice_index", slice_index))
     items.insert(0, ("nodule_id", patient_nodule_index))
     items.insert(0, ("patient_id", patient_id))
     # In Python 3.7 and later, the built-in dict type maintains insertion order
@@ -78,17 +77,17 @@ def get_features(
 
 
 def get_record(
-    patient_id: str,
+    case_id: int,
     nodule_index: int,
     diagnosis: int,
     image: np.ndarray,
     mask: np.ndarray,
     img_meta: NiiMetadata,
     mask_meta: NiiMetadata,
-    extractor: RadiomicsFeatureExtractor,
     mask_pixel_min_threshold: int,
 ):
-    record = []
+    records = []
+    patient_id = case_id_to_patient_id(case_id)
 
     for slice_index in range(image.shape[2]):  # X, Y, Z
         # Get the axial cut
@@ -117,72 +116,64 @@ def get_record(
         feat_dict = get_features(
             feature_vector, slice_index, patient_id, nodule_index, diagnosis
         )
-        record.append(feat_dict)
+        records.append(feat_dict)
 
-    if len(record) == 0:
+    if len(records) == 0:
         logger.info(
             f"Skipping patient {patient_id} nodule {nodule_index} because it has no slices with more than {mask_pixel_min_threshold} pixels"
         )
 
-    return record
+    return records
 
 
-def extract_features_of_one_record(
-    section: Literal["CT", "VOI"],
-    case_id: int,
-    nodule_id: int,
+def extract_features_of_one_nodule(
+    section: Literal["CT", "VOI"], case_id: int, nodule_id: int
 ) -> list[dict[str, float]]:
     """
     extract features from a single patient and return a DataFrame
     """
 
     img_path, mask_path = nii_file(section, case_id, nodule_id)
-    patient_id = case_id_to_patient_id(case_id)
 
     # Reading image and mask
     image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
     mask, mask_meta = read_nifty(mask_path, coordinate_order=CoordinateOrder.xyz)
-
     nodule_metadata = load_metadata(case_id, nodule_id)
+
     diagnosis: int = nodule_metadata.diagnosis_value
-
     image = process_image(image)  # pre-processing
-
-    extractor = RadiomicsFeatureExtractor(str(RADIOMICS_DEFAULT_PARAMS_PATH))
     mask_min_pixels = DEFAULT_MASK_MIN_PIXELS
     # Extract features slice by slice.
+
     record = get_record(
-        patient_id,
+        case_id,
         nodule_id,
         diagnosis,
         image,
         mask,
         img_meta,
         mask_meta,
-        extractor,
         mask_min_pixels,
     )
     logger.info(
-        f"Extracted features from {len(record):2} slices in {patient_id=} {nodule_id=} {diagnosis=}"
+        f"Extracted features from {len(record):2} slices in {case_id=} {nodule_id=} {diagnosis=}"
     )
     return record
 
 
-def extract_features_of_all_records_to_excel(
+def extract_features_of_all_nodules_to_excel(
     case_nodule_id_to_extract: list[tuple[Literal["CT", "VOI"], int, int]]
 ):
     """Was the script body"""
 
     records = []
     for section, case_id, nodule_id in case_nodule_id_to_extract:
-        records.extend(extract_features_of_one_record(section, case_id, nodule_id))
+        records.extend(extract_features_of_one_nodule(section, case_id, nodule_id))
     df = pd.DataFrame.from_records(records)
     df.to_excel(DEFAULT_EXPORT_XLSX_PATH, index=False)
 
 
 if __name__ == "__main__":
-    records = []
-
     # #TODO long-term: extract more features from VOIs dataset
     case_nodule_id_to_extract = [
         # (section, case_id, nodule_id)
@@ -194,7 +185,7 @@ if __name__ == "__main__":
         ("CT", 5, 2),  # diagnosis:0
     ]
 
-    extract_features_of_all_records_to_excel(case_nodule_id_to_extract)
+    extract_features_of_all_nodules_to_excel(case_nodule_id_to_extract)
 
 """
 Exercise 3. Features extraction for all images and masks in the database.
@@ -211,7 +202,7 @@ code applies pre-processing, can you explain what it does?
         REPO_ROOT/output/features.xlsx
         
     What features are extracted? Very verbose output, but the features extracted are:
-        slice_number
+        slice_index
         diagnosis
         original_firstorder_10Percentile
         original_firstorder_90Percentile

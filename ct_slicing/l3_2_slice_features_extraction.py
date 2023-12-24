@@ -62,7 +62,7 @@ def GetFeatures(featureVector, i, patient_id, nodule_id):
             new_row.update({featureName: featureVector[featureName]})
     lst = sorted(new_row.items())  # Ordering the new_row dictionary
     # Adding some columns
-    lst.insert(0, ("slice_number", i))
+    lst.insert(0, ("slice_index", i))
     lst.insert(0, ("nodule_id", nodule_id))
     lst.insert(0, ("patient_id", patient_id))
     od = OrderedDict(lst)
@@ -141,7 +141,7 @@ Exercise 2.  Feature extraction from the slices of the image and mask.
 a) Execute the code SliceFeaturesExtraction.py and analyse its output. What are the
 features extracted?
     Very verbose output, but the features extracted are:
-    slice_number
+    slice_index
     original_firstorder_10Percentile
     original_firstorder_90Percentile
     original_firstorder_Energy
