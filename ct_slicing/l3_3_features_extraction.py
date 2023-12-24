@@ -12,7 +12,6 @@ Universitat Autonoma de Barcelona
 
 
 import logging
-from pathlib import Path
 from typing import Literal
 import numpy as np
 import pandas as pd
@@ -23,7 +22,10 @@ from ct_slicing.config.data_path import (
     DEFAULT_EXPORT_XLSX_PATH,
     RADIOMICS_DEFAULT_PARAMS_PATH,
 )
-from ct_slicing.data_util.metadata_access import load_metadata_excel_to_data_frame
+from ct_slicing.data_util.metadata_access import (
+    load_metadata,
+    load_metadata_excel_to_data_frame,
+)
 from ct_slicing.data_util.nii_file_access import (
     case_id_to_patient_id,
     nii_file,
@@ -141,16 +143,10 @@ def extract_features_of_one_record(
     image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
     mask, mask_meta = read_nifty(mask_path, coordinate_order=CoordinateOrder.xyz)
 
-    df_metadata = load_metadata_excel_to_data_frame()
+    nodule_metadata = load_metadata(case_id, nodule_id)
+    diagnosis: int = nodule_metadata.diagnosis_value
 
-    nodule_identity = df_metadata[
-        (df_metadata.patient_id == patient_id) & (df_metadata.nodule_id == nodule_id)
-    ]
-    assert len(nodule_identity) == 1, f"Error: Found {len(nodule_identity)} rows"
-    diagnosis: int = nodule_identity.Diagnosis_value.values[0]
-
-    # pre-processing
-    image = process_image(image)
+    image = process_image(image)  # pre-processing
 
     extractor = RadiomicsFeatureExtractor(str(RADIOMICS_DEFAULT_PARAMS_PATH))
     mask_min_pixels = DEFAULT_MASK_MIN_PIXELS
@@ -172,7 +168,7 @@ def extract_features_of_one_record(
     return record
 
 
-def extract_features_of_all_records(
+def extract_features_of_all_records_to_excel(
     case_nodule_id_to_extract: list[tuple[Literal["CT", "VOI"], int, int]]
 ):
     """Was the script body"""
@@ -198,7 +194,7 @@ if __name__ == "__main__":
         ("CT", 5, 2),  # diagnosis:0
     ]
 
-    extract_features_of_all_records(case_nodule_id_to_extract)
+    extract_features_of_all_records_to_excel(case_nodule_id_to_extract)
 
 """
 Exercise 3. Features extraction for all images and masks in the database.
