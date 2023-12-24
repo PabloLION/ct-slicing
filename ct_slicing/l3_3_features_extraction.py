@@ -17,7 +17,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 import SimpleITK as sitk
-from radiomics import featureextractor
+from radiomics.featureextractor import RadiomicsFeatureExtractor
 
 from ct_slicing.config.data_path import (
     DEFAULT_EXPORT_XLSX_PATH,
@@ -40,16 +40,6 @@ logging.getLogger("pykwalify").setLevel(logging.CRITICAL)  # pykwalify from radi
 # #TODO: fix Shape features are only available 3D input (for 2D input, use shape2D). Found 2D input
 
 logger.setLevel(logging.INFO)
-
-
-# #TODO: refactor move, or maybe use pandas.DataFrame.to_excel
-def write_excel(df: pd.DataFrame, path: Path):
-    # (over)write DataFrame to excel file
-
-    # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter(path, engine="xlsxwriter")
-    df.to_excel(writer, sheet_name="Sheet1", index=False)
-    writer.close()
 
 
 def get_features(
@@ -93,7 +83,7 @@ def get_record(
     mask: np.ndarray,
     img_meta: NiiMetadata,
     mask_meta: NiiMetadata,
-    extractor: featureextractor.RadiomicsFeatureExtractor,
+    extractor: RadiomicsFeatureExtractor,
     mask_pixel_min_threshold: int,
 ):
     record = []
@@ -162,9 +152,7 @@ def extract_features_of_one_record(
     # pre-processing
     image = process_image(image)
 
-    extractor = featureextractor.RadiomicsFeatureExtractor(
-        str(RADIOMICS_DEFAULT_PARAMS_PATH)
-    )
+    extractor = RadiomicsFeatureExtractor(str(RADIOMICS_DEFAULT_PARAMS_PATH))
     mask_min_pixels = DEFAULT_MASK_MIN_PIXELS
     # Extract features slice by slice.
     record = get_record(
@@ -193,7 +181,7 @@ def extract_features_of_all_records(
     for section, case_id, nodule_id in case_nodule_id_to_extract:
         records.extend(extract_features_of_one_record(section, case_id, nodule_id))
     df = pd.DataFrame.from_records(records)
-    write_excel(df, DEFAULT_EXPORT_XLSX_PATH)
+    df.to_excel(DEFAULT_EXPORT_XLSX_PATH, index=False)
 
 
 if __name__ == "__main__":
