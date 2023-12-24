@@ -7,8 +7,14 @@ if __name__ != "__main__":
 
 from ct_slicing.config.data_path import CT_FOLDER, VOI_FOLDER
 import filecmp
+from ct_slicing.data_util.metadata_access import load_all_metadata
 
-from ct_slicing.data_util.nii_file_access import iter_files
+from ct_slicing.data_util.nii_file_access import (
+    get_case_id_mask_id_iter,
+    iter_files,
+    load_nodule_id_pickle,
+    nii_exist,
+)
 
 EXCLUDED_FILENAMES = (".DS_Store",)
 
@@ -45,11 +51,23 @@ def check_voi_img_eq_mask():
         print(f"VOI nodule mask not found for {file_rel_path}")
 
 
+def compare_voi_and_metadata():
+    _ct_nodules, file_ids = load_nodule_id_pickle()
+    metadata_ids = set(load_all_metadata().keys())
+    print(f"{file_ids-metadata_ids=}, {metadata_ids-file_ids=}")
+
+
 if __name__ == "__main__":
-    check_voi_contains_ct()
+    # check_voi_contains_ct()
     # result: nothing from CT is equal to anything from VOI
-    check_voi_img_eq_mask()
+
+    # check_voi_img_eq_mask()
     # result: two VOI images are not found
     # VOI image not found for LIDC-IDRI-1002_R_2.nii.gz
     # VOI image not found for LIDC-IDRI-1002_R_1.nii.gz
     # All images have mask
+
+    compare_voi_and_metadata()
+    # file_ids-metadata_ids=set(), metadata_ids-file_ids={(1002, 1), (1002, 2)}
+    # this result shows that all VOI files are in metadata, but two metadata are not in VOI
+    # so when iter over VOI files, we can just assume the metadata exists

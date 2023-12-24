@@ -94,9 +94,8 @@ def serialize_tuple(key: tuple[int, ...]) -> str:
     return "|".join(map(str, key))
 
 
-# never used
-# def deserialize_tuple(key: str) -> tuple[int, ...]:
-#     return tuple(map(int, key.split("|")))
+def deserialize_tuple(key: str) -> tuple[int, ...]:
+    return tuple(map(int, key.split("|")))
 
 
 def dump_all_metadata():
@@ -119,6 +118,20 @@ def test_load_all_metadata_as_dataclass():
     records = load_all_metadata_as_dataclass(df_metadata)
     assert len(records) == 996, f"expected 996 records, got {len(records)}"
     print("test_load_data_to_dataclass passed")
+
+
+def load_all_metadata() -> dict[tuple[int, int], NoduleMetadata]:
+    if not METADATA_JSON_GZIP.exists():
+        logger.warning(f"Metadata JSON {METADATA_JSON_GZIP} does not exist. Dumping...")
+        dump_all_metadata()
+
+    with gzip.open(METADATA_JSON_GZIP, "rt") as f:
+        raw_key_dict = json.load(f)
+
+    return {  # Convert the key from string to tuple
+        deserialize_tuple(key): NoduleMetadata(**value)
+        for key, value in raw_key_dict.items()
+    }  # type: ignore  we know the key is a tuple of len 2.
 
 
 def load_metadata(case_id: int, nodule_id: int) -> NoduleMetadata:
