@@ -34,6 +34,7 @@ from ct_slicing.image_process import process_image
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
 from ct_slicing.ct_logger import logger
 
+# instead of MIN_PIXELS, we might should use a percentage of the mask size?
 DEFAULT_MASK_MIN_PIXELS = 15  # was 200, too large to see `diagnosis==0` samples
 
 # to fix wrong implementation of radiomics.setVerbosity(60)
@@ -47,10 +48,9 @@ extractor = RadiomicsFeatureExtractor(str(RADIOMICS_DEFAULT_PARAMS_PATH))
 
 def format_feature_dict(
     feature_vector: dict,
-    slice_index: int,
-    patient_id: str,
+    case_id: int,
     nodule_id: int,
-    diagnosis: int,
+    slice_index: int,
 ) -> dict[str, float]:
     """
     filter and sort the feature vector
@@ -60,10 +60,10 @@ def format_feature_dict(
     # In Python 3.7 and later, the built-in dict type maintains insertion order
     # by default. So OrderedDict(items) is no longer needed.
     feature_entry = {
-        "patient_id": patient_id,
+        "patient_id": case_id_to_patient_id(case_id),
         "nodule_id": nodule_id,
         "slice_index": slice_index,
-        "diagnosis": diagnosis,
+        "diagnosis": load_metadata(case_id, nodule_id).diagnosis_value,
     }
 
     for feature_name, feature_value in sorted(feature_vector.items()):
@@ -79,93 +79,58 @@ def format_feature_dict(
         if feature_name not in feature_entry:
             feature_entry[feature_name] = feature_value
         else:
-            logger.error(f"Overwriting {feature_name=} of {patient_id=}, {nodule_id=}")
+            logger.error(f"Overwriting {feature_name=} of {case_id=}, {nodule_id=}")
     return feature_entry
 
 
-def get_record(
+def extract_features_of_one_nodule(
+    section: Literal["CT", "VOI"],
     case_id: int,
-    nodule_index: int,
-    diagnosis: int,
-    image: np.ndarray,
-    mask: np.ndarray,
-    img_meta: NiiMetadata,
-    mask_meta: NiiMetadata,
-    mask_pixel_min_threshold: int,
-):
+    nodule_id: int,
+    mask_pixel_min_threshold: int = DEFAULT_MASK_MIN_PIXELS,
+) -> list[dict[str, float]]:
+    """
+    extract features from a single patient and return a DataFrame
+    """
+    img_path, mask_path = nii_file(section, case_id, nodule_id)
+    image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
+    mask, mask_meta = read_nifty(mask_path, coordinate_order=CoordinateOrder.xyz)
+
+    image = process_image(image)  # pre-processing
     records = []
-    patient_id = case_id_to_patient_id(case_id)
 
     for slice_index in range(image.shape[2]):  # X, Y, Z
         # Get the axial cut
         mask_slice = mask[:, :, slice_index]
         if mask_slice.sum() < mask_pixel_min_threshold:
             logger.debug(
-                f"Skipping {slice_index=} of {patient_id=} {nodule_index=} because it has less than {mask_pixel_min_threshold=} pixels"
+                f"Skipping {slice_index=} of {case_id=} {nodule_id=} because it has less than {mask_pixel_min_threshold=} pixels"
             )
             continue
         img_slice = image[:, :, slice_index]
 
-        # Get back to the format sitk
         img_slice_sitk = sitk.GetImageFromArray(img_slice)
         mask_slice_sitk = sitk.GetImageFromArray(mask_slice)
-
-        # Recover the pixel dimension in X and Y
-        (x1, y1, _z1) = img_meta.spacing
-        (x2, y2, _z2) = mask_meta.spacing
-        img_slice_sitk.SetSpacing((float(x1), float(y1)))
-        mask_slice_sitk.SetSpacing((float(x2), float(y2)))
+        img_slice_sitk.SetSpacing(img_meta.spacing[:2])  # [x,y,_z]
+        mask_slice_sitk.SetSpacing(mask_meta.spacing[:2])  # [x,y,_z]
 
         # Extract features
         feature_vector = extractor.execute(
             img_slice_sitk, mask_slice_sitk, voxelBased=False
         )
-        feat_dict = format_feature_dict(
-            feature_vector, slice_index, patient_id, nodule_index, diagnosis
+        records.append(
+            format_feature_dict(feature_vector, case_id, nodule_id, slice_index)
         )
-        records.append(feat_dict)
 
     if len(records) == 0:
         logger.info(
-            f"Skipping patient {patient_id} nodule {nodule_index} because it has no slices with more than {mask_pixel_min_threshold} pixels"
+            f"Skipping patient {case_id} nodule {nodule_id}: no slices with more than {mask_pixel_min_threshold} pixels"
         )
-
+    else:
+        logger.info(
+            f"Extracted feature from {len(records):2} slices of {case_id=} {nodule_id=}"
+        )
     return records
-
-
-def extract_features_of_one_nodule(
-    section: Literal["CT", "VOI"], case_id: int, nodule_id: int
-) -> list[dict[str, float]]:
-    """
-    extract features from a single patient and return a DataFrame
-    """
-
-    img_path, mask_path = nii_file(section, case_id, nodule_id)
-
-    # Reading image and mask
-    image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
-    mask, mask_meta = read_nifty(mask_path, coordinate_order=CoordinateOrder.xyz)
-    nodule_metadata = load_metadata(case_id, nodule_id)
-
-    diagnosis: int = nodule_metadata.diagnosis_value
-    image = process_image(image)  # pre-processing
-    mask_min_pixels = DEFAULT_MASK_MIN_PIXELS
-    # Extract features slice by slice.
-
-    record = get_record(
-        case_id,
-        nodule_id,
-        diagnosis,
-        image,
-        mask,
-        img_meta,
-        mask_meta,
-        mask_min_pixels,
-    )
-    logger.info(
-        f"Extracted features from {len(record):2} slices in {case_id=} {nodule_id=} {diagnosis=}"
-    )
-    return record
 
 
 def extract_features_of_all_nodules_to_excel(

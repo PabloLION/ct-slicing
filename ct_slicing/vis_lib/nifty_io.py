@@ -23,9 +23,9 @@ class NiiMetadata(NamedTuple):
     Tuple of (Origin, Resolution, Orientation)
     """
 
-    origin: sitk.VectorDouble
-    spacing: sitk.VectorDouble
-    direction: sitk.VectorDouble
+    origin: tuple[float, float, float]  # same as sitk.VectorDouble
+    spacing: tuple[float, float, float]  # same as sitk.VectorDouble
+    direction: tuple[float, float, float]  # same as sitk.MatrixDouble
 
 
 class CoordinateOrder(Enum):
