@@ -92,14 +92,16 @@ def nii_exist(sections: Literal["CT", "VOI"], case_id: int, mask_id: int) -> boo
 
 
 def nii_file(
-    sections: Literal["CT", "VOI"], case_id: int, mask_id: int
+    sections: Literal["CT", "VOI"], case_id: int, nodule_id: int
 ) -> NoduleMaskPair:
     """
     Return the nii file pair.
     """
-    nodule, mask = nii_path(sections, case_id, mask_id)
-    if not nii_exist(sections, case_id, mask_id):
-        raise FileNotFoundError(f"File not found for {nodule=} {mask=}")
+    nodule, mask = nii_path(sections, case_id, nodule_id)
+    if not nii_exist(sections, case_id, nodule_id):
+        raise FileNotFoundError(
+            f"File not found for {sections}, {case_id}, {nodule_id}"
+        )
     return NoduleMaskPair(nodule, mask)
 
 
