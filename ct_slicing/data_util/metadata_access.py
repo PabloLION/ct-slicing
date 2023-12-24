@@ -67,7 +67,7 @@ class NoduleMetadata:
     len_mal_details: int
 
 
-def load_metadata_to_dataclass(
+def load_all_metadata_as_dataclass(
     df: pd.DataFrame,
 ) -> dict[tuple[int, int], NoduleMetadata]:
     def to_snake_case(name: str) -> str:
@@ -88,17 +88,17 @@ def load_metadata_to_dataclass(
     return records
 
 
-def dump_available_metadata():
+def dump_all_metadata():
     df_metadata = load_metadata_excel_to_data_frame()
-    records = load_metadata_to_dataclass(df_metadata)
+    records = load_all_metadata_as_dataclass(df_metadata)
     with open(METADATA_PICKLE, "wb") as f:
         pickle.dump(records, f)
     logger.warning(f"Dumped {len(records)} records to {METADATA_PICKLE}")
 
 
-def test_load_metadata_to_dataclass():
+def test_load_all_metadata_as_dataclass():
     df_metadata = load_metadata_excel_to_data_frame()
-    records = load_metadata_to_dataclass(df_metadata)
+    records = load_all_metadata_as_dataclass(df_metadata)
     assert len(records) == 996, f"expected 996 records, got {len(records)}"
     print("test_load_data_to_dataclass passed")
 
@@ -114,7 +114,7 @@ class NoduleData(NoduleMetadata):
     mask_path: Path
 
 
-def load_nodule_metadata_to_dataclass(
+def load_nodule_data_as_dataclass(
     df: pd.DataFrame,
 ) -> dict[tuple[int, int], NoduleData]:
     def to_snake_case(name: str) -> str:
@@ -145,18 +145,18 @@ def load_nodule_metadata_to_dataclass(
     return records
 
 
-def dump_nodule_metadata():
+def dump_nodule_data():
     """
     Dump (overwrite) all available VOI nodule metadata with path info to a file.
     """
     # when running this function, we there are two known missing files for
     # case_id=1002, nodule_id=1 and case_id=1002, nodule_id=2
     df_metadata = load_metadata_excel_to_data_frame()
-    records = load_nodule_metadata_to_dataclass(df_metadata)
+    records = load_nodule_data_as_dataclass(df_metadata)
     with open(NODULE_METADATA_PICKLE, "wb") as f:
         pickle.dump(records, f)
     logger.warning(f"Dumped {len(records)} records to {NODULE_METADATA_PICKLE}")
 
 
 if __name__ == "__main__":
-    test_load_metadata_to_dataclass()
+    test_load_all_metadata_as_dataclass()
