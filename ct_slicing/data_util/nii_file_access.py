@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Literal, NamedTuple
 import pickle
 
-from ct_slicing.config.data_path import DATA_FOLDER, REPO_ROOT
+from ct_slicing.config.data_path import DATA_FOLDER, NODULE_ID_PICKLE
 from ct_slicing.data_util.compare_ct_voi import CT_FOLDER, VOI_FOLDER, iter_files
 
 
@@ -70,7 +70,7 @@ def nii_path(
     return NoduleMaskPair(image, mask)
 
 
-with open(REPO_ROOT / "ct_slicing" / "data_util" / "nodule_id.pkl", "rb") as f:
+with open(NODULE_ID_PICKLE, "rb") as f:
     data = pickle.load(f)
     CT_NODULES = data["CT"]
     VOI_NODULES = data["VOI"]
@@ -193,7 +193,7 @@ def dump_available_nodules():
         voi_nodules.add(nii_path_to_case_id_mask_id(file))
 
     # dump to file
-    with open(REPO_ROOT / "ct_slicing" / "data_util" / "nodule_id.pkl", "wb") as f:
+    with open(NODULE_ID_PICKLE, "wb") as f:
         pickle.dump({"CT": ct_nodules, "VOI": voi_nodules}, f)
 
 

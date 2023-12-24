@@ -12,7 +12,7 @@ import SimpleITK as itk
 from radiomics import featureextractor as feature_extractor, setVerbosity
 from ct_slicing.ct_logger import logger
 
-from ct_slicing.config.data_path import REPO_ROOT
+from ct_slicing.config.data_path import RADIOMICS_CUSTOM_PARAMS_PATH
 from ct_slicing.data_util.nii_file_access import nii_file
 
 setVerbosity(60)
@@ -21,10 +21,6 @@ setVerbosity(60)
 # choose the case id and nodule id to get the path of the nodule image and mask
 IMG_PATH, MASK_PATH = nii_file("CT", 1, 1)
 
-# #TODO: refactor
-radiomics_params = str(
-    REPO_ROOT / "ct_slicing" / "config" / "FeaturesExtraction_Params.yaml"
-)
 # Reading image and mask
 img = itk.ReadImage(IMG_PATH)
 mask = itk.ReadImage(MASK_PATH)
@@ -34,7 +30,9 @@ mask = itk.ReadImage(MASK_PATH)
 # which features should be extracted.
 
 # Initialize the feature extractor
-extractor = feature_extractor.RadiomicsFeatureExtractor(radiomics_params)
+extractor = feature_extractor.RadiomicsFeatureExtractor(
+    str(RADIOMICS_CUSTOM_PARAMS_PATH)
+)
 # Calculate features
 feature_vector = extractor.execute(img, mask)
 # Show the features and its calculated values

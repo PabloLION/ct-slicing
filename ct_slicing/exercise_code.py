@@ -5,7 +5,7 @@ import numpy as np
 import SimpleITK as sitk
 from matplotlib import pyplot as plt
 
-from ct_slicing.config.data_path import REPO_ROOT
+from ct_slicing.config.data_path import RADIOMICS_DEFAULT_PARAMS_PATH
 from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
 from ct_slicing.data_util.nii_file_access import nii_file
 from ct_slicing.ct_logger import logger
@@ -26,9 +26,9 @@ mask = sitk.ReadImage(mask_path)
 # l1.1 Visualization
 # Ex 1.1.2.a Bounding Boxes
 radiomics_params = str(
-    REPO_ROOT / "ct_slicing" / "config" / "FeaturesExtraction_Params.yaml"
+    RADIOMICS_DEFAULT_PARAMS_PATH
 )  # using another params will cause error
-# #TODO: ref params
+
 # Calculate bounding boxes
 bbox = radiomics.imageoperations.checkMask(img, mask, label=1)[0]
 logger.info(f"Ex1.1.2.a Bounding Boxes:\n{bbox}")

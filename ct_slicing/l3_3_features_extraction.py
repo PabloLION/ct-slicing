@@ -19,12 +19,15 @@ import pandas as pd
 import SimpleITK as sitk
 from radiomics import featureextractor, setVerbosity
 
-from ct_slicing.config.data_path import DATA_FOLDER, OUTPUT_FOLDER, REPO_ROOT
+from ct_slicing.config.data_path import (
+    DEFAULT_EXPORT_XLSX_PATH,
+    RADIOMICS_DEFAULT_PARAMS_PATH,
+)
+from ct_slicing.data_util.metadata_access import load_metadata_excel_to_data_frame
 from ct_slicing.data_util.nii_file_access import nii_file
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
 from ct_slicing.ct_logger import logger
 
-RADIOMICS_PARAMS_STR = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
 DEFAULT_MASK_MIN_PIXELS = 15  # was 200, too large to see `diagnosis==0` samples
 
 # to fix wrong implementation of radiomics.setVerbosity(60)
@@ -41,10 +44,6 @@ def get_img_mask_pair_paths(
     section = "VOI" if data_set == "VOIs" else data_set
     case_id = int(patient_id.lstrip("LIDC-IDRI-"))
     return nii_file(section, case_id, nodule_index)
-
-
-DEFAULT_EXPORT_XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"
-META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
 
 
 def shift_values(image: np.ndarray, value: int) -> np.ndarray:
@@ -187,11 +186,7 @@ def extract_feature_record(
     image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
     mask, mask_meta = read_nifty(mask_path, coordinate_order=CoordinateOrder.xyz)
 
-    df_metadata = pd.read_excel(
-        META_DATA_PATH,
-        sheet_name="ML4PM_MetadatabyNoduleMaxVoting",
-        engine="openpyxl",
-    )
+    df_metadata = load_metadata_excel_to_data_frame()
 
     nodule_identity = df_metadata[
         (df_metadata.patient_id == patient_id)
@@ -205,7 +200,9 @@ def extract_feature_record(
     image = set_range(image, in_min=0, in_max=4000)
     image = set_gray_level(image, levels=24)
 
-    extractor = featureextractor.RadiomicsFeatureExtractor(RADIOMICS_PARAMS_STR)
+    extractor = featureextractor.RadiomicsFeatureExtractor(
+        str(RADIOMICS_DEFAULT_PARAMS_PATH)
+    )
     mask_min_pixels = DEFAULT_MASK_MIN_PIXELS
     # Extract features slice by slice.
     record = get_record(
@@ -265,11 +262,11 @@ code applies pre-processing, can you explain what it does?
     Input: 
         py-radiomics params: ct_slicing/config/Params.yaml
         data: 
-            full image: REPO_ROOT/data/CT/image/LIDC-IDRI-0003/1.nii.gz
+            full image: REPO_ROOT/data/CT/image/LIDC-IDRI-0003_1.nii.gz
             nodule mask: REPO_ROOT/data/CT/nodule_mask/LIDC-IDRI-0003_R_2.nii.gz
-        metadata: ROOT/data/MetadatabyNoduleMaxVoting.xlsx
+        metadata: REPO_ROOT/data/MetadatabyNoduleMaxVoting.xlsx
     Output:
-        ROOT/output/features.xlsx
+        REPO_ROOT/output/features.xlsx
         
     What features are extracted? Very verbose output, but the features extracted are:
         slice_number

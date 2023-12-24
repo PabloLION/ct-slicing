@@ -7,14 +7,12 @@ import pickle
 import pandas as pd
 
 from ct_slicing.config.data_path import (
-    DATA_FOLDER,
+    META_DATA_PATH,
     META_DATA_PICKLE,
     NODULE_METADATA_PICKLE,
 )
 from ct_slicing.data_util.nii_file_access import nii_file, patient_id_to_case_id
 from ct_slicing.ct_logger import logger
-
-META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
 
 
 def load_metadata_excel_to_data_frame(

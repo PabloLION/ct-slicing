@@ -16,7 +16,10 @@ from collections import OrderedDict
 import SimpleITK as sitk
 from radiomics import featureextractor as feature_extractor
 from ct_slicing.ct_logger import logger as _logger
-from ct_slicing.config.data_path import OUTPUT_FOLDER, REPO_ROOT
+from ct_slicing.config.data_path import (
+    OUTPUT_FOLDER,
+    RADIOMICS_DEFAULT_PARAMS_PATH,
+)
 from ct_slicing.data_util.nii_file_access import nii_file
 
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty
@@ -106,17 +109,14 @@ def SliceMode(
     return df
 
 
-radiomics_params = str(REPO_ROOT / "ct_slicing" / "config" / "Params.yaml")
-# #TODO: extract params
-####
-
-
 # Use a parameter file, this customizes the extraction settings and
 # also specifies the input image types to use and
 # which features should be extracted.
 
 # Initializing the feature extractor
-extractor = feature_extractor.RadiomicsFeatureExtractor(radiomics_params)
+extractor = feature_extractor.RadiomicsFeatureExtractor(
+    str(RADIOMICS_DEFAULT_PARAMS_PATH)
+)  # using another params will cause error
 
 
 # Reading image and mask
