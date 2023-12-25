@@ -10,10 +10,8 @@ import filecmp
 from ct_slicing.data_util.metadata_access import load_all_metadata
 
 from ct_slicing.data_util.nii_file_access import (
-    get_case_id_mask_id_iter,
     iter_files,
     load_nodule_id_pickle,
-    nii_exist,
 )
 
 EXCLUDED_FILENAMES = (".DS_Store",)
@@ -52,9 +50,9 @@ def check_voi_img_eq_mask():
 
 
 def compare_voi_and_metadata():
-    _ct_nodules, file_ids = load_nodule_id_pickle()
+    _ct_file_ids, voi_file_ids = load_nodule_id_pickle()
     metadata_ids = set(load_all_metadata().keys())
-    print(f"{file_ids-metadata_ids=}, {metadata_ids-file_ids=}")
+    print(f"{voi_file_ids-metadata_ids=}, {metadata_ids-voi_file_ids=}")
 
 
 if __name__ == "__main__":
