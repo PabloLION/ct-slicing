@@ -180,20 +180,7 @@ def vgg_extract_features(slice_tensor: torch.Tensor) -> np.ndarray:
 vgg_classifier = nn.Sequential(*list(model.classifier.children())[:2])
 
 
-def extract_feature_from_slice(img_slice: np.ndarray) -> np.ndarray:
-    """Extract one feature from a single slice.
-
-    Args:
-        img_slice (np.ndarray): A single slice of the image.
-
-    Returns:
-        np.ndarray: The extracted feature.
-    """
-    slice_tensor = tensor_from_2d_array(img_slice)
-    return vgg_extract_features(slice_tensor)
-
-
-def extract_feature_from_slices_diagnoses(
+def extract_feature_from_slice_diagnosis_pairs(
     slice_diagnosis_pairs: Iterable[tuple[np.ndarray, int]]
 ) -> tuple[np.ndarray, np.ndarray]:
     """Extract features from multiple slices.
@@ -207,17 +194,17 @@ def extract_feature_from_slices_diagnoses(
     extracted_features = []  # List with the extracted features of each slice
     diagnosis_value = []  # List with the ground truth of each slice
 
-    for process_idx, (slice, truth) in enumerate(slice_diagnosis_pairs):
-        extracted_features.append(extract_feature_from_slice(slice))
+    for process_idx, (img_slice, truth) in enumerate(slice_diagnosis_pairs):
+        extracted_features.append(vgg_extract_features(tensor_from_2d_array(img_slice)))
         diagnosis_value.append(truth)
         if not (process_idx % 90):
             logger.info(f"Extracted features from {process_idx} slices out of 9016.")
 
     # Stack the extracted features
     extracted_features = np.vstack(extracted_features)
-    diagnosis_value = np.array(  # convert the ground truth list to a numpy array.
-        diagnosis_value
-    )
+    # convert the ground truth list to a numpy array.
+    diagnosis_value = np.array(diagnosis_value)
+
     return extracted_features, diagnosis_value
 
 
@@ -235,7 +222,7 @@ def load_voi_slice_truth_pairs() -> Iterator[tuple[np.ndarray, int]]:
             yield process_image(voi_slice), diagnosis
 
 
-extracted_features, diagnosis_value = extract_feature_from_slices_diagnoses(
+extracted_features, diagnosis_value = extract_feature_from_slice_diagnosis_pairs(
     load_voi_slice_truth_pairs()
 )
 
