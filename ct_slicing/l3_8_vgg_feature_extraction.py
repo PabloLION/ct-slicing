@@ -185,9 +185,6 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:2])
 ########################
 rng = np.random.Generator(np.random.PCG64(123))  # better practice of random.seed
 
-extracted_features = []  # List with the extracted features of each slice
-diagnosis_value = []  # List with the ground truth of each slice
-
 
 def extract_feature_from_slice(img_slice: np.ndarray) -> np.ndarray:
     """Extract one feature from a single slice.
@@ -202,19 +199,17 @@ def extract_feature_from_slice(img_slice: np.ndarray) -> np.ndarray:
     return vgg_extract_features(slice_tensor)
 
 
-####### ONE SLICE ########
+extracted_features = []  # List with the extracted features of each slice
+diagnosis_value = []  # List with the ground truth of each slice
+
 one_slice = rng.uniform(size=(224, 224))
-# #TODO: replace with a real slice (any size)
-extracted_features.append(extract_feature_from_slice(one_slice))
-diagnosis_value.append(0)
-
-####### ANOTHER SLICE ########
 another_slice = rng.uniform(size=(224, 224))
-# #TODO: replace with a real slice (any size)
-extracted_features.append(extract_feature_from_slice(another_slice))
-diagnosis_value.append(1)
+# #TODO: replace with real slices (any size)
+slice_truth_pairs = [(one_slice, 0), (another_slice, 1)]
 
-#####################################
+for slice, truth in slice_truth_pairs:
+    extracted_features.append(extract_feature_from_slice(slice))
+    diagnosis_value.append(truth)
 
 # Stack the extracted features
 extracted_features = np.vstack(extracted_features)
