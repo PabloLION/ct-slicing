@@ -267,6 +267,18 @@ X_train, X_test, y_train, y_test = train_test_split(
     extracted_features, diagnosis_value, test_size=0.3, random_state=42
 )
 
+"""
+Result with data splitting: (train with 6311 data, test with 2706 data)
+We can see that the accuracy is similar to the one without data splitting.
+              precision    recall  f1-score   support
+      benign      0.617     0.985     0.758      3038
+      malign      0.968     0.432     0.598      3273
+
+    accuracy                          0.698      6311
+   macro avg      0.792     0.708     0.678      6311
+weighted avg      0.799     0.698     0.675      6311
+"""
+
 # Create and train a SVM classifier
 clf2 = svm.SVC(probability=True, class_weight="balanced")
 clf2.fit(X_train, y_train)
