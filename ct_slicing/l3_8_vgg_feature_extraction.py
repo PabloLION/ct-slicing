@@ -62,6 +62,7 @@ if __name__ != "__main__":
 
 
 from enum import Enum
+from typing import Iterable
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -199,23 +200,38 @@ def extract_feature_from_slice(img_slice: np.ndarray) -> np.ndarray:
     return vgg_extract_features(slice_tensor)
 
 
-extracted_features = []  # List with the extracted features of each slice
-diagnosis_value = []  # List with the ground truth of each slice
+def extract_feature_from_slices(
+    slices_diagnosis_pairs: Iterable[tuple[np.ndarray, int]]
+) -> tuple[np.ndarray, np.ndarray]:
+    """Extract features from multiple slices.
+
+    Args:
+        slices_diagnosis_pairs (Iterable[tuple[np.ndarray, int]]): An iterable
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: The extracted features and the corresponding diagnoses.
+    """
+    extracted_features = []  # List with the extracted features of each slice
+    diagnosis_value = []  # List with the ground truth of each slice
+
+    for slice, truth in slices_diagnosis_pairs:
+        extracted_features.append(extract_feature_from_slice(slice))
+        diagnosis_value.append(truth)
+
+    # Stack the extracted features
+    extracted_features = np.vstack(extracted_features)
+    diagnosis_value = np.array(  # convert the ground truth list to a numpy array.
+        diagnosis_value
+    )
+    return extracted_features, diagnosis_value
+
 
 one_slice = rng.uniform(size=(224, 224))
 another_slice = rng.uniform(size=(224, 224))
 # #TODO: replace with real slices (any size)
+
 slice_truth_pairs = [(one_slice, 0), (another_slice, 1)]
-
-for slice, truth in slice_truth_pairs:
-    extracted_features.append(extract_feature_from_slice(slice))
-    diagnosis_value.append(truth)
-
-# Stack the extracted features
-extracted_features = np.vstack(extracted_features)
-diagnosis_value = np.array(
-    diagnosis_value
-)  # convert the ground truth list to a numpy array.
+extracted_features, diagnosis_value = extract_feature_from_slices(slice_truth_pairs)
 
 #####################################
 
