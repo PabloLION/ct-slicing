@@ -24,6 +24,8 @@ from ct_slicing.config.data_path import (
 )
 from ct_slicing.ct_logger import logger
 
+Section = Literal["CT", "VOI"]
+
 
 class NoduleMaskPair(NamedTuple):
     nodule: Path
@@ -65,9 +67,7 @@ def nii_path_to_case_id_mask_id(nii_path: Path) -> tuple[int, int]:
     return int(case_id), int(mask_id)
 
 
-def _parse_nii_path(
-    section: Literal["CT", "VOI"], case_id: int, nodule_id: int
-) -> NoduleMaskPair:
+def _parse_nii_path(section: Section, case_id: int, nodule_id: int) -> NoduleMaskPair:
     """Return a pair of (image path, mask path) of a given case id and
     nodule index.
     If the file does not exist, raise FileNotFoundError.
@@ -148,14 +148,17 @@ def dump_nodule_file_path():
     logger.warning(f"Dumped nodule id to {NODULE_ID_PICKLE}")
 
 
-def get_case_id_mask_id_iter() -> (
-    tuple[Iterator[tuple[int, int]], Iterator[tuple[int, int]]]
+def get_section_case_id_mask_id_iter() -> (
+    tuple[Iterator[tuple[Section, int, int]], Iterator[tuple[Section, int, int]]]
 ):
     """
     Get the case id and mask id iterator.
     """
     ct_nodules, voi_nodules = load_nodule_id_pickle()
-    return iter(ct_nodules), iter(voi_nodules)
+    return (
+        (("CT", case_id, mask_id) for case_id, mask_id in ct_nodules),
+        (("VOI", case_id, mask_id) for case_id, mask_id in voi_nodules),
+    )
 
 
 def get_nii_path_iter() -> tuple[Iterator[NoduleMaskPair], Iterator[NoduleMaskPair]]:
@@ -168,7 +171,7 @@ def get_nii_path_iter() -> tuple[Iterator[NoduleMaskPair], Iterator[NoduleMaskPa
     )
 
 
-def nii_exist(sections: Literal["CT", "VOI"], case_id: int, mask_id: int) -> bool:
+def nii_exist(sections: Section, case_id: int, mask_id: int) -> bool:
     """
     Check if the nii file exists.
     Created to future proof against more data from other sections.
@@ -184,9 +187,7 @@ def nii_exist(sections: Literal["CT", "VOI"], case_id: int, mask_id: int) -> boo
         raise ValueError(f"sections must be CT or VOI, but got {sections}")
 
 
-def nii_file(
-    sections: Literal["CT", "VOI"], case_id: int, nodule_id: int
-) -> NoduleMaskPair:
+def nii_file(sections: Section, case_id: int, nodule_id: int) -> NoduleMaskPair:
     """
     Return the nii file pair.
     """
@@ -200,7 +201,7 @@ def nii_file(
 
 # Test if the file path is correct. Assume we won't rename the data files.
 def _test_nii_file_with_expected_not_found_error(
-    sections: Literal["CT", "VOI"], case_id: int, mask_id: int
+    sections: Section, case_id: int, mask_id: int
 ):
     """
     Expect a FileNotFoundError from nii_file.
