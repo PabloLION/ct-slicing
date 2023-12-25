@@ -16,6 +16,9 @@ RADIOMICS_CUSTOM_PARAMS_PATH = (
 # intermediate data
 NODULE_ID_PICKLE = REPO_ROOT / "ct_slicing" / "data_util" / "nodule_id.pkl"
 METADATA_JSON_GZIP = REPO_ROOT / "data" / "metadata.json.gz"
+EXTRACTED_FEATURES_NPY = (
+    REPO_ROOT / "ct_slicing" / "data_util" / "extracted_features.npy"
+)
 
 # output
 OUTPUT_FOLDER = REPO_ROOT / "output"

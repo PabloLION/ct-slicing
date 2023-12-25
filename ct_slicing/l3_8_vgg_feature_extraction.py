@@ -74,6 +74,7 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import classification_report
+from ct_slicing.config.data_path import EXTRACTED_FEATURES_NPY
 
 from ct_slicing.ct_logger import logger
 from ct_slicing.data_util.metadata_access import load_all_metadata
@@ -222,9 +223,23 @@ def load_voi_slice_truth_pairs() -> Iterator[tuple[np.ndarray, int]]:
             yield process_image(voi_slice), diagnosis
 
 
-extracted_features, diagnosis_value = extract_feature_from_slice_diagnosis_pairs(
-    load_voi_slice_truth_pairs()
-)
+if EXTRACTED_FEATURES_NPY.exists():
+    logger.info("Extracted features already exists, loading from file.")
+    with open(EXTRACTED_FEATURES_NPY, "rb") as f:
+        concatenated_array = np.load(f, allow_pickle=False)
+    extracted_features = concatenated_array[:, :-1]
+    diagnosis_value = concatenated_array[:, -1]
+else:
+    extracted_features, diagnosis_value = extract_feature_from_slice_diagnosis_pairs(
+        load_voi_slice_truth_pairs()
+    )
+    diagnosis_reshaped = np.reshape(diagnosis_value, (-1, 1))  # Reshape to (9016, 1)
+    concatenated_array = np.concatenate(
+        (extracted_features, diagnosis_reshaped), axis=1
+    )
+    with open(EXTRACTED_FEATURES_NPY, "wb") as f:
+        np.save(f, concatenated_array, allow_pickle=False)
+    logger.info("Extracted features saved to file.")
 
 """
 Result without data splitting: (train and test with full 9016 data)
