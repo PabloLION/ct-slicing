@@ -21,6 +21,7 @@ Renaming:
 | tensor | tensor_another_slice |
 |array2 | feature_another_slice |
 | y | diagnosis_value |
+| all_features | extracted_features |
 
 Improvements:
 - Copying an 224x224 image three times along the new first axis:
@@ -237,20 +238,11 @@ def load_voi_slice_truth_pairs() -> Iterator[tuple[np.ndarray, int]]:
 extracted_features, diagnosis_value = extract_feature_from_slices_diagnoses(
     load_voi_slice_truth_pairs()
 )
-#####################################
 
 # DATA SPLITTING
-# X_train, X_test, y_train, y_test = train_test_split(
-#     all_features, y, test_size=0.3, random_state=42
-# )
-X_train, X_test, y_train, y_test = (
-    extracted_features,
-    extracted_features,
-    diagnosis_value,
-    diagnosis_value,
+X_train, X_test, y_train, y_test = train_test_split(
+    extracted_features, diagnosis_value, test_size=0.3, random_state=42
 )
-
-#####################################
 
 # Create and train a SVM classifier
 clf2 = svm.SVC(probability=True, class_weight="balanced")
