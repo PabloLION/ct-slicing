@@ -96,21 +96,19 @@ def extract_features_of_one_nodule(
     extract features from a single patient and return a DataFrame
     """
     img_path, mask_path = nii_file(section, case_id, nodule_id)
-    image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.xyz)
-    mask, mask_meta = read_nifty(mask_path, coordinate_order=CoordinateOrder.xyz)
+    image, img_meta = read_nifty(img_path, coordinate_order=CoordinateOrder.zyx)
+    mask, mask_meta = read_nifty(mask_path, coordinate_order=CoordinateOrder.zyx)
 
     image = process_image(image)  # pre-processing
     records = []
 
-    for slice_index in range(image.shape[2]):
+    for slice_index, (mask_slice, img_slice) in enumerate(zip(mask, image)):
         # Get the axial cut
-        mask_slice = mask[:, :, slice_index]
         if mask_slice.sum() < mask_pixel_min_threshold:
             logger.debug(
                 f"Skipping {slice_index=} of {case_id=} {nodule_id=} because it has less than {mask_pixel_min_threshold=} pixels"
             )
             continue
-        img_slice = image[:, :, slice_index]
 
         img_slice_sitk = sitk.GetImageFromArray(img_slice)
         mask_slice_sitk = sitk.GetImageFromArray(mask_slice)
