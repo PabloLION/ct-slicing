@@ -20,6 +20,7 @@ Renaming:
 | X | another_slice |
 | tensor | tensor_another_slice |
 |array2 | feature_another_slice |
+| y | diagnosis_value |
 
 Improvements:
 - Copying an 224x224 image three times along the new first axis:
@@ -184,27 +185,30 @@ vgg_classifier = nn.Sequential(*list(model.classifier.children())[:2])
 ########################
 rng = np.random.Generator(np.random.PCG64(123))  # better practice of random.seed
 
-y = []  # List with the ground truth of each slice
+extracted_features = []  # List with the extracted features of each slice
+diagnosis_value = []  # List with the ground truth of each slice
 
 ####### ONE SLICE ########
 one_slice = rng.uniform(size=(224, 224))
 # #TODO: replace with a real slice (any size)
 tensor_one_slice = tensor_from_2d_array(one_slice)
-feature_one_slice = vgg_extract_features(tensor_one_slice)
-y.append(0)
+extracted_features.append(vgg_extract_features(tensor_one_slice))
+diagnosis_value.append(0)
 
 ####### ANOTHER SLICE ########
 another_slice = rng.uniform(size=(224, 224))
 # #TODO: replace with a real slice (any size)
 tensor_another_slice = tensor_from_2d_array(another_slice)
-feature_another_slice = vgg_extract_features(tensor_another_slice)
-y.append(1)
+extracted_features.append(vgg_extract_features(tensor_another_slice))
+diagnosis_value.append(1)
 
 #####################################
 
 # Stack the extracted features
-extracted_features = np.vstack((feature_one_slice, feature_another_slice))
-y = np.array(y)  # convert the ground truth list to a numpy array.
+extracted_features = np.vstack(extracted_features)
+diagnosis_value = np.array(
+    diagnosis_value
+)  # convert the ground truth list to a numpy array.
 
 #####################################
 
@@ -212,7 +216,12 @@ y = np.array(y)  # convert the ground truth list to a numpy array.
 # X_train, X_test, y_train, y_test = train_test_split(
 #     all_features, y, test_size=0.3, random_state=42
 # )
-X_train, X_test, y_train, y_test = extracted_features, extracted_features, y, y
+X_train, X_test, y_train, y_test = (
+    extracted_features,
+    extracted_features,
+    diagnosis_value,
+    diagnosis_value,
+)
 
 #####################################
 
