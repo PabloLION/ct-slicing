@@ -62,7 +62,8 @@ if __name__ != "__main__":
 
 
 from enum import Enum
-from typing import Iterable
+import logging
+from typing import Iterable, Iterator
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -74,6 +75,12 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import classification_report
 
 from ct_slicing.ct_logger import logger
+from ct_slicing.data_util.metadata_access import load_all_metadata
+from ct_slicing.data_util.nii_file_access import load_nodule_id_pickle, nii_file
+from ct_slicing.image_process import process_image
+from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty
+
+logger.setLevel(logging.INFO)
 
 
 class ModelName(Enum):
@@ -168,23 +175,8 @@ def vgg_extract_features(slice_tensor: torch.Tensor) -> np.ndarray:
 ## (classifier): Sequential(
 ##  (0): Linear(in_features=25088, out_features=4096, bias=True)
 ##  (1): ReLU(inplace=True)  <------- extract features from this layer
-# according to this comment, we want to extract features from the first ReLU
+# according to the comment above, extract features from the first ReLU
 vgg_classifier = nn.Sequential(*list(model.classifier.children())[:2])
-
-########################
-## Insert your code here...
-## "ONE SLICE" and "ANOTHER SLICE" must be replaced by your code.
-
-# image, meta1 = readNifty(imageName, CoordinateOrder='xyz')
-
-## Apply the same preprocessing used in featuresExtraction.py
-### PREPROCESSING
-# image = ShiftValues(image, value=1024)
-# image = SetRange(image, in_min=0, in_max=4000)
-# image = SetGrayLevel(image, levels=24)
-
-########################
-rng = np.random.Generator(np.random.PCG64(123))  # better practice of random.seed
 
 
 def extract_feature_from_slice(img_slice: np.ndarray) -> np.ndarray:
@@ -200,8 +192,8 @@ def extract_feature_from_slice(img_slice: np.ndarray) -> np.ndarray:
     return vgg_extract_features(slice_tensor)
 
 
-def extract_feature_from_slices(
-    slices_diagnosis_pairs: Iterable[tuple[np.ndarray, int]]
+def extract_feature_from_slices_diagnoses(
+    slice_diagnosis_pairs: Iterable[tuple[np.ndarray, int]]
 ) -> tuple[np.ndarray, np.ndarray]:
     """Extract features from multiple slices.
 
@@ -214,9 +206,11 @@ def extract_feature_from_slices(
     extracted_features = []  # List with the extracted features of each slice
     diagnosis_value = []  # List with the ground truth of each slice
 
-    for slice, truth in slices_diagnosis_pairs:
+    for process_idx, (slice, truth) in enumerate(slice_diagnosis_pairs):
         extracted_features.append(extract_feature_from_slice(slice))
         diagnosis_value.append(truth)
+        if not (process_idx % 90):
+            logger.info(f"Extracted features from {process_idx} slices out of 9016.")
 
     # Stack the extracted features
     extracted_features = np.vstack(extracted_features)
@@ -226,13 +220,23 @@ def extract_feature_from_slices(
     return extracted_features, diagnosis_value
 
 
-one_slice = rng.uniform(size=(224, 224))
-another_slice = rng.uniform(size=(224, 224))
-# #TODO: replace with real slices (any size)
+def load_voi_slice_truth_pairs() -> Iterator[tuple[np.ndarray, int]]:
+    _ct_data, voi_data = load_nodule_id_pickle()
+    all_metadata = load_all_metadata()
 
-slice_truth_pairs = [(one_slice, 0), (another_slice, 1)]
-extracted_features, diagnosis_value = extract_feature_from_slices(slice_truth_pairs)
+    for case_id, nodule_id in voi_data:
+        metadata = all_metadata[(case_id, nodule_id)]
+        diagnosis = metadata.diagnosis_value
+        voi_path, _mask_path = nii_file("VOI", case_id, nodule_id)
+        voi_image, _voi_meta = read_nifty(voi_path, CoordinateOrder.zyx)
+        for voi_slice in voi_image:
+            # process_image: same pre-process used in featuresExtraction.py
+            yield process_image(voi_slice), diagnosis
 
+
+extracted_features, diagnosis_value = extract_feature_from_slices_diagnoses(
+    load_voi_slice_truth_pairs()
+)
 #####################################
 
 # DATA SPLITTING

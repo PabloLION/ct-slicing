@@ -69,7 +69,7 @@ class NoduleMetadata:
     len_mal_details: int
 
 
-def load_all_metadata_as_dataclass(
+def load_all_metadata_excel_as_dataclass(
     df: pd.DataFrame,
 ) -> dict[tuple[int, int], NoduleMetadata]:
     def to_snake_case(name: str) -> str:
@@ -100,7 +100,7 @@ def deserialize_tuple(key: str) -> tuple[int, ...]:
 
 def dump_all_metadata():
     df_metadata = load_metadata_excel_to_data_frame()
-    records = load_all_metadata_as_dataclass(df_metadata)
+    records = load_all_metadata_excel_as_dataclass(df_metadata)
 
     # Convert data class instances to dictionaries
     records_dict = {
@@ -115,7 +115,7 @@ def dump_all_metadata():
 
 def test_load_all_metadata_as_dataclass():
     df_metadata = load_metadata_excel_to_data_frame()
-    records = load_all_metadata_as_dataclass(df_metadata)
+    records = load_all_metadata_excel_as_dataclass(df_metadata)
     assert len(records) == 996, f"expected 996 records, got {len(records)}"
     print("test_load_data_to_dataclass passed")
 
@@ -131,7 +131,7 @@ def load_all_metadata() -> dict[tuple[int, int], NoduleMetadata]:
     return {  # Convert the key from string to tuple
         deserialize_tuple(key): NoduleMetadata(**value)
         for key, value in raw_key_dict.items()
-    }  # type: ignore  we know the key is a tuple of len 2.
+    }  # type: ignore  # we know the key is a tuple of len 2.
 
 
 def load_metadata(case_id: int, nodule_id: int) -> NoduleMetadata:
@@ -156,7 +156,7 @@ def load_metadata(case_id: int, nodule_id: int) -> NoduleMetadata:
 
 def test_dump_all_metadata():
     dump_all_metadata()
-    expected_records = load_all_metadata_as_dataclass(
+    expected_records = load_all_metadata_excel_as_dataclass(
         load_metadata_excel_to_data_frame()
     )
     with gzip.open(METADATA_JSON_GZIP, "rt") as f:

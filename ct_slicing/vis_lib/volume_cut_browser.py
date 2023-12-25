@@ -84,7 +84,7 @@ class VolumeCutBrowser:
     # EXAMPLE: #TODO: outdated
     # DataDir='C://Data_Session1//Case0016';
     # NIIFile='LIDC-IDRI-0016_GT1.nii.gz'
-    # nii_vol,_=NiftyIO.readNifty(os.path.join(ServerDir,NIIFile))
+    # nii_vol,_=nifty_io.read_nifty(os.path.join(DataDir,NIIFile))
     # VolumeCutBrowser(nii_vol)
     """
 
