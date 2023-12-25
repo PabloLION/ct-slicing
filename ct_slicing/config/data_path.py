@@ -16,9 +16,13 @@ RADIOMICS_CUSTOM_PARAMS_PATH = (
 # intermediate data
 NODULE_ID_PICKLE = REPO_ROOT / "ct_slicing" / "data_util" / "nodule_id.pkl"
 METADATA_JSON_GZIP = REPO_ROOT / "data" / "metadata.json.gz"
-EXTRACTED_FEATURES_NPY = (
-    REPO_ROOT / "ct_slicing" / "data_util" / "extracted_features.npy"
-)
+
+
+def extracted_features_npy_path_with_threshold(threshold) -> Path:
+    return (
+        REPO_ROOT / "ct_slicing" / "data_util" / f"extracted_features_{threshold}.npy"
+    )
+
 
 # output
 OUTPUT_FOLDER = REPO_ROOT / "output"

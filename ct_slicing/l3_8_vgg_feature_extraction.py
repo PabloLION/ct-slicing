@@ -64,6 +64,7 @@ if __name__ != "__main__":
 
 from enum import Enum
 import logging
+from math import prod
 from typing import Iterable, Iterator
 import torch
 import torch.nn as nn
@@ -74,7 +75,7 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import classification_report
-from ct_slicing.config.data_path import EXTRACTED_FEATURES_NPY
+from ct_slicing.config.data_path import extracted_features_npy_path_with_threshold
 
 from ct_slicing.ct_logger import logger
 from ct_slicing.data_util.metadata_access import load_all_metadata
@@ -92,6 +93,7 @@ class ModelName(Enum):
 
 ## Choose parameters for this script
 MODEL_NAME: ModelName = ModelName.VGG16  # property to be configured
+empty_slice_threshold = 0.1  # Using 0.1 and 0.0 gives the same result
 
 # Load a pre-trained VGG16 or VGG19 model. NOT using dict for performance
 if MODEL_NAME == ModelName.VGG16:
@@ -198,8 +200,7 @@ def extract_feature_from_slice_diagnosis_pairs(
     for process_idx, (img_slice, truth) in enumerate(slice_diagnosis_pairs):
         extracted_features.append(vgg_extract_features(tensor_from_2d_array(img_slice)))
         diagnosis_value.append(truth)
-        if not (process_idx % 90):
-            logger.info(f"Extracted features from {process_idx} slices out of 9016.")
+        logger.info(f"Extracted features from {process_idx} slices.")
 
     # Stack the extracted features
     extracted_features = np.vstack(extracted_features)
@@ -209,7 +210,9 @@ def extract_feature_from_slice_diagnosis_pairs(
     return extracted_features, diagnosis_value
 
 
-def load_voi_slice_truth_pairs() -> Iterator[tuple[np.ndarray, int]]:
+def load_voi_slice_truth_pairs(
+    empty_slice_threshold: float = empty_slice_threshold,
+) -> Iterator[tuple[np.ndarray, int]]:
     _ct_data, voi_data = load_nodule_id_pickle()
     all_metadata = load_all_metadata()
 
@@ -218,17 +221,28 @@ def load_voi_slice_truth_pairs() -> Iterator[tuple[np.ndarray, int]]:
         diagnosis = metadata.diagnosis_value
         voi_path, _mask_path = nii_file("VOI", case_id, nodule_id)
         voi_image, _voi_meta = read_nifty(voi_path, CoordinateOrder.zyx)
-        for voi_slice in voi_image:
+        for voi_slice in voi_image:  # voi_slice is a np.ndarray of shape (H,W)
+            if (
+                np.count_nonzero(voi_slice)
+                < prod(voi_slice.shape) * empty_slice_threshold
+            ):
+                print(f"skipping empty slice in {case_id=} {nodule_id=}")
+                continue  # skip empty slices
             # process_image: same pre-process used in featuresExtraction.py
+            # #TODO: maybe we should apply the process_image to the 224x224 image
             yield process_image(voi_slice), diagnosis
 
 
+EXTRACTED_FEATURES_NPY = extracted_features_npy_path_with_threshold(
+    threshold=empty_slice_threshold
+)
 if EXTRACTED_FEATURES_NPY.exists():
     logger.info("Extracted features already exists, loading from file.")
     with open(EXTRACTED_FEATURES_NPY, "rb") as f:
         concatenated_array = np.load(f, allow_pickle=False)
     extracted_features = concatenated_array[:, :-1]
     diagnosis_value = concatenated_array[:, -1]
+    logger.info("Extracted features loaded from file.")
 else:
     extracted_features, diagnosis_value = extract_feature_from_slice_diagnosis_pairs(
         load_voi_slice_truth_pairs()
