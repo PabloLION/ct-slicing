@@ -12,7 +12,7 @@ Universitat Autonoma de Barcelona
 
 
 import logging
-from typing import Literal
+from typing import Iterable, Literal
 import numpy as np
 import pandas as pd
 import SimpleITK as sitk
@@ -28,6 +28,9 @@ from ct_slicing.data_util.metadata_access import (
 )
 from ct_slicing.data_util.nii_file_access import (
     case_id_to_patient_id,
+    get_nii_path_iter,
+    get_section_case_id_mask_id_iter,
+    load_nodule_id_pickle,
     nii_file,
 )
 from ct_slicing.image_process import process_image
@@ -132,7 +135,7 @@ def extract_features_of_one_nodule(
 
 
 def extract_features_of_all_nodules_to_excel(
-    case_nodule_id_to_extract: list[tuple[Literal["CT", "VOI"], int, int]]
+    case_nodule_id_to_extract: Iterable[tuple[Literal["CT", "VOI"], int, int]]
 ):
     """Was the script body"""
 
@@ -145,17 +148,9 @@ def extract_features_of_all_nodules_to_excel(
 
 if __name__ == "__main__":
     # #TODO long-term: extract more features from VOIs dataset
-    case_nodule_id_to_extract = [
-        # (section, case_id, nodule_id)
-        ("CT", 1, 1),  # diagnosis:1
-        ("CT", 3, 2),  # diagnosis:1 # in original code, only this case was processed
-        ("CT", 3, 3),  # diagnosis:1
-        ("CT", 3, 4),  # diagnosis:1
-        ("CT", 5, 1),  # diagnosis:0
-        ("CT", 5, 2),  # diagnosis:0
-    ]
-
-    extract_features_of_all_nodules_to_excel(case_nodule_id_to_extract)
+    # in original code, only ("CT", 3, 2) case was processed
+    ct_iter, voi_iter = get_section_case_id_mask_id_iter()
+    extract_features_of_all_nodules_to_excel(ct_iter)
 
 """
 Exercise 3. Features extraction for all images and masks in the database.
