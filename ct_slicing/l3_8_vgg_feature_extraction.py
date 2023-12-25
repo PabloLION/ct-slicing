@@ -226,6 +226,27 @@ extracted_features, diagnosis_value = extract_feature_from_slice_diagnosis_pairs
     load_voi_slice_truth_pairs()
 )
 
+"""
+Result without data splitting: (train and test with full 9016 data)
+                precision   recall   f1-score   support
+
+      benign      0.618     0.983     0.759      4362  
+      malign      0.965     0.431     0.595      4655  
+
+    accuracy                          0.698      9017  
+   macro avg      0.791     0.707     0.677      9017  
+weighted avg      0.797     0.698     0.675      9017  
+
+Probabilities of the prediction:
+[[0.0074956  0.9925044 ]
+ [0.01078246 0.98921754]
+ [0.0291752  0.9708248 ]
+ ...
+ [0.6280596  0.3719404 ]
+ [0.39925227 0.60074773]
+ [0.47804706 0.52195294]]
+"""
+
 # DATA SPLITTING
 X_train, X_test, y_train, y_test = train_test_split(
     extracted_features, diagnosis_value, test_size=0.3, random_state=42
