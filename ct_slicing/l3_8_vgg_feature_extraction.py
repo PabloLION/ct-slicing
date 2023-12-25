@@ -292,23 +292,21 @@ logger.info(f"Probabilities of the prediction:\n{clf2.predict_proba(X_train)}")
 
 # Use the probabilities to calibrate a new model
 calibrated_classifier = CalibratedClassifierCV(clf2, n_jobs=-1, cv=2)
-# calibrated_classifier.fit(X_train, y_train) # not fixable with 2 samples only
+calibrated_classifier.fit(X_train, y_train)  # not fixable with 2 samples only
+y_pred_calib = calibrated_classifier.predict(X_train)
 
-
-# y_pred_calib = calibrated_classifier.predict(X_train)
-
-# train_report_dict = classification_report(
-#     y_train,
-#     y_pred_calib,
-#     labels=[0, 1],
-#     target_names=["benign", "malign"],
-#     sample_weight=None,
-#     digits=3,
-#     output_dict=False,
-#     zero_division=0,
-# )
-
-# print(train_report_dict)
+print(
+    classification_report(
+        y_train,
+        y_pred_calib,
+        labels=[0, 1],
+        target_names=["benign", "malign"],
+        sample_weight=None,
+        digits=3,
+        output_dict=False,
+        zero_division=0,
+    )
+)
 
 ## Unused code
 vgg_features = model.features
