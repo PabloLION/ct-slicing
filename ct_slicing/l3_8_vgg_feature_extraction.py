@@ -188,18 +188,30 @@ rng = np.random.Generator(np.random.PCG64(123))  # better practice of random.see
 extracted_features = []  # List with the extracted features of each slice
 diagnosis_value = []  # List with the ground truth of each slice
 
+
+def extract_feature_from_slice(img_slice: np.ndarray) -> np.ndarray:
+    """Extract one feature from a single slice.
+
+    Args:
+        img_slice (np.ndarray): A single slice of the image.
+
+    Returns:
+        np.ndarray: The extracted feature.
+    """
+    slice_tensor = tensor_from_2d_array(img_slice)
+    return vgg_extract_features(slice_tensor)
+
+
 ####### ONE SLICE ########
 one_slice = rng.uniform(size=(224, 224))
 # #TODO: replace with a real slice (any size)
-tensor_one_slice = tensor_from_2d_array(one_slice)
-extracted_features.append(vgg_extract_features(tensor_one_slice))
+extracted_features.append(extract_feature_from_slice(one_slice))
 diagnosis_value.append(0)
 
 ####### ANOTHER SLICE ########
 another_slice = rng.uniform(size=(224, 224))
 # #TODO: replace with a real slice (any size)
-tensor_another_slice = tensor_from_2d_array(another_slice)
-extracted_features.append(vgg_extract_features(tensor_another_slice))
+extracted_features.append(extract_feature_from_slice(another_slice))
 diagnosis_value.append(1)
 
 #####################################
