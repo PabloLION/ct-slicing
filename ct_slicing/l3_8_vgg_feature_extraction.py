@@ -352,6 +352,70 @@ logger.info(
     )
 )
 
+
+# Apply the original classifier to the test set
+y_pred_test_uncalib = classifier.predict(X_test)
+
+# Classification report for the original classifier on test data
+logger.info("Classification report for uncalibrated classifier on test data:")
+logger.info(
+    classification_report(
+        y_test,
+        y_pred_test_uncalib,
+        labels=[0, 1],
+        target_names=["benign", "malign"],
+        digits=3,
+    )
+)
+
+"""
+Classification report for uncalibrated classifier on test data:
+                precision   recall  f1-score   support
+
+      benign      0.613     0.968     0.750      1324
+      malign      0.931     0.413     0.572      1382
+
+    accuracy                          0.685      2706
+   macro avg      0.772     0.691     0.661      2706
+weighted avg      0.775     0.685     0.659      2706
+"""
+
+# Apply the calibrated classifier to the test set
+y_pred_test_calib = calibrated_classifier.predict(X_test)
+
+# Classification report for the calibrated classifier on test data
+logger.info("Classification report for calibrated classifier on test data:")
+logger.info(
+    classification_report(
+        y_test,
+        y_pred_test_calib,
+        labels=[0, 1],
+        target_names=["benign", "malign"],
+        digits=3,
+    )
+)
+"""
+Classification report for calibrated classifier on test data:
+                precision    recall  f1-score   support
+
+      benign      0.637     0.804     0.711      1324
+      malign      0.749     0.560     0.641      1382
+
+    accuracy                          0.680      2706
+   macro avg      0.693     0.682     0.676      2706
+weighted avg      0.694     0.680     0.675      2706
+
+Conclusion:
+The higher recall for benign cases is good, so the model can help exclude
+benign cases and reduce the number of unnecessary biopsies.
+Therefore, the uncalibrated classifier is better than the calibrated one.
+"""
+
+# Optional: Probabilities of the predictions on test data (from the original classifier)
+# Uncomment the following line if you want to log the probabilities
+# logger.info(f"Probabilities of the prediction on test data:\n{classifier.predict_proba(X_test)}")
+
+
 ## Unused code
 vgg_features = model.features
 vgg_avgpool = model.avgpool
