@@ -256,24 +256,41 @@ else:
     logger.info("Extracted features saved to file.")
 
 """
-Result without data splitting: (train and test with full 9016 data)
+Train report without data splitting: (train and test with full 9016 data)
                 precision   recall   f1-score   support
 
-      benign      0.618     0.983     0.759      4362  
-      malign      0.965     0.431     0.595      4655  
+      benign      0.618     0.983     0.759      4362
+      malign      0.965     0.431     0.595      4655
 
-    accuracy                          0.698      9017  
-   macro avg      0.791     0.707     0.677      9017  
-weighted avg      0.797     0.698     0.675      9017  
+    accuracy                          0.698      9017
+   macro avg      0.791     0.707     0.677      9017
+weighted avg      0.797     0.698     0.675      9017
 
-Probabilities of the prediction:
-[[0.0074956  0.9925044 ]
- [0.01078246 0.98921754]
- [0.0291752  0.9708248 ]
- ...
- [0.6280596  0.3719404 ]
- [0.39925227 0.60074773]
- [0.47804706 0.52195294]]
+How to read the report:
+| Name         | Meaning                                                       |
+| ------------ | ------------------------------------------------------------- |
+| TP           | True Positive                                                 |
+| TN           | True Negative                                                 |
+| FP           | False Positive                                                |
+| FN           | False Negative                                                |
+| precision    | TP / (TP + FP)                                                |
+| recall or .. | TP / (TP + FN)                                                |
+| sensitivity  | TP / (TP + FN)                                                |
+| f1-score     | 2 \\* precision \\* recall / (precision + recall)             |
+| f1-score     | the harmonic mean of precision and recall                     |
+| accuracy     | (TP + TN) / (TP + TN + FP + FN)                               |
+| weighted avg | average weighted by the number of instances in each class     |
+| macro avg    | average not weighted by the number of instances in each class |
+
+Keynote of the report:
+- The model is better at identifying benign cases than malign cases (higher recall for benign).
+- The model is more precise in predicting malign cases than benign ones.
+- The F1 score is moderately good for both classes, but there's room for improvement, especially for the malign class.
+- The accuracy of 70.1% shows a general effectiveness of the model, but considering the weighted metrics and individual class performance is crucial, especially in imbalanced datasets.
+
+Discussion:
+- If the model can help exclude benign cases, it can reduce the number of
+    unnecessary biopsies. So a high recall for benign cases is good.
 """
 
 # DATA SPLITTING
@@ -281,10 +298,29 @@ X_train, X_test, y_train, y_test = train_test_split(
     extracted_features, diagnosis_value, test_size=0.3, random_state=42
 )
 
+# Create and train a SVM classifier
+classifier = svm.SVC(probability=True, class_weight="balanced")
+classifier.fit(X_train, y_train)
+
+y_pred_uncalib = classifier.predict(X_train)
+
+logger.info("Classification report without calibration:")
+logger.info(
+    classification_report(
+        y_train,
+        y_pred_uncalib,
+        labels=[0, 1],
+        target_names=["benign", "malign"],
+        digits=3,
+        # sample_weight=None, | default value: sample_weight=None,
+        # output_dict=False,  | default value: output_dict=False,
+        # zero_division=0,    | default value: zero_division="warn",
+    )
+)
 """
-Result with data splitting: (train with 6311 data, test with 2706 data)
+Classification report with data splitting: (train with 6311 data, test with 2706 data)
 We can see that the accuracy is similar to the one without data splitting.
-              precision    recall  f1-score   support
+                precision   recall  f1-score   support
       benign      0.617     0.985     0.758      3038
       malign      0.968     0.432     0.598      3273
 
@@ -293,44 +329,26 @@ We can see that the accuracy is similar to the one without data splitting.
 weighted avg      0.799     0.698     0.675      6311
 """
 
-# Create and train a SVM classifier
-clf2 = svm.SVC(probability=True, class_weight="balanced")
-clf2.fit(X_train, y_train)
 
-y_pred_uncalib = clf2.predict(X_train)
-
-train_report_dict = classification_report(
-    y_train,
-    y_pred_uncalib,
-    labels=[0, 1],
-    target_names=["benign", "malign"],
-    sample_weight=None,
-    digits=3,
-    output_dict=False,
-    zero_division=0,
-)
-
-logger.info(train_report_dict)
-
-
-# Show the probabilities of the prediction
-logger.info(f"Probabilities of the prediction:\n{clf2.predict_proba(X_train)}")
+# Uncomment the following line to show the probabilities of the prediction
+# logger.info(f"Probabilities of the prediction:\n{classifier.predict_proba(X_train)}")
 
 # Use the probabilities to calibrate a new model
-calibrated_classifier = CalibratedClassifierCV(clf2, n_jobs=-1, cv=2)
+calibrated_classifier = CalibratedClassifierCV(classifier, n_jobs=-1, cv=2)
 calibrated_classifier.fit(X_train, y_train)  # not fixable with 2 samples only
 y_pred_calib = calibrated_classifier.predict(X_train)
 
-print(
+logger.info("Classification report with calibration:")
+logger.info(
     classification_report(
         y_train,
         y_pred_calib,
         labels=[0, 1],
         target_names=["benign", "malign"],
-        sample_weight=None,
         digits=3,
-        output_dict=False,
-        zero_division=0,
+        # sample_weight=None, | default value: sample_weight=None,
+        # output_dict=False,  | default value: output_dict=False,
+        # zero_division=0,    | default value: zero_division="warn",
     )
 )
 
