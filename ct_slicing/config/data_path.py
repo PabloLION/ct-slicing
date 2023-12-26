@@ -3,7 +3,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent.parent
 # data
 DATA_FOLDER = REPO_ROOT / "data"
-META_DATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
+METADATA_PATH = DATA_FOLDER / "MetadatabyNoduleMaxVoting.xlsx"
 CT_FOLDER = DATA_FOLDER / "CT"
 VOI_FOLDER = DATA_FOLDER / "VOIs"
 
@@ -14,14 +14,12 @@ RADIOMICS_CUSTOM_PARAMS_PATH = (
 )
 
 # intermediate data
-NODULE_ID_PICKLE = REPO_ROOT / "ct_slicing" / "data_util" / "nodule_id.pkl"
-METADATA_JSON_GZIP = REPO_ROOT / "data" / "metadata.json.gz"
+NODULE_ID_PICKLE = REPO_ROOT / "output" / "intermediate-results" / "nodule_id.pickle"
+METADATA_JSON_GZIP = REPO_ROOT / "output" / "intermediate-results" / "metadata.json.gz"
 
 
 def extracted_features_npy_path_with_threshold(threshold) -> Path:
-    return (
-        REPO_ROOT / "ct_slicing" / "data_util" / f"extracted_features_{threshold}.npy"
-    )
+    return REPO_ROOT / "output" / f"extracted_features_{threshold}.npy"
 
 
 # output

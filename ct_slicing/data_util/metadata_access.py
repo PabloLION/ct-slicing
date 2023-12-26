@@ -10,7 +10,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from ct_slicing.config.data_path import (
-    META_DATA_PATH,
+    METADATA_PATH,
     METADATA_JSON_GZIP,
 )
 from ct_slicing.data_util.nii_file_access import patient_id_to_case_id
@@ -18,7 +18,7 @@ from ct_slicing.ct_logger import logger
 
 
 def load_metadata_excel_to_data_frame(
-    metadata_path: Path = META_DATA_PATH,
+    metadata_path: Path = METADATA_PATH,
 ) -> pd.DataFrame:
     df_metadata = pd.read_excel(
         metadata_path,
