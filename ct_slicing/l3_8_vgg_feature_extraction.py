@@ -329,30 +329,39 @@ def split_data_from_features_and_diagnoses(
     return X_train, X_test, y_train, y_test
 
 
-# DATA SPLITTING
 X_train, X_test, y_train, y_test = split_data_from_features_and_diagnoses(
     *get_extracted_features_and_diagnosis_value()
 )
 
-# Create and train a SVM classifier
-classifier = svm.SVC(probability=True, class_weight="balanced")
-classifier.fit(X_train, y_train)
 
-y_pred_uncalibrated = classifier.predict(X_train)
+def get_uncalibrated_classifier(X_train: np.ndarray, y_train: np.ndarray) -> svm.SVC:
+    # DATA SPLITTING
 
-logger.info("Classification report without calibration:")
-logger.info(
-    classification_report(
-        y_train,
-        y_pred_uncalibrated,
-        labels=[0, 1],
-        target_names=["benign", "malign"],
-        digits=3,
-        # sample_weight=None, | default value: sample_weight=None,
-        # output_dict=False,  | default value: output_dict=False,
-        # zero_division=0,    | default value: zero_division="warn",
+    # Create and train a SVM classifier
+    uncalibrated_classifier = svm.SVC(probability=True, class_weight="balanced")
+    uncalibrated_classifier.fit(X_train, y_train)
+
+    y_pred_uncalibrated = uncalibrated_classifier.predict(X_train)
+
+    logger.info("Classification report without calibration:")
+    logger.info(
+        classification_report(
+            y_train,
+            y_pred_uncalibrated,
+            labels=[0, 1],
+            target_names=["benign", "malign"],
+            digits=3,
+            # sample_weight=None, | default value: sample_weight=None,
+            # output_dict=False,  | default value: output_dict=False,
+            # zero_division=0,    | default value: zero_division="warn",
+        )
     )
-)
+
+    # Uncomment the following line to show the probabilities of the prediction
+    # logger.info(f"Probabilities of the prediction:\n{classifier.predict_proba(X_train)}")
+    return uncalibrated_classifier
+
+
 """
 Classification report with data splitting: (train with 6311 data, test with 2706 data)
 We can see that the accuracy is similar to the one without data splitting.
@@ -366,38 +375,64 @@ weighted avg      0.799     0.698     0.675      6311
 """
 
 
-# Uncomment the following line to show the probabilities of the prediction
-# logger.info(f"Probabilities of the prediction:\n{classifier.predict_proba(X_train)}")
-
-# Use the probabilities to calibrate a new model
-calibrated_classifier = CalibratedClassifierCV(classifier, n_jobs=-1, cv=2)
-calibrated_classifier.fit(X_train, y_train)  # not fixable with 2 samples only
-y_pred_calib = calibrated_classifier.predict(X_train)
-
-logger.info("Classification report with calibration:")
-logger.info(
-    classification_report(
-        y_train,
-        y_pred_calib,
-        labels=[0, 1],
-        target_names=["benign", "malign"],
-        digits=3,
-        # sample_weight=None, | default value: sample_weight=None,
-        # output_dict=False,  | default value: output_dict=False,
-        # zero_division=0,    | default value: zero_division="warn",
+def get_calibrated_classifier(
+    X_train: np.ndarray, y_train: np.ndarray, uncalibrated_classifier: svm.SVC
+):
+    # Use the probabilities to calibrate a new model
+    calibrated_classifier = CalibratedClassifierCV(
+        uncalibrated_classifier, n_jobs=-1, cv=2
     )
-)
+    calibrated_classifier.fit(X_train, y_train)  # not fixable with 2 samples only
+    y_pred_calib = calibrated_classifier.predict(X_train)
+
+    logger.info("Classification report with calibration:")
+    logger.info(
+        classification_report(
+            y_train,
+            y_pred_calib,
+            labels=[0, 1],
+            target_names=["benign", "malign"],
+            digits=3,
+            # sample_weight=None, | default value: sample_weight=None,
+            # output_dict=False,  | default value: output_dict=False,
+            # zero_division=0,    | default value: zero_division="warn",
+        )
+    )
+
+    # Use the probabilities to calibrate a new model
+    calibrated_classifier = CalibratedClassifierCV(
+        uncalibrated_classifier, n_jobs=-1, cv=2
+    )
+    calibrated_classifier.fit(X_train, y_train)  # not fixable with 2 samples only
+    y_pred_calib = calibrated_classifier.predict(X_train)
+
+    logger.info("Classification report with calibration:")
+    logger.info(
+        classification_report(
+            y_train,
+            y_pred_calib,
+            labels=[0, 1],
+            target_names=["benign", "malign"],
+            digits=3,
+            # sample_weight=None, | default value: sample_weight=None,
+            # output_dict=False,  | default value: output_dict=False,
+            # zero_division=0,    | default value: zero_division="warn",
+        )
+    )
+    return calibrated_classifier
 
 
+classifier = get_uncalibrated_classifier(X_train, y_train)
+calibrated_classifier = get_calibrated_classifier(X_train, y_train, classifier)
 # Apply the original classifier to the test set
-y_pred_test_uncalib = classifier.predict(X_test)
+y_pred_test_uncalibrated = classifier.predict(X_test)
 
 # Classification report for the original classifier on test data
 logger.info("Classification report for uncalibrated classifier on test data:")
 logger.info(
     classification_report(
         y_test,
-        y_pred_test_uncalib,
+        y_pred_test_uncalibrated,
         labels=[0, 1],
         target_names=["benign", "malign"],
         digits=3,
