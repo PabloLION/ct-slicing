@@ -233,27 +233,37 @@ def load_voi_slice_truth_pairs(
             yield process_image(voi_slice), diagnosis
 
 
-EXTRACTED_FEATURES_NPY = extracted_features_npy_path_with_threshold(
-    threshold=empty_slice_threshold
-)
-if EXTRACTED_FEATURES_NPY.exists():
-    logger.info("Extracted features already exists, loading from file.")
-    with open(EXTRACTED_FEATURES_NPY, "rb") as f:
-        concatenated_array = np.load(f, allow_pickle=False)
-    extracted_features = concatenated_array[:, :-1]
-    diagnosis_value = concatenated_array[:, -1]
-    logger.info("Extracted features loaded from file.")
-else:
-    extracted_features, diagnosis_value = extract_feature_from_slice_diagnosis_pairs(
-        load_voi_slice_truth_pairs()
+def get_extracted_features_and_diagnosis_value() -> tuple[np.ndarray, np.ndarray]:
+    """
+    Get the extracted features and diagnosis value from the saved file if it
+    exists, otherwise extract the features from the slices and save it to file.
+    """
+    EXTRACTED_FEATURES_NPY = extracted_features_npy_path_with_threshold(
+        threshold=empty_slice_threshold
     )
-    diagnosis_reshaped = np.reshape(diagnosis_value, (-1, 1))  # Reshape to (9016, 1)
-    concatenated_array = np.concatenate(
-        (extracted_features, diagnosis_reshaped), axis=1
-    )
-    with open(EXTRACTED_FEATURES_NPY, "wb") as f:
-        np.save(f, concatenated_array, allow_pickle=False)
-    logger.info("Extracted features saved to file.")
+    if EXTRACTED_FEATURES_NPY.exists():
+        logger.info("Extracted features already exists, loading from file.")
+        with open(EXTRACTED_FEATURES_NPY, "rb") as f:
+            concatenated_array = np.load(f, allow_pickle=False)
+        extracted_features = concatenated_array[:, :-1]
+        diagnosis_value = concatenated_array[:, -1]
+        logger.info("Extracted features loaded from file.")
+    else:
+        (
+            extracted_features,
+            diagnosis_value,
+        ) = extract_feature_from_slice_diagnosis_pairs(load_voi_slice_truth_pairs())
+        diagnosis_reshaped = np.reshape(
+            diagnosis_value, (-1, 1)
+        )  # Reshape to (9016, 1)
+        concatenated_array = np.concatenate(
+            (extracted_features, diagnosis_reshaped), axis=1
+        )
+        with open(EXTRACTED_FEATURES_NPY, "wb") as f:
+            np.save(f, concatenated_array, allow_pickle=False)
+        logger.info("Extracted features saved to file.")
+    return extracted_features, diagnosis_value
+
 
 """
 Train report without data splitting: (train and test with full 9016 data)
@@ -293,6 +303,9 @@ Discussion:
     unnecessary biopsies. So a high recall for benign cases is good.
 """
 
+
+extracted_features, diagnosis_value = get_extracted_features_and_diagnosis_value()
+
 # DATA SPLITTING
 X_train, X_test, y_train, y_test = train_test_split(
     extracted_features, diagnosis_value, test_size=0.3, random_state=42
@@ -302,13 +315,13 @@ X_train, X_test, y_train, y_test = train_test_split(
 classifier = svm.SVC(probability=True, class_weight="balanced")
 classifier.fit(X_train, y_train)
 
-y_pred_uncalib = classifier.predict(X_train)
+y_pred_uncalibrated = classifier.predict(X_train)
 
 logger.info("Classification report without calibration:")
 logger.info(
     classification_report(
         y_train,
-        y_pred_uncalib,
+        y_pred_uncalibrated,
         labels=[0, 1],
         target_names=["benign", "malign"],
         digits=3,
@@ -381,14 +394,14 @@ weighted avg      0.775     0.685     0.659      2706
 """
 
 # Apply the calibrated classifier to the test set
-y_pred_test_calib = calibrated_classifier.predict(X_test)
+y_pred_test_calibrated = calibrated_classifier.predict(X_test)
 
 # Classification report for the calibrated classifier on test data
 logger.info("Classification report for calibrated classifier on test data:")
 logger.info(
     classification_report(
         y_test,
-        y_pred_test_calib,
+        y_pred_test_calibrated,
         labels=[0, 1],
         target_names=["benign", "malign"],
         digits=3,
@@ -414,12 +427,6 @@ Therefore, the uncalibrated classifier is better than the calibrated one.
 # Optional: Probabilities of the predictions on test data (from the original classifier)
 # Uncomment the following line if you want to log the probabilities
 # logger.info(f"Probabilities of the prediction on test data:\n{classifier.predict_proba(X_test)}")
-
-
-## Unused code
-vgg_features = model.features
-vgg_avgpool = model.avgpool
-
 """
 # Exercise
 
