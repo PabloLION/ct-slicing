@@ -65,6 +65,7 @@ if __name__ != "__main__":
 from enum import Enum
 import logging
 from math import prod
+import random
 from typing import Iterable, Iterator
 import torch
 import torch.nn as nn
@@ -304,11 +305,33 @@ Discussion:
 """
 
 
-extracted_features, diagnosis_value = get_extracted_features_and_diagnosis_value()
+def split_data_from_features_and_diagnoses(
+    extracted_features: np.ndarray,
+    diagnosis_value: np.ndarray,
+    test_size: float = 0.3,
+    random_state: int = 42,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Split the data into a train set (70%) and a test set (30%).
+
+    Args:
+        extracted_features (np.ndarray): The extracted features.
+        diagnosis_value (np.ndarray): The diagnosis value.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The splitted data.
+    """
+    X_train, X_test, y_train, y_test = train_test_split(
+        extracted_features,
+        diagnosis_value,
+        test_size=test_size,
+        random_state=random_state,
+    )
+    return X_train, X_test, y_train, y_test
+
 
 # DATA SPLITTING
-X_train, X_test, y_train, y_test = train_test_split(
-    extracted_features, diagnosis_value, test_size=0.3, random_state=42
+X_train, X_test, y_train, y_test = split_data_from_features_and_diagnoses(
+    *get_extracted_features_and_diagnosis_value()
 )
 
 # Create and train a SVM classifier
