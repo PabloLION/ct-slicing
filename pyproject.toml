@@ -22,7 +22,6 @@ pyqt5 = "^5.15.10"
 torch = "^2.1.0"
 torchvision = "^0.16.0"
 rich = "^13.6.0"
-segmentation-models-pytorch = "^0.3.3"
 
 
 [build-system]
