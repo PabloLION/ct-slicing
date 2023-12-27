@@ -30,32 +30,39 @@ from ct_slicing.ct_logger import logger
 SLICE_FEATURES_PATH = DATA_FOLDER / "py-radiomics" / "slice_glcm1d.npz"
 FOLDS = 10
 
-# glcm means gray level co-occurrence matrix
-glcm_features = np.load(SLICE_FEATURES_PATH, allow_pickle=True)
-slice_features: list[np.ndarray] = glcm_features["slice_features"]
-metadata: np.ndarray[None, np.dtype[np.int8 | np.str_]] = glcm_features["slice_meta"]
-# metadata is an 2d array like ['LIDC-IDRI-1011_GT1_1' 1011 1 'Malignant']
-diagnosis = [meta[3] for meta in metadata]
 
-_x: list[np.ndarray] = []
-_y: list[int] = []
-for i in range(len(slice_features)):
-    if diagnosis[i] == "NoNod":
-        continue
-    _x.append(slice_features[i])
-    _y.append(1 if diagnosis[i] == "Malignant" else 0)
+def load_slice_features_diagnosis_as_numpy_array() -> tuple[np.ndarray, np.ndarray]:
+    # glcm means gray level co-occurrence matrix
+    glcm_features = np.load(SLICE_FEATURES_PATH, allow_pickle=True)
+    slice_features: np.ndarray = glcm_features["slice_features"]
+    metadata: np.ndarray = glcm_features["slice_meta"]
+    # metadata is an 2d array like ['LIDC-IDRI-1011_GT1_1' 1011 1 'Malignant']
+    diagnosis = [meta[3] for meta in metadata]
 
-x = np.vstack(_x)
-y = np.asarray(_y)
+    # seems the old code piece was written by someone not familiar with numpy
+    # So I'll rewrite it later
+    x: list[np.ndarray] = []
+    y: list[int] = []
+    for i in range(len(slice_features)):
+        if diagnosis[i] == "NoNod":
+            continue
+        x.append(slice_features[i])
+        y.append(1 if diagnosis[i] == "Malignant" else 0)
+    return np.asarray(x), np.asarray(y)
+
+
+def k_fold_cross_validation(x: np.ndarray, y: np.ndarray, kf: KFold) -> list[float]:
+    scores = []
+    for i, (train_index, test_index) in enumerate(kf.split(x)):
+        clf = SVC(probability=True, class_weight="balanced")
+        calibrated_classifier = CalibratedClassifierCV(clf, n_jobs=-1)
+        calibrated_classifier.fit(x[train_index], y[train_index])
+        scores.append(calibrated_classifier.score(x[test_index], y[test_index]))
+        logger.info(f"Fold {i} score: {scores[-1]}")
+    return scores
+
+
 kf = KFold(n_splits=FOLDS)
-scores = []
-
-for i, (train_index, test_index) in enumerate(kf.split(x)):
-    # logger.info(slices[train_index].shape, slices.shape)
-    clf = SVC(probability=True, class_weight="balanced")
-    calibrated_classifier = CalibratedClassifierCV(clf, n_jobs=-1)
-    calibrated_classifier.fit(x[train_index], y[train_index])
-    scores.append(calibrated_classifier.score(x[test_index], y[test_index]))
-    logger.info(f"Fold {i} score: {scores[-1]}")
-
+x, y = load_slice_features_diagnosis_as_numpy_array()
+scores = k_fold_cross_validation(x, y, kf)
 logger.info(f"average score of all folds: {sum(scores) / FOLDS}")
