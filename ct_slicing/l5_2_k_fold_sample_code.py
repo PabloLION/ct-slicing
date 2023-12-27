@@ -32,23 +32,18 @@ FOLDS = 10
 
 
 def load_slice_features_diagnosis_as_numpy_array() -> tuple[np.ndarray, np.ndarray]:
-    # glcm means gray level co-occurrence matrix
     glcm_features = np.load(SLICE_FEATURES_PATH, allow_pickle=True)
     slice_features: np.ndarray = glcm_features["slice_features"]
+    # slice_features is an 2d array of shape (7414, 24)
     metadata: np.ndarray = glcm_features["slice_meta"]
-    # metadata is an 2d array like ['LIDC-IDRI-1011_GT1_1' 1011 1 'Malignant']
-    diagnosis = [meta[3] for meta in metadata]
+    # metadata has shape (7414, 4), with rows like ['LIDC-IDRI-0933_GT1_6' 933 6 'Benign']
 
     # seems the old code piece was written by someone not familiar with numpy
-    # So I'll rewrite it later
-    x: list[np.ndarray] = []
-    y: list[int] = []
-    for i in range(len(slice_features)):
-        if diagnosis[i] == "NoNod":
-            continue
-        x.append(slice_features[i])
-        y.append(1 if diagnosis[i] == "Malignant" else 0)
-    return np.asarray(x), np.asarray(y)
+    valid_cases = (metadata[:, 3] == "Malignant") | (metadata[:, 3] == "Benign")
+    features = slice_features[valid_cases]
+    diagnoses = np.where(metadata[valid_cases, 3] == "Malignant", 1, 0)
+
+    return features, diagnoses
 
 
 def k_fold_cross_validation(x: np.ndarray, y: np.ndarray, kf: KFold) -> list[float]:
@@ -63,6 +58,6 @@ def k_fold_cross_validation(x: np.ndarray, y: np.ndarray, kf: KFold) -> list[flo
 
 
 kf = KFold(n_splits=FOLDS)
-x, y = load_slice_features_diagnosis_as_numpy_array()
-scores = k_fold_cross_validation(x, y, kf)
+features, diagnoses = load_slice_features_diagnosis_as_numpy_array()
+scores = k_fold_cross_validation(features, diagnoses, kf)
 logger.info(f"average score of all folds: {sum(scores) / FOLDS}")
