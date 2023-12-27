@@ -11,19 +11,22 @@ Universitat Autonoma de Barcelona
 # Unit: Visual Feature extraction exploration and selection / PyRadiomics
 
 """
-Renaming:
-| Old name | New name |
-|----------|----------|
-| X | one_slice |
-| tensor | tensor_one_slice |
-|array1 | feature_one_slice |
-| X | another_slice |
-| tensor | tensor_another_slice |
-|array2 | feature_another_slice |
-| y | diagnosis_value |
-| all_features | extracted_features |
+## Renaming
 
-Improvements:
+| Old name     | New name              | comment                                                        |
+| ------------ | --------------------- | -------------------------------------------------------------- |
+| X            | one_slice             | replaced with real data returned by load_voi_slice_truth_pairs |
+| tensor       | tensor_one_slice      | replaced with real data returned by load_voi_slice_truth_pairs |
+| array1       | feature_one_slice     | moved to get_extracted_features_and_diagnosis_value            |
+| X            | another_slice         | replaced with real data returned by load_voi_slice_truth_pairs |
+| tensor       | tensor_another_slice  | replaced with real data returned by load_voi_slice_truth_pairs |
+| array2       | feature_another_slice | moved to get_extracted_features_and_diagnosis_value            |
+| y            | diagnosis_value       | moved to get_extracted_features_and_diagnosis_value            |
+| all_features | extracted_features    | moved to get_extracted_features_and_diagnosis_value            |
+
+
+## Improvements
+
 - Copying an 224x224 image three times along the new first axis:
     - Old version:
         X = np.stack([X] * 3, axis=2)  # (224, 224, 3)
