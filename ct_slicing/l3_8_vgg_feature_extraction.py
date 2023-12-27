@@ -67,6 +67,7 @@ import logging
 from math import prod
 import random
 from typing import Iterable, Iterator
+from joblib import dump, load
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -76,7 +77,11 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import classification_report
-from ct_slicing.config.data_path import extracted_features_npy_path_with_threshold
+from ct_slicing.config.data_path import (
+    CALIBRATED_CLASSIFIER_JOBLIB,
+    UNCALIBRATED_CLASSIFIER_JOBLIB,
+    extracted_features_npy_path_with_threshold,
+)
 
 from ct_slicing.ct_logger import logger
 from ct_slicing.data_util.metadata_access import load_all_metadata
@@ -292,10 +297,17 @@ def split_data_from_features_and_diagnoses(
 
 def get_uncalibrated_classifier(X_train: np.ndarray, y_train: np.ndarray) -> svm.SVC:
     # DATA SPLITTING
+    if UNCALIBRATED_CLASSIFIER_JOBLIB.exists():
+        logger.warning(f"Loading classifier from {UNCALIBRATED_CLASSIFIER_JOBLIB}.")
+        return load(UNCALIBRATED_CLASSIFIER_JOBLIB)
 
     # Create and train a SVM classifier
     uncalibrated_classifier = svm.SVC(probability=True, class_weight="balanced")
     uncalibrated_classifier.fit(X_train, y_train)
+
+    # Save the classifier to file
+    dump(uncalibrated_classifier, UNCALIBRATED_CLASSIFIER_JOBLIB)
+    logger.info(f"Calibrated classifier saved to {UNCALIBRATED_CLASSIFIER_JOBLIB}")
 
     # Uncomment the following line to show the probabilities of the prediction
     # logger.info(f"Probabilities of the prediction:\n{classifier.predict_proba(X_train)}")
@@ -305,16 +317,23 @@ def get_uncalibrated_classifier(X_train: np.ndarray, y_train: np.ndarray) -> svm
 def get_calibrated_classifier(
     X_train: np.ndarray, y_train: np.ndarray, uncalibrated_classifier: svm.SVC
 ):
+    if CALIBRATED_CLASSIFIER_JOBLIB.exists():
+        logger.warning(f"Loading classifier from {CALIBRATED_CLASSIFIER_JOBLIB}.")
+        return load(CALIBRATED_CLASSIFIER_JOBLIB)
+
     # Use the probabilities to calibrate a new model
     calibrated_classifier = CalibratedClassifierCV(
         uncalibrated_classifier, n_jobs=-1, cv=2
     )
     calibrated_classifier.fit(X_train, y_train)  # not fixable with 2 samples only
+
+    dump(calibrated_classifier, CALIBRATED_CLASSIFIER_JOBLIB)
+    logger.info(f"Calibrated classifier saved to {CALIBRATED_CLASSIFIER_JOBLIB}")
     return calibrated_classifier
 
 
 """
-Train report without data splitting: (train and test with full 9016 data)
+Training report without data splitting: (train and test with full 9016 data)
                 precision   recall   f1-score   support
 
       benign      0.618     0.983     0.759      4362
@@ -341,10 +360,14 @@ How to read the report:
 | macro avg    | average not weighted by the number of instances in each class |
 
 Keynote of the report:
-- The model is better at identifying benign cases than malign cases (higher recall for benign).
+- The model is better at identifying benign cases than malign cases (higher
+    recall for benign).
 - The model is more precise in predicting malign cases than benign ones.
-- The F1 score is moderately good for both classes, but there's room for improvement, especially for the malign class.
-- The accuracy of 70.1% shows a general effectiveness of the model, but considering the weighted metrics and individual class performance is crucial, especially in imbalanced datasets.
+- The F1 score is moderately good for both classes, but there's room for
+    improvement, especially for the malign class.
+- The accuracy of 70.1% shows a general effectiveness of the model, but
+    considering the weighted metrics and individual class performance is 
+    crucial, especially in imbalanced datasets.
 
 Discussion:
 - If the model can help exclude benign cases, it can reduce the number of
@@ -356,7 +379,7 @@ X_train, X_test, y_train, y_test = split_data_from_features_and_diagnoses(
 )
 uncalibrated_classifier = get_uncalibrated_classifier(X_train, y_train)
 y_pred_uncalibrated = uncalibrated_classifier.predict(X_train)
-logger.info("Classification report without calibration:")
+logger.info("Training report without calibration:")
 logger.info(
     classification_report(
         y_train,
@@ -371,7 +394,7 @@ logger.info(
 )
 
 """
-Classification report with data splitting: (train with 6311 data, test with 2706 data)
+Training report with data splitting: (train with 6311 data, test with 2706 data)
 We can see that the accuracy is similar to the one without data splitting.
                 precision   recall  f1-score   support
       benign      0.617     0.985     0.758      3038
@@ -386,7 +409,7 @@ calibrated_classifier = get_calibrated_classifier(
     X_train, y_train, uncalibrated_classifier
 )
 y_pred_calibrated = calibrated_classifier.predict(X_train)
-logger.info("Classification report with calibration:")
+logger.info("Training report with calibration:")
 logger.info(
     classification_report(
         y_train,
@@ -404,8 +427,7 @@ logger.info(
 # Apply the original classifier to the test set
 y_pred_test_uncalibrated = uncalibrated_classifier.predict(X_test)
 
-# Classification report for the original classifier on test data
-logger.info("Classification report for uncalibrated classifier on test data:")
+logger.info("Test report for uncalibrated classifier:")
 logger.info(
     classification_report(
         y_test,
@@ -417,7 +439,7 @@ logger.info(
 )
 
 """
-Classification report for uncalibrated classifier on test data:
+Test report for uncalibrated classifier:
                 precision   recall  f1-score   support
 
       benign      0.613     0.968     0.750      1324
@@ -431,8 +453,7 @@ weighted avg      0.775     0.685     0.659      2706
 # Apply the calibrated classifier to the test set
 y_pred_test_calibrated = calibrated_classifier.predict(X_test)
 
-# Classification report for the calibrated classifier on test data
-logger.info("Classification report for calibrated classifier on test data:")
+logger.info("Test report for calibrated classifier:")
 logger.info(
     classification_report(
         y_test,
@@ -443,7 +464,7 @@ logger.info(
     )
 )
 """
-Classification report for calibrated classifier on test data:
+Test report for calibrated classifier:
                 precision    recall  f1-score   support
 
       benign      0.637     0.804     0.711      1324

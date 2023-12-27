@@ -14,12 +14,23 @@ RADIOMICS_CUSTOM_PARAMS_PATH = (
 )
 
 # intermediate data
-NODULE_ID_PICKLE = REPO_ROOT / "output" / "intermediate-results" / "nodule_id.pickle"
+NODULE_ID_PICKLE = REPO_ROOT / "output" / "intermediate-results" / "nodule_id.pkl"
 METADATA_JSON_GZIP = REPO_ROOT / "output" / "intermediate-results" / "metadata.json.gz"
+UNCALIBRATED_CLASSIFIER_JOBLIB = (
+    REPO_ROOT / "output" / "intermediate-results" / "uncalibrated_classifier.joblib"
+)
+CALIBRATED_CLASSIFIER_JOBLIB = (
+    REPO_ROOT / "output" / "intermediate-results" / "calibrated_classifier.joblib"
+)
 
 
 def extracted_features_npy_path_with_threshold(threshold) -> Path:
-    return REPO_ROOT / "output" / f"extracted_features_{threshold}.npy"
+    return (
+        REPO_ROOT
+        / "output"
+        / "intermediate-results"
+        / f"extracted_features_{threshold}.npy"
+    )
 
 
 # output
