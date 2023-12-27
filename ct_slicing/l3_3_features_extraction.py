@@ -15,7 +15,6 @@ if __name__ != "__main__":
 
 import logging
 from typing import Iterable, Literal
-import numpy as np
 import pandas as pd
 import SimpleITK as sitk
 from radiomics.featureextractor import RadiomicsFeatureExtractor
@@ -26,13 +25,10 @@ from ct_slicing.config.data_path import (
 )
 from ct_slicing.data_util.metadata_access import (
     load_metadata,
-    load_metadata_excel_to_data_frame,
 )
 from ct_slicing.data_util.nii_file_access import (
     case_id_to_patient_id,
-    get_nii_path_iter,
     get_section_case_id_mask_id_iter,
-    load_nodule_id_pickle,
     nii_file,
 )
 from ct_slicing.image_process import process_image

@@ -28,8 +28,9 @@ from sklearn.model_selection import KFold
 from ct_slicing.config.data_path import DATA_FOLDER
 from ct_slicing.ct_logger import logger
 
-SLICE_FEATURES_PATH = DATA_FOLDER / "py-radiomics" / "slice_glcm1d.npz"
 FOLDS = 10
+# glcm means gray-level co-occurrence matrix
+SLICE_FEATURES_PATH = DATA_FOLDER / "py-radiomics" / "slice_glcm1d.npz"
 
 
 def load_slice_features_diagnosis_as_numpy_array() -> tuple[np.ndarray, np.ndarray]:
