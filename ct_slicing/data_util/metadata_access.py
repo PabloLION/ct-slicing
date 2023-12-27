@@ -182,3 +182,5 @@ if __name__ == "__main__":
     test_load_all_metadata_as_dataclass()
     test_dump_all_metadata()
     test_load_metadata()
+    md11 = load_metadata(1, 1)
+    print(md11.__dataclass_fields__.keys())
