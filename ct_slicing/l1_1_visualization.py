@@ -11,6 +11,9 @@ Universitat Autonoma de Barcelona
 # Unit: Data Exploration / Volume Visualization
 # Data: from "LUNA Dataset / Full Dataset"
 
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 from ct_slicing.ct_logger import logger
 from ct_slicing.data_util.nii_file_access import nii_file
 from ct_slicing.vis_lib.volume_cut_browser import (

@@ -59,10 +59,7 @@ Universitat Autonoma de Barcelona
 """
 
 if __name__ != "__main__":
-    raise ImportError(
-        "This file is not meant to be imported. "
-        "Please run it directly with python3 -m ct_slicing.l3_8_vgg_feature_extraction"
-    )
+    raise ImportError(f"Script {__file__} should not be imported as a module")
 
 
 from enum import Enum

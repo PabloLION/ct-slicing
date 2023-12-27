@@ -23,7 +23,7 @@ Medsze | median_size
 """
 
 if __name__ != "__main__":
-    raise ImportError(f"Cannot import a script file. {__file__} is not a module.")
+    raise ImportError(f"Script {__file__} should not be imported as a module")
 
 import numpy as np
 from mayavi import mlab

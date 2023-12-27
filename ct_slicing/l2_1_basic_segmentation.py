@@ -11,6 +11,9 @@ Universitat Autonoma de Barcelona
 # Unit: Volume Visualization and Lesion Segmentation / Segmentation
 # Data: from Unit "Full Dataset"
 
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 import matplotlib.pyplot as plt
 from ct_slicing.data_util.nii_file_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty

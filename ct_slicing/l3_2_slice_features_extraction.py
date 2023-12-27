@@ -11,7 +11,6 @@ Universitat Autonoma de Barcelona
 if __name__ != "__main__":
     raise ImportError(f"Script {__file__} should not be imported as a module")
 
-
 import logging
 import pandas as pd
 from collections import OrderedDict

@@ -10,6 +10,8 @@ Universitat Autonoma de Barcelona
 
 # Unit: Feature Extraction / PreTrained Networks
 
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
 
 import logging
 from typing import Iterable, Literal

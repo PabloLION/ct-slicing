@@ -8,6 +8,9 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 from pathlib import Path
 from typing import cast
 import numpy as np

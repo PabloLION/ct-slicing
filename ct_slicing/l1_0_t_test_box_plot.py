@@ -9,11 +9,14 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
-# Not mentioned in class.
+# Not mentioned during the lectures.
 # Unit: Data Exploration / Features Exploration
 # Data: from "Features Extraction / PyRadiomics"
 # Resource:
 # * T-Test: https://thedatascientist.com/how-to-do-a-t-test-in-python/
+
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
 
 import os
 

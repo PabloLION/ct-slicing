@@ -8,6 +8,9 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 # Import scikit-learn dataset library
 from typing import cast
 from sklearn import datasets, metrics

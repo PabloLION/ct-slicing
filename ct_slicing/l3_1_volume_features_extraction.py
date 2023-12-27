@@ -8,6 +8,9 @@ Computer Vision Center
 Universitat Autonoma de Barcelona
 """
 
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 import SimpleITK as itk
 from radiomics import featureextractor as feature_extractor, setVerbosity
 from ct_slicing.ct_logger import logger

@@ -68,7 +68,7 @@ in one slice. This might cause the threshold to be inaccurate.
 """
 
 if __name__ != "__main__":
-    raise ImportError(f"Cannot import a script file. {__file__} is not a module.")
+    raise ImportError(f"Script {__file__} should not be imported as a module")
 
 from typing import Callable, cast
 import matplotlib.pyplot as plt

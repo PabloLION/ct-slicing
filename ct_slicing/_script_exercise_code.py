@@ -1,3 +1,6 @@
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 from typing import cast
 from radiomics import featureextractor as feature_extractor, setVerbosity
 import radiomics

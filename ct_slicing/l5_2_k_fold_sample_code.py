@@ -10,6 +10,9 @@ Universitat Autonoma de Barcelona
 
 # Unit: Segmentation Validation / Advanced Validation
 
+if __name__ != "__main__":
+    raise ImportError(f"Script {__file__} should not be imported as a module")
+
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.calibration import CalibratedClassifierCV
