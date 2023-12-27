@@ -4,7 +4,6 @@ This module provides functions to load metadata from excel file to dataclass
 
 import gzip
 import json
-import pickle
 import pandas as pd
 from dataclasses import asdict
 from pathlib import Path
