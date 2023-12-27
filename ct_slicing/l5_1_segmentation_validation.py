@@ -77,10 +77,10 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt as backward_dist
 from skimage.filters import threshold_otsu
 from skimage.measure import find_contours
+
 from ct_slicing.config.dev_config import DEFAULT_PLOT_BLOCK
 from ct_slicing.data_util.nii_file_access import nii_file
 from ct_slicing.vis_lib.nifty_io import read_nifty
-
 from ct_slicing.vis_lib.segmentation_quality_scores import (
     dice_index,
     volume_overlap_error,
