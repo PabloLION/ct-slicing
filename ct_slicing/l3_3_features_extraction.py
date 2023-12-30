@@ -23,9 +23,7 @@ from ct_slicing.config.data_path import (
     DEFAULT_EXPORT_XLSX_PATH,
     RADIOMICS_DEFAULT_PARAMS_PATH,
 )
-from ct_slicing.data_util.metadata_access import (
-    load_metadata,
-)
+from ct_slicing.data_util.metadata_access import load_metadata
 from ct_slicing.data_util.nii_file_access import (
     case_id_to_patient_id,
     get_section_case_id_mask_id_iter,
@@ -68,13 +66,9 @@ def format_feature_dict(
     }
 
     for feature_name, feature_value in sorted(feature_vector.items()):
-        if not (
-            ("firstorder" in feature_name)
-            or ("glszm" in feature_name)
-            or ("glcm" in feature_name)
-            or ("glrlm" in feature_name)
-            or ("gldm" in feature_name)
-            or ("shape" in feature_name)
+        if not any(
+            k in feature_name
+            for k in ("firstorder", "glcm", "gldm", "glrlm", "glszm", "shape")
         ):
             continue
         if feature_name not in feature_entry:
@@ -132,6 +126,7 @@ def extract_features_of_one_nodule(
 
 def extract_features_of_all_nodules_to_excel(
     case_nodule_id_to_extract: Iterable[tuple[Literal["CT", "VOI"], int, int]]
+    # #TODO: add an excel path argument
 ):
     """Was the script body"""
 
