@@ -23,7 +23,7 @@ def load_voi_slice_truth_pairs(
         voi_path, _mask_path = nii_file("VOI", case_id, nodule_id)
         voi_image, _voi_meta = read_nifty(voi_path, CoordinateOrder.zyx)
         for voi_slice in voi_image:  # voi_slice is a np.ndarray of shape (H,W)
-            if empty_slice_threshold == 0 or (
+            if empty_slice_threshold > 0 and (
                 np.count_nonzero(voi_slice)
                 < prod(voi_slice.shape) * empty_slice_threshold
             ):
