@@ -30,7 +30,7 @@ from ct_slicing.data_util.nii_file_access import (
     nii_file,
 )
 from ct_slicing.image_process import process_image
-from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty, NiiMetadata
+from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty
 from ct_slicing.ct_logger import logger
 
 # instead of MIN_PIXELS, we might should use a percentage of the mask size?
