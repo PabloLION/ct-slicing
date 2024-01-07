@@ -18,6 +18,7 @@ logger = logging.getLogger("rich")
 # change logger level based on environment variable
 if DEV_MODE:
     logger.setLevel(logging.DEBUG)
+    logger.critical("Running in dev mode")
 
 if __name__ == "__main__":
     logger.info("This is an info message")

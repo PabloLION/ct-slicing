@@ -1,8 +1,8 @@
 from math import prod
 import numpy as np
 from typing import Iterator
-from ct_slicing.data_util.metadata_access import load_all_metadata
 
+from ct_slicing.data_util.metadata_access import load_all_metadata
 from ct_slicing.data_util.nii_file_access import load_nodule_id_pickle, nii_file
 from ct_slicing.image_process import process_image
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty
