@@ -1,5 +1,5 @@
 """
-ResNet model is better for 224x224 images. With out arbitrary resize image,
+ResNet model is better for 224x224 images. With arbitrary size images,
 I'm afraid the padding will affect the model's performance.
 """
 from torchvision import models
