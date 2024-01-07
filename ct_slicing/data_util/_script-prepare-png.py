@@ -71,16 +71,21 @@ def convert_nodule_to_png_batch(
         # process_image: same pre-process used in featuresExtraction.py
 
         pil_image = transform(voi_slice.astype(numpy.uint8))
-        image_name = f"{case_id:04}-{nodule_id:02}-{slice_idx:02}-{diagnosis}.png"
-        pil_image.save(image_path := SLICE_IMAGE_FOLDER / image_name)
+        image_name = f"{case_id:04}-{nodule_id:02}-{slice_idx:02}.png"
+        pil_image.save(image_path := SLICE_IMAGE_FOLDER / diagnosis / image_name)
         logger.debug(f"Saved image to {image_path}")
 
 
 all_metadata = load_all_metadata()
 
 _ct_data, voi_data = load_nodule_id_pickle()
+DIAGNOSES = ("benign", "malign")
+for d in DIAGNOSES:
+    if not (SLICE_IMAGE_FOLDER / d).exists():
+        (SLICE_IMAGE_FOLDER / d).mkdir()
+
 for case_id, nodule_id in voi_data:
-    diagnosis = all_metadata[case_id, nodule_id].diagnosis_value
+    diagnosis = all_metadata[case_id, nodule_id].diagnosis.lower()
     convert_nodule_to_png_batch(case_id, nodule_id, diagnosis=diagnosis)
     logger.info(f"Converted {case_id=} {nodule_id=}, {diagnosis=}")
 logger.info("PNG image generation finished")
