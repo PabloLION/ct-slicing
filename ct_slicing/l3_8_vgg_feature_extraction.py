@@ -82,7 +82,7 @@ from ct_slicing.config.data_path import (
 )
 
 from ct_slicing.ct_logger import logger
-from ct_slicing.data_util.slice_diagnosis_pair import load_voi_slice_truth_pairs
+from ct_slicing.data_util.slice_view import load_voi_slice_truth_pairs
 
 logger.setLevel(logging.INFO)
 
