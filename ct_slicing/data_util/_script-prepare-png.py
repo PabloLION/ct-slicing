@@ -4,16 +4,15 @@ if __name__ != "__main__":
 import logging
 from venv import logger
 import numpy
-from torchvision import datasets, transforms, models, utils
-from ct_slicing.config.data_path import OUTPUT_FOLDER
+from torchvision import transforms
+from ct_slicing.config.data_path import SLICE_IMAGE_FOLDER
+from ct_slicing.data_util.metadata_access import load_all_metadata
 
 from ct_slicing.data_util.nii_file_access import load_nodule_id_pickle, nii_file
-from ct_slicing.image_process import process_image
 from ct_slicing.vis_lib.nifty_io import CoordinateOrder, read_nifty
 
 # Parameters
 EMPTY_SLICE_THRESHOLD = 0  # 0.1 (==10%) has the same effect as 0
-SLICE_IMAGE_FOLDER = OUTPUT_FOLDER / "png-slice-images"
 
 
 logger.setLevel(logging.INFO)
@@ -48,6 +47,7 @@ default_transform = transforms.Compose(
 def convert_nodule_to_png_batch(
     case_id,
     nodule_id,
+    diagnosis,
     coordinate_order=CoordinateOrder.zyx,
     empty_slice_threshold: float = EMPTY_SLICE_THRESHOLD,
     transform=default_transform,
@@ -71,14 +71,16 @@ def convert_nodule_to_png_batch(
         # process_image: same pre-process used in featuresExtraction.py
 
         pil_image = transform(voi_slice.astype(numpy.uint8))
-        image_name = f"{case_id:04}-{nodule_id:02}-{slice_idx:02}.png"
+        image_name = f"{case_id:04}-{nodule_id:02}-{slice_idx:02}-{diagnosis}.png"
         pil_image.save(image_path := SLICE_IMAGE_FOLDER / image_name)
         logger.debug(f"Saved image to {image_path}")
 
 
-if not SLICE_IMAGE_FOLDER.exists():
-    SLICE_IMAGE_FOLDER.mkdir()
+all_metadata = load_all_metadata()
+
 _ct_data, voi_data = load_nodule_id_pickle()
 for case_id, nodule_id in voi_data:
-    convert_nodule_to_png_batch(case_id, nodule_id)
-    logger.info(f"Converted {case_id=} {nodule_id=}")
+    diagnosis = all_metadata[case_id, nodule_id].diagnosis_value
+    convert_nodule_to_png_batch(case_id, nodule_id, diagnosis=diagnosis)
+    logger.info(f"Converted {case_id=} {nodule_id=}, {diagnosis=}")
+logger.info("PNG image generation finished")

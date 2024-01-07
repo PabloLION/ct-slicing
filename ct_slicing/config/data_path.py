@@ -36,3 +36,8 @@ def extracted_features_npy_path_with_threshold(threshold) -> Path:
 # output
 OUTPUT_FOLDER = REPO_ROOT / "output"
 DEFAULT_EXPORT_XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"
+SLICE_IMAGE_FOLDER = OUTPUT_FOLDER / "png-slice-images"
+
+for folder in [OUTPUT_FOLDER, SLICE_IMAGE_FOLDER]:
+    if not folder.exists():
+        folder.mkdir()

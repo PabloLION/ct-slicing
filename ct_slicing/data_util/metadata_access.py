@@ -46,7 +46,7 @@ class NoduleMetadata:
     bbox_high_y: float
     bbox_high_z: float
     diagnosis: str
-    diagnosis_value: int
+    diagnosis_value: int  # 0: benign, 1: malign
     malignancy: str
     malignancy_value: int
     calcification: str
