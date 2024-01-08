@@ -19,40 +19,46 @@ model.to(device)
 test_dataset = datasets.ImageFolder(
     root=str(SLICE_IMAGE_FOLDER), transform=transforms.ToTensor()
 )
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-model.eval()  # Set the model to evaluation mode
-all_preds = []
-all_labels = []
-wrong_preds_paths = []
 
-with torch.no_grad():
-    for batch_idx, (inputs, labels) in enumerate(test_loader):
-        inputs = inputs.to(device)
-        outputs = model(inputs)
-        _, preds = torch.max(outputs, 1)
+def test_model(model, test_dataset):
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=32, shuffle=False
+    )
+    model.eval()  # Set the model to evaluation mode
+    all_preds = []
+    all_labels = []
+    wrong_preds_paths = []
 
-        all_preds.extend(preds.cpu().numpy())
-        all_labels.extend(labels.cpu().numpy())
+    with torch.no_grad():
+        for batch_idx, (inputs, labels) in enumerate(test_loader):
+            inputs = inputs.to(device)
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
 
-        # Identify and store paths of wrong predictions
-        wrong_indices = (preds != labels).nonzero(as_tuple=False).view(-1)
-        for index in wrong_indices:
-            img_path = test_loader.dataset.samples[index][0]
-            wrong_preds_paths.append(img_path)
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
 
-        for idx, (pred, label) in enumerate(zip(preds, labels)):
-            absolute_idx = batch_idx * test_loader.batch_size + idx
-            img_path = test_loader.dataset.samples[absolute_idx][0]
-            if pred != label:
+            # Identify and store paths of wrong predictions
+            wrong_indices = (preds != labels).nonzero(as_tuple=False).view(-1)
+            for index in wrong_indices:
+                img_path = test_loader.dataset.samples[index][0]
                 wrong_preds_paths.append(img_path)
-                print(
-                    f"Wrong Prediction: {pred.item()=}, Label: {label.item()=}, Path: {img_path}"
-                )
-            # else:
-            #     print(f"        Correct prediction {pred=} for {img_path=}")
+
+            for idx, (pred, label) in enumerate(zip(preds, labels)):
+                absolute_idx = batch_idx * test_loader.batch_size + idx
+                img_path = test_loader.dataset.samples[absolute_idx][0]
+                if pred != label:
+                    wrong_preds_paths.append(img_path)
+                    print(
+                        f"Wrong Prediction: {pred.item()=}, Label: {label.item()=}, Path: {img_path}"
+                    )
+                # else:
+                #     print(f"        Correct prediction {pred=} for {img_path=}")
+    return all_preds, all_labels, wrong_preds_paths
 
 
+all_preds, all_labels, wrong_preds_paths = test_model(model, test_dataset)
 # Generate classification report
 report = classification_report(
     all_labels, all_preds, target_names=["benign", "malign"], digits=4
