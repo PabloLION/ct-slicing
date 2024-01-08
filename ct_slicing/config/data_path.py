@@ -36,6 +36,8 @@ def extracted_features_npy_path_with_threshold(threshold) -> Path:
 
 
 MODEL_PATH = OUTPUT_FOLDER / "trained-model" / "resnet152_model.pth"
+# #TODO: remove MODEL_PATH
+MODEL_OPTIMIZER_PATH = OUTPUT_FOLDER / "trained-model" / "resnet152_model_optimizer.pth"
 SLICE_IMAGE_FOLDER = OUTPUT_FOLDER / "png-slice-images"
 
 # output (git-ignored)
