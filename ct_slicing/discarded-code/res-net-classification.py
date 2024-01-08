@@ -20,9 +20,11 @@ from ct_slicing.ct_logger import logger
 
 # Parameters
 criterion = nn.CrossEntropyLoss()
-n_epoch = 1  # number of training epochs
+n_epoch = 0  # number of training epochs
 # note on n_epoch: on my mac M1U, 100% data * 10 epochs took 5h23m;
 # so 70% data * 16 epochs should take about 6h2m
+run_test = True  # whether to run test after training
+# Parameters END
 
 # #TODO: not implemented. Now we only use the default parameters
 # model = models.resnet152(weights=models.ResNet152_Weights.DEFAULT)
@@ -173,6 +175,42 @@ def train_model(
     logger.warning(f"Model and optimizer saved to {MODEL_OPTIMIZER_PATH}")
 
 
+def test_model(
+    test_dataset: Dataset,
+    model: nn.Module,
+) -> tuple[list[int], list[int], list[str]]:
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    model.eval()  # Set the model to evaluation mode
+
+    all_predictions = []
+    all_labels = []
+    wrong_prediction_paths = []
+
+    with torch.no_grad():
+        for batch_idx, (inputs, labels) in enumerate(test_loader):
+            inputs = inputs.to(device)
+            outputs = model(inputs)
+            _, predictions = torch.max(outputs, 1)
+
+            all_predictions.extend(predictions.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+            batch_size = test_loader.batch_size or 0  # should be 32 as before
+            # Identify and store paths of wrong predictions
+            for idx, (pred, label) in enumerate(zip(predictions, labels)):
+                absolute_idx = batch_idx * batch_size + idx
+                original_idx = test_loader.dataset.indices[absolute_idx]  # type: ignore
+                img_path = test_loader.dataset.dataset.samples[original_idx][0]  # type: ignore
+                if pred != label:
+                    wrong_prediction_paths.append(img_path)
+                    logger.info(
+                        f"Wrong Prediction: {pred.item()=}, Label: {label.item()=}, Path: {img_path}"
+                    )
+                # else:
+                #     print(f"        Correct prediction {pred=} for {img_path=}")
+    return all_predictions, all_labels, wrong_prediction_paths
+
+
 # Prepare the model and optimizer
 logger.setLevel(logging.INFO)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -180,7 +218,18 @@ model, optimizer = load_or_create_model_and_optimizer()
 model.to(device)
 
 ## prepare the data
-train_dataset, _test_dataset = split_data_or_restore_split()
+train_dataset, test_dataset = split_data_or_restore_split()
 
 # Train the model
-train_model(train_dataset, n_epoch, n_epoch_trained, model, optimizer)
+if n_epoch > 0:
+    train_model(train_dataset, n_epoch, n_epoch_trained, model, optimizer)
+
+# Or test the model
+if run_test:
+    predictions, labels, wrong_paths = test_model(test_dataset, model)
+
+    # Generate classification report
+    report = classification_report(
+        labels, predictions, target_names=["benign", "malign"], digits=4
+    )
+    print(report)
