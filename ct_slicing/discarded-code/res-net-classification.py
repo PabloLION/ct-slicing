@@ -31,7 +31,6 @@ n_epoch = 1  # number of training epochs
 n_epoch_trained = 0  # number of epochs the model has been trained
 
 
-# Prepare the model and optimizer
 def load_or_create_model_and_optimizer():
     """
     Load the model and optimizer from file if they exist, otherwise create them.
@@ -69,16 +68,19 @@ def load_or_create_model_and_optimizer():
     return model, optimizer
 
 
-logger.setLevel(logging.INFO)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model, optimizer = load_or_create_model_and_optimizer()
-model.to(device)
-
-
-## prepare the data
 def split_data_or_restore_split(training_split_ratio=0.7):
     """
     Split the data into train and test set, or restore the split if it exists.
+
+    Args:
+        training_split_ratio: the ratio of training set to the whole dataset
+
+    Returns:
+        train_dataset, test_dataset
+
+    #TODO:
+        - store multiple files for different train_test_split_ratio
+        - option to force create a new split
     """
 
     from torch.utils.data import random_split
@@ -112,19 +114,32 @@ def split_data_or_restore_split(training_split_ratio=0.7):
     return train_dataset, test_dataset
 
 
-train_dataset, _test_dataset = split_data_or_restore_split()
-
-
 def train_model(
     train_dataset: Dataset,
     n_epoch: int,
     n_epoch_trained: int,
-    model: nn.Module = model,
-    optimizer: torch.optim.Optimizer = optimizer,
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
     criterion: nn.Module = criterion,
 ):
     """
     Train the model on the training set.
+
+    Args:
+        train_dataset: the training set
+        n_epoch: number of epochs to train
+        n_epoch_trained: number of epochs the model has been trained
+        model: the model to train
+        optimizer: the optimizer to use
+        criterion: the loss function to use
+
+    Returns:
+        None
+
+    #TODO:
+        - add validation set
+        - add early stopping
+        - option to not save the model
     """
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
@@ -158,4 +173,14 @@ def train_model(
     logger.warning(f"Model and optimizer saved to {MODEL_OPTIMIZER_PATH}")
 
 
-train_model(train_dataset, n_epoch, n_epoch_trained)
+# Prepare the model and optimizer
+logger.setLevel(logging.INFO)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model, optimizer = load_or_create_model_and_optimizer()
+model.to(device)
+
+## prepare the data
+train_dataset, _test_dataset = split_data_or_restore_split()
+
+# Train the model
+train_model(train_dataset, n_epoch, n_epoch_trained, model, optimizer)
