@@ -16,6 +16,7 @@ from ct_slicing.config.data_path import (
 )
 
 from ct_slicing.ct_logger import logger
+from ct_slicing.data_util.slice_view import is_first_or_last_k_image
 
 
 # Parameters
@@ -184,7 +185,7 @@ def test_model(
 
     all_predictions = []
     all_labels = []
-    wrong_prediction_paths = []
+    image_names = []
 
     with torch.no_grad():
         for batch_idx, (inputs, labels) in enumerate(test_loader):
@@ -197,18 +198,13 @@ def test_model(
 
             batch_size = test_loader.batch_size or 0  # should be 32 as before
             # Identify and store paths of wrong predictions
-            for idx, (pred, label) in enumerate(zip(predictions, labels)):
+            for idx in range(batch_size):
                 absolute_idx = batch_idx * batch_size + idx
                 original_idx = test_loader.dataset.indices[absolute_idx]  # type: ignore
                 img_path = test_loader.dataset.dataset.samples[original_idx][0]  # type: ignore
-                if pred != label:
-                    wrong_prediction_paths.append(img_path)
-                    logger.info(
-                        f"Wrong Prediction: {pred.item()=}, Label: {label.item()=}, Path: {img_path}"
-                    )
-                # else:
-                #     print(f"        Correct prediction {pred=} for {img_path=}")
-    return all_predictions, all_labels, wrong_prediction_paths
+                *_dir, img_name = img_path.split("/")
+                image_names.append(img_name)
+    return all_predictions, all_labels, image_names
 
 
 # Prepare the model and optimizer
@@ -226,18 +222,64 @@ if n_epoch > 0:
 
 # Or test the model
 if run_test:
-    predictions, labels, wrong_paths = test_model(test_dataset, model)
+    predictions, labels, image_paths = test_model(test_dataset, model)
+    logger.info("Finished testing")
 
     # Generate classification report
-    report = classification_report(
+    logger.info("Raw classification report without filtering")
+    report0 = classification_report(
         labels, predictions, target_names=["benign", "malign"], digits=4
     )
-    print(report)
+    logger.info(report0)
 
+    # the image_paths shows that most of the wrong predictions are due to the
+    # quality of the input, because they are mostly the first or last few
+    # slices of a nodule that contains almost no voxels of the nodule.
 
-# the wrong paths shows that most of the wrong predictions are due to the
-# quality of the input, because they are mostly the first or last slices of a
-# nodule that contains almost no voxels of the nodule.
+    # we should try to do the classification report for only the middle slices.
+    # And even only train with the middle slices.
 
-# we should try to do the classification report for only the middle slices. And
-# even only train with the middle slices.
+    filtered_predictions_1, filtered_labels_1, filtered_image_paths_1 = zip(
+        *filter(
+            lambda x: not is_first_or_last_k_image(x[2], 1),
+            zip(predictions, labels, image_paths),
+        )
+    )
+    logger.info("Classification report with filtering out first and last 1 slice")
+    report1 = classification_report(
+        filtered_labels_1,
+        filtered_predictions_1,
+        target_names=["benign", "malign"],
+        digits=4,
+    )
+    logger.info(report1)
+
+    filtered_predictions_2, filtered_labels_2, filtered_image_paths_2 = zip(
+        *filter(
+            lambda x: not is_first_or_last_k_image(x[2], 2),
+            zip(predictions, labels, image_paths),
+        )
+    )
+    logger.info("Classification report with filtering out first and last 2 slices")
+    report2 = classification_report(
+        filtered_labels_2,
+        filtered_predictions_2,
+        target_names=["benign", "malign"],
+        digits=4,
+    )
+    logger.info(report2)
+
+    filtered_predictions_3, filtered_labels_3, filtered_image_paths_3 = zip(
+        *filter(
+            lambda x: not is_first_or_last_k_image(x[2], 3),
+            zip(predictions, labels, image_paths),
+        )
+    )
+    logger.info("Classification report with filtering out first and last 3 slices")
+    report3 = classification_report(
+        filtered_labels_3,
+        filtered_predictions_3,
+        target_names=["benign", "malign"],
+        digits=4,
+    )
+    logger.info(report3)

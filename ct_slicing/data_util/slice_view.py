@@ -33,3 +33,14 @@ def load_voi_slice_truth_pairs(
             # process_image: same pre-process used in featuresExtraction.py
             # #TODO: maybe we should apply the process_image to the 224x224 image
             yield process_image(voi_slice), diagnosis
+
+
+def is_first_or_last_k_slice(case_id: int, nodule_id: int, slice_id: int, k: int = 1):
+    voi_path, _mask_path = nii_file("VOI", case_id, nodule_id)
+    voi_image, _voi_meta = read_nifty(voi_path, CoordinateOrder.zyx)
+    return not slice_id <= k < voi_image.shape[0] - k
+
+
+def is_first_or_last_k_image(image_name: str, k: int = 1):
+    case_id, nodule_id, slice_id = map(int, image_name.split("-"))
+    return is_first_or_last_k_slice(case_id, nodule_id, slice_id, k)
