@@ -11,7 +11,6 @@ from ct_slicing.config.data_path import MODEL_PATH, SLICE_IMAGE_FOLDER
 model = models.resnet152()  # Initialize the model structure
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-num_ftrs = model.fc.in_features
 model.fc = nn.Linear(model.fc.in_features, 2)
 model.load_state_dict(torch.load(MODEL_PATH))  # this is new
 model.to(device)

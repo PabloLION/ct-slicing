@@ -5,7 +5,7 @@ import logging
 import torch
 import torch.nn as nn
 from torchvision import datasets, models, transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
@@ -27,6 +27,8 @@ n_epoch = 1  # number of training epochs
 # #TODO: not implemented. Now we only use the default parameters
 # model = models.resnet152(weights=models.ResNet152_Weights.DEFAULT)
 # optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+n_epoch_trained = 0  # number of epochs the model has been trained
 
 
 # Prepare the model and optimizer
@@ -61,6 +63,9 @@ def load_or_create_model_and_optimizer():
         logger.warning("Using checkpoint for model and optimizer")
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+
+        global n_epoch_trained
+        n_epoch_trained = checkpoint.get("n_epoch_trained", 0)
     return model, optimizer
 
 
@@ -108,29 +113,49 @@ def split_data_or_restore_split(training_split_ratio=0.7):
 
 
 train_dataset, _test_dataset = split_data_or_restore_split()
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
 
-# Training
-logger.info("Start training")
-for epoch in range(n_epoch):
-    model.train()
-    for batch, (data, label) in enumerate(train_loader):
-        data, label = data.to(device), label.to(device)  # Move data, label to `device`
-        optimizer.zero_grad()  # Zero the parameter gradients
-        outputs = model(data)  # Forward pass
-        loss = criterion(outputs, label)
-        loss.backward()  # Backward pass
-        optimizer.step()  # and then optimize
+def train_model(
+    train_dataset: Dataset,
+    n_epoch: int,
+    n_epoch_trained: int,
+    model: nn.Module = model,
+    optimizer: torch.optim.Optimizer = optimizer,
+    criterion: nn.Module = criterion,
+):
+    """
+    Train the model on the training set.
+    """
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
-        logger.info(f"Epoch: {epoch}, Batch: {batch:03}, Loss: {loss.item()}")
-    logger.info(f"Epoch: {epoch} finished")
+    # Training
+    logger.info("Start training")
+    for epoch in range(n_epoch_trained, n_epoch_trained + n_epoch):
+        model.train()
+        for batch, (data, label) in enumerate(train_loader):
+            data, label = data.to(device), label.to(
+                device
+            )  # Move data, label to `device`
+            optimizer.zero_grad()  # Zero the parameter gradients
+            outputs = model(data)  # Forward pass
+            loss = criterion(outputs, label)
+            loss.backward()  # Backward pass
+            optimizer.step()  # and then optimize
 
-# Saving the model and optimizer, maybe should use try except KeyboardInterrupt?
-torch.save(
-    {
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
-    },
-    str(MODEL_OPTIMIZER_PATH),
-)
+            logger.info(f"Epoch: {epoch}, Batch: {batch:03}, Loss: {loss.item()}")
+        logger.info(f"Epoch: {epoch} finished")
+    logger.info("Finished training")
+
+    # Saving the model and optimizer, maybe should use try except KeyboardInterrupt?
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "n_epoch_trained": n_epoch_trained + n_epoch,
+        },
+        str(MODEL_OPTIMIZER_PATH),
+    )
+    logger.warning(f"Model and optimizer saved to {MODEL_OPTIMIZER_PATH}")
+
+
+train_model(train_dataset, n_epoch, n_epoch_trained)
