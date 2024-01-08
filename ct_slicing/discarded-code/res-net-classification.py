@@ -233,3 +233,11 @@ if run_test:
         labels, predictions, target_names=["benign", "malign"], digits=4
     )
     print(report)
+
+
+# the wrong paths shows that most of the wrong predictions are due to the
+# quality of the input, because they are mostly the first or last slices of a
+# nodule that contains almost no voxels of the nodule.
+
+# we should try to do the classification report for only the middle slices. And
+# even only train with the middle slices.
