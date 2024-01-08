@@ -13,14 +13,16 @@ RADIOMICS_CUSTOM_PARAMS_PATH = (
     REPO_ROOT / "ct_slicing" / "config" / "FeaturesExtraction_Params.yaml"
 )
 
-# intermediate data
-NODULE_ID_PICKLE = REPO_ROOT / "output" / "intermediate-results" / "nodule_id.pkl"
-METADATA_JSON_GZIP = REPO_ROOT / "output" / "intermediate-results" / "metadata.json.gz"
+# intermediate results (git-ignored)
+OUTPUT_FOLDER = REPO_ROOT / "output"
+
+NODULE_ID_PICKLE = OUTPUT_FOLDER / "intermediate-results" / "nodule_id.pkl"
+METADATA_JSON_GZIP = OUTPUT_FOLDER / "intermediate-results" / "metadata.json.gz"
 UNCALIBRATED_CLASSIFIER_JOBLIB = (
-    REPO_ROOT / "output" / "intermediate-results" / "uncalibrated_classifier.joblib"
+    OUTPUT_FOLDER / "intermediate-results" / "uncalibrated_classifier.joblib"
 )
 CALIBRATED_CLASSIFIER_JOBLIB = (
-    REPO_ROOT / "output" / "intermediate-results" / "calibrated_classifier.joblib"
+    OUTPUT_FOLDER / "intermediate-results" / "calibrated_classifier.joblib"
 )
 
 
@@ -33,10 +35,11 @@ def extracted_features_npy_path_with_threshold(threshold) -> Path:
     )
 
 
-# output
-OUTPUT_FOLDER = REPO_ROOT / "output"
-DEFAULT_EXPORT_XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"
+MODEL_PATH = OUTPUT_FOLDER / "trained-model" / "resnet152_model.pth"
 SLICE_IMAGE_FOLDER = OUTPUT_FOLDER / "png-slice-images"
+
+# output (git-ignored)
+DEFAULT_EXPORT_XLSX_PATH = OUTPUT_FOLDER / "features.xlsx"
 
 for folder in [OUTPUT_FOLDER, SLICE_IMAGE_FOLDER]:
     if not folder.exists():

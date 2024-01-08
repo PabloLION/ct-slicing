@@ -8,7 +8,7 @@ from torchvision import datasets, models, transforms
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from ct_slicing.config.data_path import SLICE_IMAGE_FOLDER
+from ct_slicing.config.data_path import MODEL_PATH, SLICE_IMAGE_FOLDER
 
 from ct_slicing.ct_logger import logger
 
@@ -55,7 +55,8 @@ for epoch in range(n_epochs):
         logger.info(f"Epoch: {epoch}, Batch: {batch:03}, Loss: {loss.item()}")
     logger.info(f"Epoch: {epoch} finished")
 
-torch.save(model.state_dict(), "output/trained-model/resnet152_model.pth")
+
+torch.save(model.state_dict(), str(MODEL_PATH))
 
 
 # X_train, X_test, y_train, y_test = split_data_from_features_and_diagnoses()
