@@ -19,6 +19,7 @@ from ct_slicing.ct_logger import logger
 
 # Parameters
 criterion = nn.CrossEntropyLoss()
+n_epoch = 10  # number of training epochs
 # #TODO: not implemented. Now we only use the default parameters
 # model = models.resnet152(weights=models.ResNet152_Weights.DEFAULT)
 # optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -72,13 +73,10 @@ train_dataset = datasets.ImageFolder(
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
 
-# Loading
-# setup for training
-n_epochs = 10  # number of training epochs
-
-
+# Training
 logger.info("Start training")
-for epoch in range(n_epochs):
+for epoch in range(n_epoch):
+    model.train()
     for batch, (data, label) in enumerate(train_loader):
         data, label = data.to(device), label.to(device)  # Move data, label to `device`
         optimizer.zero_grad()  # Zero the parameter gradients
