@@ -179,6 +179,8 @@ def test_model(
     test_dataset: Dataset,
     model: nn.Module,
 ) -> tuple[list[int], list[int], list[str]]:
+    logger.info("Started testing")
+
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
     model.eval()  # Set the model to evaluation mode
 
@@ -203,6 +205,8 @@ def test_model(
                 img_path = test_loader.dataset.dataset.samples[original_idx][0]  # type: ignore
                 *_dir, img_name = img_path.split("/")
                 image_names.append(img_name)
+
+    logger.info("Finished testing")
     return all_predictions, all_labels, image_names
 
 
@@ -222,7 +226,6 @@ if n_epoch > 0:
 # Or test the model
 if run_test:
     predictions, labels, image_paths = test_model(test_dataset, model)
-    logger.info("Finished testing")
 
     # Generate classification report
     logger.info("Raw classification report without filtering")
