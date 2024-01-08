@@ -21,12 +21,14 @@ test_dataset = datasets.ImageFolder(
 )
 
 
-def test_model(model, test_dataset):
+def test_model(
+    model: nn.Module, test_dataset: datasets.ImageFolder
+) -> tuple[list[int], list[int], list[str]]:
     test_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=32, shuffle=False
     )
     model.eval()  # Set the model to evaluation mode
-    all_preds = []
+    all_predictions = []
     all_labels = []
     wrong_preds_paths = []
 
@@ -36,7 +38,7 @@ def test_model(model, test_dataset):
             outputs = model(inputs)
             _, preds = torch.max(outputs, 1)
 
-            all_preds.extend(preds.cpu().numpy())
+            all_predictions.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
 
             # Identify and store paths of wrong predictions
@@ -55,13 +57,13 @@ def test_model(model, test_dataset):
                     )
                 # else:
                 #     print(f"        Correct prediction {pred=} for {img_path=}")
-    return all_preds, all_labels, wrong_preds_paths
+    return all_predictions, all_labels, wrong_preds_paths
 
 
-all_preds, all_labels, wrong_preds_paths = test_model(model, test_dataset)
+all_predictions, all_labels, wrong_preds_paths = test_model(model, test_dataset)
 # Generate classification report
 report = classification_report(
-    all_labels, all_preds, target_names=["benign", "malign"], digits=4
+    all_labels, all_predictions, target_names=["benign", "malign"], digits=4
 )
 print(report)
 
