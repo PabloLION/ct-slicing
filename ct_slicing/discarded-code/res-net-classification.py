@@ -2,19 +2,18 @@ if __name__ != "__main__":
     raise ImportError(f"Script {__file__} should not be imported as a module")
 
 import logging
+
 import torch
 import torch.nn as nn
 from torchvision import datasets, models, transforms
 from torch.utils.data import DataLoader, Dataset
-
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+
 from ct_slicing.config.data_path import (
     DATA_SPLIT_INDICES_PATH,
     MODEL_OPTIMIZER_PATH,
     SLICE_IMAGE_FOLDER,
 )
-
 from ct_slicing.ct_logger import logger
 from ct_slicing.data_util.slice_view import is_first_or_last_k_image
 
