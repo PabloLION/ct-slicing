@@ -42,5 +42,5 @@ def is_first_or_last_k_slice(case_id: int, nodule_id: int, slice_id: int, k: int
 
 
 def is_first_or_last_k_image(image_name: str, k: int = 1):
-    case_id, nodule_id, slice_id = map(int, image_name.split("-"))
+    case_id, nodule_id, slice_id = map(int, image_name.removesuffix(".png").split("-"))
     return is_first_or_last_k_slice(case_id, nodule_id, slice_id, k)

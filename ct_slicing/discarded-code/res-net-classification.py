@@ -187,9 +187,11 @@ def test_model(
     all_predictions = []
     all_labels = []
     image_names = []
+    batch_size = test_loader.batch_size or 0  # should be 32 as defined above
 
     with torch.no_grad():
         for batch_idx, (inputs, labels) in enumerate(test_loader):
+            logger.info(f"Batch: {batch_idx:03}")
             inputs = inputs.to(device)
             outputs = model(inputs)
             _, predictions = torch.max(outputs, 1)
@@ -197,9 +199,8 @@ def test_model(
             all_predictions.extend(predictions.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
 
-            batch_size = test_loader.batch_size or 0  # should be 32 as before
             # Identify and store paths of wrong predictions
-            for idx in range(batch_size):
+            for idx in range(len(labels)):
                 absolute_idx = batch_idx * batch_size + idx
                 original_idx = test_loader.dataset.indices[absolute_idx]  # type: ignore
                 img_path = test_loader.dataset.dataset.samples[original_idx][0]  # type: ignore
