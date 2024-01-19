@@ -2,6 +2,7 @@ if __name__ != "__main__":
     raise ImportError(f"Script {__file__} should not be imported as a module")
 
 import logging
+import pandas
 
 import torch
 import torch.nn as nn
@@ -12,6 +13,7 @@ from sklearn.metrics import classification_report
 from ct_slicing.config.data_path import (
     DATA_SPLIT_INDICES_PATH,
     MODEL_OPTIMIZER_PATH,
+    OUTPUT_FOLDER,
     SLICE_IMAGE_FOLDER,
 )
 from ct_slicing.ct_logger import logger
@@ -226,7 +228,15 @@ if n_epoch > 0:
 
 # Or test the model
 if run_test:
-    predictions, labels, image_paths = test_model(test_dataset, model)
+    predictions, labels, image_names = test_model(test_dataset, model)
+
+    # save the predictions, labels, image_names to a excel file
+    test_result = list(zip(predictions, labels, image_names, strict=True))
+    test_result_data_frame = pandas.DataFrame(  # type: ignore
+        [predictions, labels, image_names],
+        columns=["predictions", "labels", " image_names"],
+    )
+    test_result_data_frame.to_excel(OUTPUT_FOLDER / "test_result.xlsx")
 
     # Generate classification report
     logger.info("Raw classification report without filtering")
@@ -235,17 +245,17 @@ if run_test:
     )
     logger.info(report0)
 
-    # the image_paths shows that most of the wrong predictions are due to the
+    # the image_names shows that most of the wrong predictions are due to the
     # quality of the input, because they are mostly the first or last few
     # slices of a nodule that contains almost no voxels of the nodule.
 
     # we should try to do the classification report for only the middle slices.
     # And even only train with the middle slices.
 
-    filtered_predictions_1, filtered_labels_1, filtered_image_paths_1 = zip(
+    filtered_predictions_1, filtered_labels_1, filtered_image_names_1 = zip(
         *filter(
             lambda x: not is_first_or_last_k_image(x[2], 1),
-            zip(predictions, labels, image_paths),
+            zip(predictions, labels, image_names),
         )
     )
     logger.info("Classification report with filtering out first and last 1 slice")
@@ -257,10 +267,10 @@ if run_test:
     )
     logger.info(report1)
 
-    filtered_predictions_2, filtered_labels_2, filtered_image_paths_2 = zip(
+    filtered_predictions_2, filtered_labels_2, filtered_image_names_2 = zip(
         *filter(
             lambda x: not is_first_or_last_k_image(x[2], 2),
-            zip(predictions, labels, image_paths),
+            zip(predictions, labels, image_names),
         )
     )
     logger.info("Classification report with filtering out first and last 2 slices")
@@ -272,10 +282,10 @@ if run_test:
     )
     logger.info(report2)
 
-    filtered_predictions_3, filtered_labels_3, filtered_image_paths_3 = zip(
+    filtered_predictions_3, filtered_labels_3, filtered_image_names_3 = zip(
         *filter(
             lambda x: not is_first_or_last_k_image(x[2], 3),
-            zip(predictions, labels, image_paths),
+            zip(predictions, labels, image_names),
         )
     )
     logger.info("Classification report with filtering out first and last 3 slices")
