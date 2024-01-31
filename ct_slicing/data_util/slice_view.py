@@ -38,7 +38,9 @@ def load_voi_slice_truth_pairs(
 def is_first_or_last_k_slice(case_id: int, nodule_id: int, slice_id: int, k: int = 1):
     voi_path, _mask_path = nii_file("VOI", case_id, nodule_id)
     voi_image, _voi_meta = read_nifty(voi_path, CoordinateOrder.zyx)
-    return not slice_id <= k < voi_image.shape[0] - k
+    # too error-prone: return not k <= slice_id < voi_image.shape[0] - k
+    # so I had to debug with: print(f"{case_id=:04} {nodule_id=:03} {slice_id=:03} {k=:03}  {voi_image.shape[0] - k=:03}, so {not (slice_id <= k < voi_image.shape[0] - k)=}")
+    return slice_id < k or slice_id >= voi_image.shape[0] - k
 
 
 def is_first_or_last_k_image(image_name: str, k: int = 1):

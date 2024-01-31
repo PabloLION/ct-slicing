@@ -25,7 +25,8 @@ criterion = nn.CrossEntropyLoss()
 n_epoch = 0  # number of training epochs
 # note on n_epoch: on my mac M1U, 100% data * 10 epochs took 5h23m;
 # so 70% data * 16 epochs should take about 6h2m
-run_test = True  # whether to run test after training
+run_test = False  # whether to run test after training
+gen_report = True  # whether to generate classification report
 # Parameters END
 
 # #TODO: not implemented. Now we only use the default parameters
@@ -232,12 +233,20 @@ if run_test:
 
     # save the predictions, labels, image_names to a excel file
     test_result = list(zip(predictions, labels, image_names, strict=True))
-    test_result_data_frame = pandas.DataFrame(  # type: ignore
-        [predictions, labels, image_names],
-        columns=["predictions", "labels", " image_names"],
+    test_result_data_frame = pandas.DataFrame(
+        zip(predictions, labels, image_names),
+        columns=["predictions", "labels", "image_names"],
     )
     test_result_data_frame.to_excel(OUTPUT_FOLDER / "test_result.xlsx")
+else:
+    logger.info("Loading test result from file")
+    # load the predictions, labels, image_names from the excel file
+    test_result_data_frame = pandas.read_excel(OUTPUT_FOLDER / "test_result.xlsx")
+    predictions = test_result_data_frame["predictions"].tolist()
+    labels = test_result_data_frame["labels"].tolist()
+    image_names = test_result_data_frame["image_names"].tolist()
 
+if gen_report:
     # Generate classification report
     logger.info("Raw classification report without filtering")
     report0 = classification_report(
@@ -296,3 +305,83 @@ if run_test:
         digits=4,
     )
     logger.info(report3)
+
+    filtered_predictions_4, filtered_labels_4, filtered_image_names_4 = zip(
+        *filter(
+            lambda x: not is_first_or_last_k_image(x[2], 4),
+            zip(predictions, labels, image_names),
+        )
+    )
+    logger.info("Classification report with filtering out first and last 4 slices")
+    report4 = classification_report(
+        filtered_labels_4,
+        filtered_predictions_4,
+        target_names=["benign", "malign"],
+        digits=4,
+    )
+    logger.info(report4)
+
+    filtered_predictions_5, filtered_labels_5, filtered_image_names_5 = zip(
+        *filter(
+            lambda x: not is_first_or_last_k_image(x[2], 5),
+            zip(predictions, labels, image_names),
+        )
+    )
+    logger.info("Classification report with filtering out first and last 5 slices")
+    report5 = classification_report(
+        filtered_labels_5,
+        filtered_predictions_5,
+        target_names=["benign", "malign"],
+        digits=4,
+    )
+    logger.info(report5)
+
+    filtered_predictions_6, filtered_labels_6, filtered_image_names_6 = zip(
+        *filter(
+            lambda x: not is_first_or_last_k_image(x[2], 6),
+            zip(predictions, labels, image_names),
+        )
+    )
+    logger.info("Classification report with filtering out first and last 6 slices")
+    report6 = classification_report(
+        filtered_labels_6,
+        filtered_predictions_6,
+        target_names=["benign", "malign"],
+        digits=4,
+    )
+    logger.info(report6)
+
+    filtered_predictions_7, filtered_labels_7, filtered_image_names_7 = zip(
+        *filter(
+            lambda x: not is_first_or_last_k_image(x[2], 7),
+            zip(predictions, labels, image_names),
+        )
+    )
+    logger.info("Classification report with filtering out first and last 7 slices")
+    report7 = classification_report(
+        filtered_labels_7,
+        filtered_predictions_7,
+        target_names=["benign", "malign"],
+        digits=4,
+    )
+    logger.info(report7)
+
+    filtered_predictions_8, filtered_labels_8, filtered_image_names_8 = zip(
+        *filter(
+            lambda x: not is_first_or_last_k_image(x[2], 8),
+            zip(predictions, labels, image_names),
+        )
+    )
+    logger.info("Classification report with filtering out first and last 8 slices")
+    report8 = classification_report(
+        filtered_labels_8,
+        filtered_predictions_8,
+        target_names=["benign", "malign"],
+        digits=4,
+    )
+    logger.info(report8)
+
+"""
+Results:
+
+"""
